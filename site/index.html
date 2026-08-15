@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1c1839">
+  <meta name="description" content="Astro Database Workspace — documentação SQL navegável e análise de impacto.">
+  <link rel="shortcut icon" href="images/astro.svg" type="image/x-icon">
+  <title>Astro · Database Workspace</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+</head>
+<body>
+  <a class="skip-link" href="#content">Pular para o conteúdo</a>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#/overview" aria-label="Astro — início">
+        <img class="brand-logo" src="images/astro.svg" alt="Icone Astro" aria-hidden="true">
+        <span><strong>astro</strong><small>database workspace</small></span>
+      </a>
+      <!-- Os ícones são injetados a partir de site/icons.js (assets de site/images). -->
+      <nav class="sidebar-nav" aria-label="Navegação principal" id="main-nav">
+        <a href="#/overview" data-route="overview" data-icon="dashboard">Visão Geral</a>
+        <span class="nav-group">Explorador</span>
+        <a href="#/database" data-route="database" data-icon="table">Banco de Dados</a>
+        <a href="#/modeling" data-route="modeling" data-icon="modeling">Modelagem</a>
+        <a href="#/scripts" data-route="scripts" data-icon="script">Scripts</a>
+        <a href="#/dataload" data-route="dataload" data-icon="dataload">Data Load</a>
+        <span class="nav-group">Objetos</span>
+        <a href="#/views" data-route="views" data-icon="view">Views</a>
+        <a href="#/procedures" data-route="procedures" data-icon="procedure">Procedures</a>
+        <a href="#/functions" data-route="functions" data-icon="function">Functions</a>
+        <a href="#/indexes" data-route="indexes" data-icon="index">Índices</a>
+        <a href="#/triggers" data-route="triggers" data-icon="trigger">Triggers</a>
+        <a href="#/logs" data-route="logs" data-icon="logTable">Logs</a>
+        <span class="nav-group">Ferramentas</span>
+        <a href="#/dependencies" data-route="dependencies" data-icon="dependencies">Dependências</a>
+        <a href="#/impact" data-route="impact" data-icon="impact">Análise de Impacto</a>
+        <a href="#/execution" data-route="execution" data-icon="execution">Executar Banco</a>
+        <a href="#/changes" data-route="changes" data-icon="changes">Alterações Locais</a>
+        <a href="#/history" data-route="history" data-icon="history">Histórico</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="mode-badge" id="mode-badge"><i></i> Verificando...</span>
+        <small id="generation-label">Carregando documentação</small>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menu-button" data-icon="hamburger" aria-label="Abrir menu" title="Abrir menu" aria-expanded="false"></button>
+        <label class="search-box" for="global-search">
+          <span class="search-box-icon" data-icon="search"></span>
+          <input id="global-search" type="search" autocomplete="off" placeholder="Pesquisar objetos, colunas ou arquivos…">
+          <kbd>Ctrl K</kbd>
+        </label>
+        <button class="button ghost" id="new-file-button">Novo SQL</button>
+      </header>
+      <main id="content" tabindex="-1"></main>
+    </div>
+  </div>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <dialog id="modal"></dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

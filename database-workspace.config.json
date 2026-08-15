@@ -1,0 +1,41 @@
+{
+  "project": {
+    "name": "Astro Database Workspace",
+    "description": "Conformidade em órbita"
+  },
+  "database": {
+    "dialect": "postgresql",
+    "paths": {
+      "scripts": "database/scripts",
+      "dataload": "database/dataload",
+      "functions": "database/functions",
+      "views": "database/views",
+      "procedures": "database/procedures",
+      "indexes": "database/indexes",
+      "triggers": "database/triggers",
+      "logs": "database/logs"
+    }
+  },
+  "models": {
+    "conceptual": "models/conceitual.png",
+    "logical": "models/logico.png"
+  },
+  "git": {
+    "history": {
+      "enabled": true,
+      "maxCommits": 100,
+      "includeDiff": true,
+      "maxDiffLinesPerFile": 4000
+    }
+  },
+  "execution": {
+    "enabled": true,
+    "stopOnError": true,
+    "transactionMode": "per-script",
+    "connectionTimeout": 10000,
+    "queryTimeout": 60000,
+    "historyTable": "_astroworkspace_migrations"
+  },
+  "generated": "generated",
+  "site": "site"
+}

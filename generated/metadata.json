@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-08-15T02:33:18.219Z",
+  "counts": {
+    "table": 0,
+    "log-table": 0,
+    "view": 0,
+    "procedure": 0,
+    "function": 0,
+    "index": 0,
+    "trigger": 0,
+    "dataload": 0,
+    "files": 0
+  },
+  "dialect": "postgresql"
+}

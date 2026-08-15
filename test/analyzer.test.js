@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { buildDependencyGraph, findPath, traversal } from '../analyzer/dependencies/graph.js';
+import { analyzeImpact } from '../analyzer/impact/analyze-impact.js';
+import { parseSqlServerFile } from '../analyzer/parser/sqlserver.js';
+import { parsePostgreSqlFile } from '../analyzer/parser/postgresql.js';
+import { readSqlFile } from '../server/services/file-service.js';
+import { dependencyGraphLayout } from '../site/views.js';
+
+test('interpreta tabela SQL Server com chaves e colunas', () => {
+  const file = { path: 'database/scripts/tables.sql', category: 'scripts', content: `CREATE TABLE dbo.clientes (id INT NOT NULL PRIMARY KEY, nome VARCHAR(100) NOT NULL, grupo_id INT NULL REFERENCES dbo.grupos(id));` };
+  const { objects, issues } = parseSqlServerFile(file);
+  assert.equal(issues.length, 0);
+  assert.equal(objects[0].name, 'clientes');
+  assert.equal(objects[0].columns.length, 3);
+  assert.equal(objects[0].columns[0].primaryKey, true);
+  assert.equal(objects[0].columns[2].references, 'grupos');
+});
+
+test('interpreta objetos e sintaxe PostgreSQL', () => {
+  const table = parsePostgreSqlFile({ path: 'database/scripts/tables.sql', category: 'scripts', content: `CREATE TABLE IF NOT EXISTS public.clientes (id BIGSERIAL PRIMARY KEY, nome CHARACTER VARYING(100) NOT NULL, criado_em TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP);` });
+  assert.equal(table.objects[0].name, 'clientes');
+  assert.equal(table.objects[0].columns[1].dataType, 'CHARACTERVARYING(100)');
+  const fn = parsePostgreSqlFile({ path: 'database/functions/fn.sql', category: 'functions', content: `CREATE OR REPLACE FUNCTION public.fn_cliente(p_id BIGINT) RETURNS NUMERIC(12, 2) LANGUAGE sql AS $$ SELECT valor FROM public.pedidos WHERE cliente_id = p_id; $$;` });
+  assert.equal(fn.objects[0].parameters[0].name, 'p_id');
+  assert.equal(fn.objects[0].returnType, 'NUMERIC(12, 2)');
+  assert.deepEqual(fn.objects[0].dependencies, ['pedidos']);
+});
+
+test('interpreta trigger PostgreSQL e suas dependências', () => {
+  const sql = `CREATE TRIGGER trg_clientes_email BEFORE INSERT OR UPDATE ON public.clientes FOR EACH ROW EXECUTE FUNCTION public.fn_normalizar_email();`;
+  const result = parsePostgreSqlFile({ path: 'database/triggers/trg.sql', category: 'triggers', content: sql });
+  const trigger = result.objects[0];
+  assert.equal(trigger.type, 'trigger');
+  assert.equal(trigger.table, 'clientes');
+  assert.equal(trigger.function, 'fn_normalizar_email');
+  assert.deepEqual(trigger.events, ['INSERT', 'UPDATE']);
+  assert.deepEqual(trigger.dependencies, ['clientes', 'fn_normalizar_email']);
+});
+
+test('constrói dependências, usados por e caminho', () => {
+  const objects = [
+    { id: 'table:clientes', name: 'clientes', type: 'table', file: 'a.sql', dependencies: [], usedBy: [] },
+    { id: 'view:vw_clientes', name: 'vw_clientes', type: 'view', file: 'b.sql', dependencies: ['clientes'], usedBy: [] },
+    { id: 'procedure:sp_relatorio', name: 'sp_relatorio', type: 'procedure', file: 'c.sql', dependencies: ['vw_clientes'], usedBy: [] }
+  ];
+  const graph = buildDependencyGraph(objects);
+  assert.equal(graph.edges.length, 2);
+  assert.deepEqual(objects[0].usedBy, ['vw_clientes']);
+  assert.equal(traversal(objects, 'clientes').length, 2);
+  assert.deepEqual(findPath(objects, 'clientes', 'sp_relatorio').map((item) => item.name), ['clientes', 'vw_clientes', 'sp_relatorio']);
+});
+
+test('explica e classifica análise de impacto', () => {
+  const objects = [
+    { id: 'table:clientes', name: 'clientes', type: 'table', file: 'a.sql', dependencies: [], usedBy: ['vw_clientes'], columns: [{ name: 'id', primaryKey: true }] },
+    { id: 'view:vw_clientes', name: 'vw_clientes', type: 'view', file: 'b.sql', dependencies: ['clientes'], usedBy: ['sp_relatorio'] },
+    { id: 'procedure:sp_relatorio', name: 'sp_relatorio', type: 'procedure', file: 'c.sql', dependencies: ['vw_clientes'], usedBy: [] }
+  ];
+  const result = analyzeImpact({ objects }, { object: 'clientes', element: 'id', changeType: 'alter-type' });
+  assert.equal(result.directDependencies, 1);
+  assert.equal(result.indirectDependencies, 1);
+  assert.ok(result.reasons.length >= 3);
+  assert.equal(result.level, 'ALTA');
+});
+
+test('bloqueia path traversal no serviço de arquivos', async () => {
+  await assert.rejects(() => readSqlFile('../../segredo.sql'), /pastas autorizadas/);
+});
+
+test('organiza o grafo da dependência para o objeto dependente', () => {
+  const objects = [
+    { id: 'table:clientes', name: 'clientes', type: 'table' },
+    { id: 'view:vw_clientes', name: 'vw_clientes', type: 'view' },
+    { id: 'procedure:sp_clientes', name: 'sp_clientes', type: 'procedure' }
+  ];
+  const edges = [
+    { from: 'table:clientes', to: 'view:vw_clientes', resolved: true },
+    { from: 'view:vw_clientes', to: 'procedure:sp_clientes', resolved: true }
+  ];
+  const layout = dependencyGraphLayout(objects, edges);
+  assert.ok(layout.positions.get('table:clientes').x < layout.positions.get('view:vw_clientes').x);
+  assert.ok(layout.positions.get('view:vw_clientes').x < layout.positions.get('procedure:sp_clientes').x);
+  assert.equal(layout.maxLevel, 2);
+});
