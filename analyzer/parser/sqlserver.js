@@ -1,0 +1,328 @@
+import path from 'node:path';
+import { cleanName, findReferences, splitCommaAware, stripComments, unique } from './utils.js';
+import { extractFileComments } from '../comments/index.js';
+
+const identifier = String.raw`(?:\[[^\]]+\]|[\w]+)(?:\.(?:\[[^\]]+\]|[\w]+))?`;
+
+/**
+ * Uma tabela declarada em `database/logs` é documentada como `log-table`, mas
+ * continua sendo uma tabela física — por isso `databaseType` permanece `table`.
+ * A classificação vem da PASTA, nunca de prefixos como `log_` ou `audit_`, que
+ * gerariam falsos positivos.
+ */
+export function tableTypeFor(file) {
+  return file?.category === 'logs' ? 'log-table' : 'table';
+}
+
+const physicalTypes = { 'log-table': 'table' };
+
+function base(file, type, name) {
+  return {
+    id: `${type}:${name.toLowerCase()}`,
+    name,
+    type,
+    databaseType: physicalTypes[type] ?? type,
+    file: file.path,
+    category: file.category,
+    code: file.content,
+    description: null,
+    dependencies: [],
+    usedBy: [],
+    warnings: []
+  };
+}
+
+function parseDataType(dataType) {
+  const match = dataType.match(/^([A-Za-z]+)(?:\s*\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\))?$/i);
+  if (!match) return { dataType, size: null, precision: null, scale: null };
+  const [, baseType, size, precision] = match;
+  if (baseType.toUpperCase() === 'NUMERIC' || baseType.toUpperCase() === 'DECIMAL') {
+    return { dataType, size: null, precision: size ?? null, scale: precision ?? null };
+  }
+  return { dataType, size: size ?? null, precision: null, scale: null };
+}
+
+function parseColumns(body) {
+  const columns = [];
+  const constraints = [];
+  for (const part of splitCommaAware(body)) {
+    const normalized = part.replace(/\s+/g, ' ').trim();
+    if (!normalized) continue;
+    if (/^(CONSTRAINT\s+\S+\s+)?(PRIMARY|FOREIGN|UNIQUE|CHECK)\b/i.test(normalized)) {
+      constraints.push(normalized);
+      continue;
+    }
+    const match = normalized.match(/^([\[\]`"\w]+)\s+(.+?)(?=\s+(?:NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|DEFAULT|REFERENCES|CHECK|CONSTRAINT|GENERATED)\b|$)(.*)$/i);
+    if (!match) continue;
+    const rest = match[3];
+    const typeInfo = parseDataType(match[2].replace(/\s+/g, ''));
+    const check = rest.match(/\bCHECK\s*\(([^)]+)\)/i)?.[1] ?? null;
+    columns.push({
+      name: cleanName(match[1]),
+      dataType: typeInfo.dataType,
+      size: typeInfo.size,
+      precision: typeInfo.precision,
+      scale: typeInfo.scale,
+      nullable: !/\bNOT\s+NULL\b/i.test(rest) && !/\bPRIMARY\s+KEY\b/i.test(rest),
+      notNull: /\bNOT\s+NULL\b/i.test(rest) || /\bPRIMARY\s+KEY\b/i.test(rest),
+      primaryKey: /\bPRIMARY\s+KEY\b/i.test(rest),
+      unique: /\bUNIQUE\b/i.test(rest),
+      default: rest.match(/\bDEFAULT\s+(.+?)(?=\s+(?:NOT\s+NULL|NULL|PRIMARY|UNIQUE|CONSTRAINT|REFERENCES|CHECK)\b|$)/i)?.[1] ?? null,
+      references: cleanName(rest.match(/\bREFERENCES\s+([\[\]`"\w.]+)/i)?.[1] ?? '') || null,
+      referencesColumn: rest.match(/\bREFERENCES\s+[\[\]`"\w.]+\(([\[\]`"\w]+)\)/i)?.[1] ?? null,
+      check: check ? check.replace(/\s+/g, ' ').trim() : null,
+      // Preenchida depois pelos COMMENT ON COLUMN, que podem estar em outro arquivo.
+      description: null
+    });
+  }
+  for (const constraint of constraints) {
+    const primary = constraint.match(/PRIMARY\s+KEY\s*\(([^)]+)\)/i);
+    const uniqueMatch = constraint.match(/UNIQUE\s*\(([^)]+)\)/i);
+    const foreign = constraint.match(/FOREIGN\s+KEY\s*\(([^)]+)\)\s+REFERENCES\s+([\[\]`"\w.]+)(?:\s*\(([^)]+)\))?/i);
+    const check = constraint.match(/CHECK\s*\(([^)]+)\)/i);
+    for (const name of splitCommaAware(primary?.[1] ?? '')) {
+      const column = columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+      if (column) { column.primaryKey = true; column.nullable = false; column.notNull = true; }
+    }
+    for (const name of splitCommaAware(uniqueMatch?.[1] ?? '')) {
+      const column = columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+      if (column) column.unique = true;
+    }
+    if (foreign) {
+      const refColumns = splitCommaAware(foreign[3] ?? '');
+      splitCommaAware(foreign[1]).forEach((name, index) => {
+        const column = columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+        if (column) {
+          column.references = cleanName(foreign[2]);
+          column.referencesColumn = refColumns[index] ? cleanName(refColumns[index]) : null;
+        }
+      });
+    }
+    if (check) {
+      for (const name of splitCommaAware(check[1])) {
+        const column = columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+        if (column) column.check = check[1].replace(/\s+/g, ' ').trim();
+      }
+    }
+  }
+  return { columns, constraints };
+}
+
+function parseParameters(header = '', dialect = 'sqlserver') {
+  if (dialect === 'postgresql') {
+    const body = header.match(/\(([^)]*)\)/)?.[1] ?? '';
+    return splitCommaAware(body).map((parameter) => {
+      const match = parameter.trim().match(/^(?:(IN|OUT|INOUT|VARIADIC)\s+)?(["\w]+)\s+(.+?)(?:\s+(?:DEFAULT|=)\s+(.+))?$/i);
+      if (!match) return null;
+      return { name: cleanName(match[2]), mode: (match[1] ?? 'IN').toUpperCase(), dataType: match[3].trim(), default: match[4] ?? null };
+    }).filter(Boolean);
+  }
+  const matches = header.matchAll(/@([\w]+)\s+([A-Z]+(?:\s*\([^)]*\))?)(?:\s*=\s*([^,\s]+))?/gi);
+  return [...matches].map((match) => ({ name: `@${match[1]}`, dataType: match[2].replace(/\s+/g, ''), default: match[3] ?? null }));
+}
+
+function parseTable(file, sql) {
+  const expression = new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?(${identifier})\\s*\\(`, 'gi');
+  const type = tableTypeFor(file);
+  const objects = [];
+  let match;
+  while ((match = expression.exec(sql))) {
+    const name = cleanName(match[1]);
+    const bodyStart = expression.lastIndex;
+    let depth = 1;
+    let cursor = bodyStart;
+    let quote = null;
+    for (; cursor < sql.length && depth > 0; cursor += 1) {
+      const char = sql[cursor];
+      if ((char === "'" || char === '"') && sql[cursor - 1] !== '\\') quote = quote === char ? null : (quote || char);
+      if (quote) continue;
+      if (char === '(') depth += 1;
+      if (char === ')') depth -= 1;
+    }
+    if (depth !== 0) {
+      objects.push({ ...base(file, type, name), columns: [], constraints: [], warnings: ['Parênteses não balanceados no CREATE TABLE.'] });
+      break;
+    }
+    const parsed = parseColumns(sql.slice(bodyStart, cursor - 1));
+    const object = { ...base(file, type, name), ...parsed };
+    object.dependencies = unique(parsed.columns.map((column) => column.references));
+    objects.push(object);
+    expression.lastIndex = cursor;
+  }
+  return objects;
+}
+
+function parseAlterTable(file, sql, tables) {
+  const expression = new RegExp(`ALTER\\s+TABLE\\s+(${identifier})\\s+ADD\\s+(CONSTRAINT\\s+\\S+\\s+)?(PRIMARY\\s+KEY|FOREIGN\\s+KEY|UNIQUE|CHECK)\\b([\\s\\S]*?)(?=;|ALTER\\s+TABLE|$)`, 'gi');
+  let match;
+  while ((match = expression.exec(sql))) {
+    const tableName = cleanName(match[1]);
+    const table = tables.find((item) => item.name.toLowerCase() === tableName.toLowerCase());
+    if (!table) continue;
+    const constraintType = match[3].toUpperCase();
+    const rest = match[4];
+    const constraintName = match[2]?.replace(/CONSTRAINT\s+/i, '').trim() ?? '';
+    if (constraintType === 'FOREIGN KEY') {
+      const foreign = rest.match(/FOREIGN\s+KEY\s*\(([^)]+)\)\s+REFERENCES\s+([\[\]`"\w.]+)(?:\s*\(([^)]+)\))?/i);
+      if (foreign) {
+        const refColumns = splitCommaAware(foreign[3] ?? '');
+        splitCommaAware(foreign[1]).forEach((name, index) => {
+          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+          if (column) {
+            column.references = cleanName(foreign[2]);
+            column.referencesColumn = refColumns[index] ? cleanName(refColumns[index]) : null;
+          }
+        });
+        table.constraints.push(`CONSTRAINT ${constraintName} FOREIGN KEY (${foreign[1]}) REFERENCES ${foreign[2]}${foreign[3] ? `(${foreign[3]})` : ''}`.trim());
+      }
+    } else if (constraintType === 'PRIMARY KEY') {
+      const primary = rest.match(/PRIMARY\s+KEY\s*\(([^)]+)\)/i);
+      if (primary) {
+        for (const name of splitCommaAware(primary[1])) {
+          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+          if (column) { column.primaryKey = true; column.nullable = false; column.notNull = true; }
+        }
+        table.constraints.push(`CONSTRAINT ${constraintName} PRIMARY KEY (${primary[1]})`.trim());
+      }
+    } else if (constraintType === 'UNIQUE') {
+      const uniqueMatch = rest.match(/UNIQUE\s*\(([^)]+)\)/i);
+      if (uniqueMatch) {
+        for (const name of splitCommaAware(uniqueMatch[1])) {
+          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+          if (column) column.unique = true;
+        }
+        table.constraints.push(`CONSTRAINT ${constraintName} UNIQUE (${uniqueMatch[1]})`.trim());
+      }
+    } else if (constraintType === 'CHECK') {
+      const check = rest.match(/CHECK\s*\(([^)]+)\)/i);
+      if (check) {
+        const checkExpr = check[1].replace(/\s+/g, ' ').trim();
+        for (const name of splitCommaAware(check[1])) {
+          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
+          if (column) column.check = checkExpr;
+        }
+        table.constraints.push(`CONSTRAINT ${constraintName} CHECK (${check[1]})`.trim());
+      }
+    }
+  }
+}
+
+function parseProgrammable(file, sql, keyword, type, dialect) {
+  const expression = new RegExp(`CREATE\\s+(?:OR\\s+(?:ALTER|REPLACE)\\s+)?${keyword}\\s+(${identifier})([\\s\\S]*?)(?=\\bAS\\b|\\bRETURNS\\b|\\bLANGUAGE\\b)`, 'gi');
+  const objects = [];
+  let match;
+  while ((match = expression.exec(sql))) {
+    const name = cleanName(match[1]);
+    const object = base(file, type, name);
+    object.parameters = parseParameters(match[2], dialect);
+    object.dependencies = findReferences(sql).filter((dependency) => dependency.toLowerCase() !== name.toLowerCase());
+    object.operations = unique([...stripComments(sql).matchAll(/\b(SELECT|INSERT|UPDATE|DELETE)\b/gi)].map((item) => item[1].toUpperCase()));
+    if (type === 'function') {
+      object.returnType = dialect === 'postgresql'
+        ? sql.match(/\bRETURNS\s+(.+?)(?=\s+(?:LANGUAGE|AS)\b)/i)?.[1]?.trim() ?? null
+        : sql.match(/\bRETURNS\s+([A-Z]+(?:\s*\([^)]*\))?)/i)?.[1] ?? null;
+      object.language = dialect === 'postgresql' ? sql.match(/\bLANGUAGE\s+(\w+)/i)?.[1] ?? null : null;
+    }
+    objects.push(object);
+  }
+  return objects;
+}
+
+/**
+ * Índices descrevem `columns` como uma lista de nomes (strings), enquanto
+ * tabelas descrevem `columns` como objetos com metadados. As duas formas são
+ * intencionais; consumidores devem usar os utilitários de `site/services/search.js`
+ * (`columnName`/`columnNames`) em vez de acessar `column.name` diretamente.
+ */
+function parseIndexes(file, sql) {
+  const expression = new RegExp(`CREATE\\s+(UNIQUE\\s+)?(?:CLUSTERED\\s+|NONCLUSTERED\\s+)?INDEX\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([\\[\\]"\\w]+)\\s+ON\\s+(${identifier})(?:\\s+USING\\s+(\\w+))?\\s*\\(([^)]+)\\)`, 'gi');
+  const objects = [];
+  let match;
+  while ((match = expression.exec(sql))) {
+    const name = cleanName(match[2]);
+    const where = sql.slice(match.index + match[0].length).match(/\bWHERE\s+([\s\S]*?)(?=;|$)/i)?.[1]?.trim() ?? null;
+    objects.push({
+      ...base(file, 'index', name),
+      table: cleanName(match[3]),
+      method: match[4] ?? null,
+      columns: splitCommaAware(match[5]).map((column) => cleanName(column.replace(/\s+(ASC|DESC)(?:\s+NULLS\s+(?:FIRST|LAST))?$/i, ''))),
+      unique: Boolean(match[1]),
+      condition: where,
+      dependencies: [cleanName(match[3])]
+    });
+  }
+  return objects;
+}
+
+function parseTriggers(file, sql, dialect) {
+  if (dialect !== 'postgresql') return [];
+  const expression = new RegExp(
+    `CREATE\\s+(CONSTRAINT\\s+)?TRIGGER\\s+(["\\w]+)\\s+` +
+    `(BEFORE|AFTER|INSTEAD\\s+OF)\\s+` +
+    `((?:INSERT|UPDATE|DELETE|TRUNCATE)(?:\\s+OR\\s+(?:INSERT|UPDATE|DELETE|TRUNCATE))*)` +
+    `[\\s\\S]*?\\bON\\s+(${identifier})` +
+    `[\\s\\S]*?\\bEXECUTE\\s+(?:FUNCTION|PROCEDURE)\\s+(${identifier})\\s*\\(`,
+    'gi'
+  );
+  const objects = [];
+  let match;
+  while ((match = expression.exec(sql))) {
+    const name = cleanName(match[2]);
+    const table = cleanName(match[5]);
+    const functionName = cleanName(match[6]);
+    objects.push({
+      ...base(file, 'trigger', name),
+      table,
+      function: functionName,
+      timing: match[3].replace(/\s+/g, ' ').toUpperCase(),
+      events: match[4].toUpperCase().split(/\s+OR\s+/),
+      level: /\bFOR\s+EACH\s+STATEMENT\b/i.test(match[0]) ? 'STATEMENT' : 'ROW',
+      constraint: Boolean(match[1]),
+      dependencies: unique([table, functionName])
+    });
+  }
+  return objects;
+}
+
+function parseDataLoad(file, sql) {
+  if (file.category !== 'dataload') return [];
+  const name = path.basename(file.path, '.sql');
+  const operations = unique([...stripComments(sql).matchAll(/\b(INSERT|UPDATE|DELETE|MERGE|COPY)\b/gi)].map((item) => item[1].toUpperCase()));
+  return [{
+    ...base(file, 'dataload', name),
+    dependencies: findReferences(sql),
+    operations,
+    statementCount: (sql.match(/;/g) ?? []).length
+  }];
+}
+
+export function parseSqlDialectFile(file, dialect = 'sqlserver') {
+  const sql = stripComments(file.content);
+  if (!sql.trim()) return { objects: [], issues: [{ file: file.path, severity: 'warning', message: 'Arquivo SQL vazio.' }], comments: [] };
+  // Os COMMENT ON são coletados aqui e aplicados pelo analyzer depois que todos
+  // os arquivos foram lidos: a descrição pode estar em um script separado.
+  const comments = extractFileComments({ path: file.path, content: sql }, dialect);
+  try {
+    const tables = parseTable(file, sql);
+    parseAlterTable(file, sql, tables);
+    const objects = [
+      ...tables,
+      ...parseProgrammable(file, sql, 'VIEW', 'view', dialect),
+      ...parseProgrammable(file, sql, 'PROC(?:EDURE)?', 'procedure', dialect),
+      ...parseProgrammable(file, sql, 'FUNCTION', 'function', dialect),
+      ...parseIndexes(file, sql),
+      ...parseTriggers(file, sql, dialect),
+      ...parseDataLoad(file, sql)
+    ];
+    const interpreted = objects.length || comments.length || file.category === 'scripts';
+    const issues = interpreted ? [] : [{ file: file.path, severity: 'warning', message: 'Não foi possível interpretar completamente este arquivo.' }];
+    return { objects, issues, comments };
+  } catch (error) {
+    // Um arquivo inválido não pode derrubar os demais: ele vira uma ocorrência.
+    return { objects: [], issues: [{ file: file.path, severity: 'error', message: error.message }], comments };
+  }
+}
+
+export function parseSqlServerFile(file) {
+  return parseSqlDialectFile(file, 'sqlserver');
+}

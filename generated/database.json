@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "Astro Database Workspace",
+    "description": "Conformidade em órbita"
+  },
+  "models": {
+    "conceptual": "models/conceitual.png",
+    "logical": "models/logico.png"
+  },
+  "dialect": "postgresql",
+  "paths": {
+    "scripts": "database/scripts",
+    "dataload": "database/dataload",
+    "functions": "database/functions",
+    "views": "database/views",
+    "procedures": "database/procedures",
+    "indexes": "database/indexes",
+    "triggers": "database/triggers",
+    "logs": "database/logs"
+  },
+  "generatedAt": "2026-08-15T02:33:18.219Z",
+  "counts": {
+    "table": 0,
+    "log-table": 0,
+    "view": 0,
+    "procedure": 0,
+    "function": 0,
+    "index": 0,
+    "trigger": 0,
+    "dataload": 0,
+    "files": 0
+  },
+  "files": [],
+  "objects": [],
+  "dependencies": {
+    "edges": []
+  },
+  "issues": []
+}

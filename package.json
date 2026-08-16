@@ -1,0 +1,23 @@
+{
+  "name": "astro-database-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Workspace de documentação, análise e edição segura de projetos SQL.",
+  "scripts": {
+    "dev": "node server/index.js",
+    "analyze": "node analyzer/index.js",
+    "git-history": "node scripts/generate-git-history.js",
+    "icons": "node scripts/build-icons.js",
+    "build": "node scripts/build.js",
+    "preview": "node scripts/build.js && node scripts/preview.js",
+    "start": "node server/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}

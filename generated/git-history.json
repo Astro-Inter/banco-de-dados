@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-15T02:33:18.344Z",
+  "available": false,
+  "reason": "no-git",
+  "message": "Este projeto não possui um repositório Git local.",
+  "branch": null,
+  "currentCommit": null,
+  "currentShortCommit": null,
+  "documentVersion": null,
+  "totalCommits": 0,
+  "truncated": false,
+  "commits": [],
+  "config": {
+    "maxCommits": 100,
+    "includeDiff": true,
+    "maxDiffLinesPerFile": 4000,
+    "detailDirectory": "git-history"
+  }
+}
