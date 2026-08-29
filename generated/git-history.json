@@ -1,20 +1,30 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T02:33:18.344Z",
-  "available": false,
-  "reason": "no-git",
-  "message": "Este projeto não possui um repositório Git local.",
-  "branch": null,
-  "currentCommit": null,
-  "currentShortCommit": null,
-  "documentVersion": null,
+  "generatedAt": "2026-08-29T03:30:17.853Z",
+  "available": true,
+  "reason": null,
+  "message": null,
+  "branch": "feat/SCRUM-111-implementa-site-documentacao-banco",
+  "currentCommit": "d7d27dbdcdf7e83de6f20c2a948b04aaafacfb30",
+  "currentShortCommit": "d7d27db",
+  "documentVersion": "feat/SCRUM-111-implementa-site-documentacao-banco@d7d27db",
+  "paths": {
+    "scripts": "database/scripts",
+    "dataload": "database/dataload",
+    "functions": "database/functions",
+    "views": "database/views",
+    "procedures": "database/procedures",
+    "indexes": "database/indexes",
+    "triggers": "database/triggers",
+    "logs": "database/logs"
+  },
   "totalCommits": 0,
   "truncated": false,
-  "commits": [],
   "config": {
     "maxCommits": 100,
     "includeDiff": true,
     "maxDiffLinesPerFile": 4000,
     "detailDirectory": "git-history"
-  }
+  },
+  "commits": []
 }
