@@ -182,14 +182,14 @@ test('busca global encontra objetos pela descrição', () => {
 
 test('o snapshot gerado leva as descrições para a interface', async () => {
   const database = await analyzeWorkspace({ write: false });
-  const clientes = database.objects.find((object) => object.name === 'clientes');
-  assert.match(clientes.description, /dados cadastrais dos clientes/);
-  assert.equal(clientes.columns.find((column) => column.name === 'nome').description, "Nome completo do cliente, incluindo 'sobrenome' quando informado.");
-  const log = database.objects.find((object) => object.name === 'log_pedidos');
-  assert.match(log.description, /alterações de status/);
+  const workspaces = database.objects.find((object) => object.name === 'workspaces');
+  assert.match(workspaces.description, /ambientes clientes/);
+  assert.equal(workspaces.columns.find((column) => column.name === 'nome').description, 'Nome empresarial ou nome de exibição do workspace.');
+  const log = database.objects.find((object) => object.name === 'insere_log');
+  assert.match(log.description, /registros inseridos/);
   // Criação e documentação vivem no mesmo script, e o COMMENT ON continua
   // visível no código-fonte exibido pelo visualizador.
-  const script = database.files.find((file) => file.path.endsWith('02_create_tables.sql'));
-  assert.match(script.content, /CREATE TABLE public\.clientes/);
-  assert.match(script.content, /COMMENT ON TABLE public\.clientes/);
+  const script = database.files.find((file) => file.path.endsWith('1_create_table.sql'));
+  assert.match(script.content, /CREATE TABLE workspaces/);
+  assert.match(script.content, /COMMENT ON TABLE workspaces/);
 });
