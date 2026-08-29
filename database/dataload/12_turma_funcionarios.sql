@@ -1,22 +1,29 @@
-INSERT INTO turma_funcionarios
-    (id_turma_funcionario, turma_id, usuario_id)
-VALUES
-    (1,  1, 3),
-    (2,  2, 4),
-    (3,  2, 5),
-    (4,  3, 3),
-    (5,  3, 4),
-    (6,  4, 8),
-    (7,  4, 9),
-    (8,  5, 10),
-    (9,  6, 13),
-    (10, 6, 14),
-    (11, 6, 15)
-ON CONFLICT DO NOTHING;
-
-SELECT setval(
-    pg_get_serial_sequence('turma_funcionarios', 'id_turma_funcionario'),
-    COALESCE(MAX(id_turma_funcionario), 1),
-    TRUE
-)
-FROM turma_funcionarios;
+INSERT INTO turma_funcionarios (turma_id, usuario_id)
+SELECT
+    t.id_turma,
+    participante.id_usuario
+FROM (
+    VALUES
+        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma A - Matriz', 'joao.pereira@brasilfer.local'),
+        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma B - Guarulhos', 'maria.oliveira@brasilfer.local'),
+        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma B - Guarulhos', 'roberto.lima@brasilfer.local'),
+        ('carlos.souza@brasilfer.local', 'Segurança na operação de máquinas', 'Turma Única - Máquinas', 'joao.pereira@brasilfer.local'),
+        ('carlos.souza@brasilfer.local', 'Segurança na operação de máquinas', 'Turma Única - Máquinas', 'maria.oliveira@brasilfer.local'),
+        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma A - Sede', 'lucas.andrade@horizonte.local'),
+        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma A - Sede', 'pedro.santos@horizonte.local'),
+        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma B - Canteiro', 'juliana.ribeiro@horizonte.local'),
+        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'mariana.costa@verdecampo.local'),
+        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'diego.carvalho@verdecampo.local'),
+        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'sofia.mendes@verdecampo.local')
+) AS dados(gestor_email, titulo_evento, nome_turma, participante_email)
+INNER JOIN usuarios gestor
+    ON gestor.email = dados.gestor_email
+INNER JOIN eventos e
+    ON e.gestor_id = gestor.id_usuario
+   AND e.titulo = dados.titulo_evento
+INNER JOIN turmas t
+    ON t.evento_id = e.id_evento
+   AND t.nome = dados.nome_turma
+INNER JOIN usuarios participante
+    ON participante.email = dados.participante_email
+ON CONFLICT (turma_id, usuario_id) DO NOTHING;

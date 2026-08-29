@@ -12,4 +12,7 @@ VALUES
     (31, 'Segurança e Saúde no Trabalho na Agricultura, Pecuária, Silvicultura, Exploração Florestal e Aquicultura', 24, FALSE),
     (33, 'Segurança e Saúde nos Trabalhos em Espaços Confinados', 12, FALSE),
     (35, 'Trabalho em Altura', 24, FALSE)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (codigo_nr) DO UPDATE
+SET titulo = EXCLUDED.titulo,
+    tempo_reciclagem_meses = EXCLUDED.tempo_reciclagem_meses,
+    revogada = EXCLUDED.revogada;

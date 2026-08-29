@@ -1,15 +1,16 @@
-INSERT INTO unidades (id_unidade, workspace_id, nome) VALUES
-    (1, 1, 'Matriz São Paulo'),
-    (2, 1, 'Unidade Guarulhos'),
-    (3, 2, 'Sede São Paulo'),
-    (4, 2, 'Canteiro Osasco'),
-    (5, 3, 'Matriz Campinas'),
-    (6, 3, 'Centro de Distribuição Ribeirão Preto')
-ON CONFLICT DO NOTHING;
-
-SELECT setval(
-    pg_get_serial_sequence('unidades', 'id_unidade'),
-    COALESCE(MAX(id_unidade), 1),
-    TRUE
-)
-FROM unidades;
+INSERT INTO unidades (workspace_id, nome)
+SELECT
+    w.id_workspace,
+    dados.nome_unidade
+FROM (
+    VALUES
+        ('11222333000144', 'Matriz São Paulo'),
+        ('11222333000144', 'Unidade Guarulhos'),
+        ('22333444000155', 'Sede São Paulo'),
+        ('22333444000155', 'Canteiro Osasco'),
+        ('33444555000166', 'Matriz Campinas'),
+        ('33444555000166', 'Centro de Distribuição Ribeirão Preto')
+) AS dados(cnpj, nome_unidade)
+INNER JOIN workspaces w
+    ON w.cnpj = dados.cnpj
+ON CONFLICT (workspace_id, nome) DO NOTHING;

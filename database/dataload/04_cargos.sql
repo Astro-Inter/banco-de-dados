@@ -1,21 +1,22 @@
-INSERT INTO cargos (id_cargo, workspace_id, nome) VALUES
-    (1,  1, 'Gestor de Segurança'),
-    (2,  1, 'Soldador'),
-    (3,  1, 'Operador de Máquinas'),
-    (4,  1, 'Técnico de Manutenção'),
-    (5,  2, 'Gestor de Segurança'),
-    (6,  2, 'Engenheiro Civil'),
-    (7,  2, 'Eletricista'),
-    (8,  2, 'Trabalhador em Altura'),
-    (9,  3, 'Gestor de Segurança'),
-    (10, 3, 'Engenheiro Agrônomo'),
-    (11, 3, 'Aplicador de Defensivos'),
-    (12, 3, 'Operador de Máquinas Agrícolas')
-ON CONFLICT DO NOTHING;
-
-SELECT setval(
-    pg_get_serial_sequence('cargos', 'id_cargo'),
-    COALESCE(MAX(id_cargo), 1),
-    TRUE
-)
-FROM cargos;
+INSERT INTO cargos (workspace_id, nome)
+SELECT
+    w.id_workspace,
+    dados.nome_cargo
+FROM (
+    VALUES
+        ('11222333000144', 'Gestor de Segurança'),
+        ('11222333000144', 'Soldador'),
+        ('11222333000144', 'Operador de Máquinas'),
+        ('11222333000144', 'Técnico de Manutenção'),
+        ('22333444000155', 'Gestor de Segurança'),
+        ('22333444000155', 'Engenheiro Civil'),
+        ('22333444000155', 'Eletricista'),
+        ('22333444000155', 'Trabalhador em Altura'),
+        ('33444555000166', 'Gestor de Segurança'),
+        ('33444555000166', 'Engenheiro Agrônomo'),
+        ('33444555000166', 'Aplicador de Defensivos'),
+        ('33444555000166', 'Operador de Máquinas Agrícolas')
+) AS dados(cnpj, nome_cargo)
+INNER JOIN workspaces w
+    ON w.cnpj = dados.cnpj
+ON CONFLICT (workspace_id, nome) DO NOTHING;
