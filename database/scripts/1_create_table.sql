@@ -224,3 +224,19 @@ COMMENT ON COLUMN conformidades.aplicavel IS 'Indica se a NR é aplicável ao us
 COMMENT ON COLUMN conformidades.data_validade IS 'Data limite da conformidade, quando houver validade definida.';
 COMMENT ON COLUMN conformidades.origem IS 'Origem do registro, como conclusão de evento ou registro administrativo.';
 COMMENT ON COLUMN conformidades.conclusao_evento_id IS 'Conclusão que originou a conformidade, quando existir.';
+
+CREATE TABLE calendario (
+    data_evento DATE,
+    ano INTEGER,
+    mes INTEGER,
+    dia INTEGER,
+    trimestre INTEGER
+);
+
+COMMENT ON TABLE calendario IS 'Tabela calendário que contém os dias do ano e seus respectivos atributos de data, utilizada principalmente para consultas, agregações e análises na camada de BI.';
+
+COMMENT ON COLUMN calendario.data_evento IS 'Data completa representada pelo registro e identificador único do dia no calendário.';
+COMMENT ON COLUMN calendario.ano IS 'Ano correspondente à data do calendário.';
+COMMENT ON COLUMN calendario.mes IS 'Número do mês correspondente à data, de 1 a 12.';
+COMMENT ON COLUMN calendario.dia IS 'Número do dia do mês correspondente à data.';
+COMMENT ON COLUMN calendario.trimestre IS 'Trimestre do ano correspondente à data, de 1 a 4.';
