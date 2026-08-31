@@ -240,3 +240,17 @@ COMMENT ON COLUMN calendario.ano IS 'Ano correspondente à data do calendário.'
 COMMENT ON COLUMN calendario.mes IS 'Número do mês correspondente à data, de 1 a 12.';
 COMMENT ON COLUMN calendario.dia IS 'Número do dia do mês correspondente à data.';
 COMMENT ON COLUMN calendario.trimestre IS 'Trimestre do ano correspondente à data, de 1 a 4.';
+
+CREATE TABLE acessos (
+    data DATE,
+    usuario_id INTEGER
+);
+
+COMMENT ON TABLE acessos IS
+'Registra os acessos diários dos usuários para permitir o cálculo da métrica DAU (Daily Active Users).';
+
+COMMENT ON COLUMN acessos.data IS
+'Data em que o usuário acessou o sistema. Utilizada para agrupar e calcular os usuários ativos por dia.';
+
+COMMENT ON COLUMN acessos.usuario_id IS
+'Identificador do usuário que acessou o sistema na data registrada.';
