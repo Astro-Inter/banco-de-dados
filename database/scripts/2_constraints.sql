@@ -322,3 +322,8 @@ ALTER TABLE calendario
         CHECK (dia BETWEEN 1 AND 31),
     ADD CONSTRAINT chk_calendario_trimestre
         CHECK (trimestre BETWEEN 1 AND 4);
+
+ALTER TABLE acessos
+    ALTER COLUMN data SET NOT NULL,
+    ALTER COLUMN usuario_id SET NOT NULL,
+    ADD CONSTRAINT pk_acessos PRIMARY KEY (data, usuario_id);
