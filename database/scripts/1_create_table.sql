@@ -12,7 +12,8 @@ COMMENT ON COLUMN workspaces.cnpj IS 'CNPJ do workspace, armazenado somente com 
 CREATE TABLE cargos (
     id_cargo BIGSERIAL,
     workspace_id BIGINT,
-    nome VARCHAR(255)
+    nome VARCHAR(255),
+    ativo BOOLEAN
 );
 
 COMMENT ON TABLE cargos IS 'Cargos profissionais cadastrados dentro de um workspace.';
@@ -23,7 +24,8 @@ COMMENT ON COLUMN cargos.nome IS 'Nome do cargo exercido pelo usuário.';
 CREATE TABLE unidades (
     id_unidade BIGSERIAL,
     workspace_id BIGINT,
-    nome VARCHAR(255)
+    nome VARCHAR(255),
+    ativo BOOLEAN
 );
 
 COMMENT ON TABLE unidades IS 'Estabelecimentos ou unidades organizacionais pertencentes a um workspace.';
@@ -60,7 +62,8 @@ CREATE TABLE usuarios (
     unidade_id BIGINT,
     cpf CHAR(11),
     modalidade VARCHAR(50),
-    status VARCHAR(50)
+    status VARCHAR(50),
+    criado_em TIMESTAMP
 );
 
 COMMENT ON TABLE usuarios IS 'Contas dos gestores, gestores de workspace e funcionários que utilizam o Astro.';

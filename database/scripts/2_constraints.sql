@@ -12,7 +12,8 @@ ALTER TABLE workspaces
 ALTER TABLE cargos
     ALTER COLUMN id_cargo SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
-    ALTER COLUMN nome SET NOT NULL;
+    ALTER COLUMN nome SET NOT NULL,
+    ALTER COLUMN ativo SET DEFAULT TRUE;
 
 ALTER TABLE cargos
     ADD CONSTRAINT pk_cargos PRIMARY KEY (id_cargo),
@@ -23,7 +24,8 @@ ALTER TABLE cargos
 ALTER TABLE unidades
     ALTER COLUMN id_unidade SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
-    ALTER COLUMN nome SET NOT NULL;
+    ALTER COLUMN nome SET NOT NULL,
+    ALTER COLUMN ativo SET DEFAULT TRUE;
 
 ALTER TABLE unidades
     ADD CONSTRAINT pk_unidades PRIMARY KEY (id_unidade),
@@ -57,7 +59,8 @@ ALTER TABLE usuarios
     ALTER COLUMN cargo_id SET NOT NULL,   
     ALTER COLUMN unidade_id SET NOT NULL, 
     ALTER COLUMN status SET DEFAULT 'PRE_CADASTRADO',
-    ALTER COLUMN status SET NOT NULL;
+    ALTER COLUMN status SET NOT NULL,
+    ALTER COLUMN criado_em SET DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE usuarios
     ADD CONSTRAINT pk_usuarios PRIMARY KEY (id_usuario),
