@@ -4,11 +4,18 @@ WITH dados (
     data_cancelamento, motivo_cancelamento
 ) AS (
     VALUES
-        ('carlos.souza@brasilfer.local', 6, 'Reciclagem de uso de EPI', 'Treinamento de reciclagem sobre seleção, utilização, conservação e substituição de equipamentos de proteção individual.', 'https://treinamentos.astro.local/nr-06', 'FUNCIONARIO', TRUE, 'CONCLUIDO', NULL, NULL),
-        ('carlos.souza@brasilfer.local', 12, 'Segurança na operação de máquinas', 'Orientações práticas para operação segura, bloqueio e inspeção de máquinas industriais.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
-        ('fernanda.rocha@horizonte.local', 35, 'Capacitação para trabalho em altura', 'Capacitação obrigatória para profissionais que realizam atividades acima de dois metros.', 'https://treinamentos.astro.local/nr-35', 'LISTA_PRESENCA', FALSE, 'CONCLUIDO', NULL, NULL),
-        ('rafael.nogueira@verdecampo.local', 31, 'Segurança na aplicação de defensivos', 'Treinamento sobre preparação, aplicação, armazenamento e descarte seguro de defensivos agrícolas.', 'https://treinamentos.astro.local/nr-31', 'FUNCIONARIO', TRUE, 'ATIVO', NULL, NULL),
-        ('rafael.nogueira@verdecampo.local', NULL, 'Integração geral de segurança', 'Integração institucional de segurança para novos funcionários da unidade.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-08-20 14:00:00', 'Evento reagendado devido à indisponibilidade do instrutor.')
+        ('ana.dias.004@example.com', 6, 'Integração para uso de EPI', 'Treinamento prático sobre seleção, utilização, conservação e substituição de equipamentos de proteção individual.', 'https://treinamentos.astro.local/nr-06', 'FUNCIONARIO', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.dias.004@example.com', 12, 'Operação segura de máquinas', 'Capacitação sobre inspeção, bloqueio e operação segura de máquinas industriais.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
+        ('ana.dias.004@example.com', 10, 'Manutenção elétrica industrial', 'Reciclagem de segurança para intervenções em instalações elétricas industriais.', 'https://treinamentos.astro.local/nr-10', 'LISTA_PRESENCA', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.dias.004@example.com', 11, 'Movimentação segura de materiais', 'Orientações para transporte, armazenamento e movimentação de materiais na planta.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-07-15 14:00:00', 'Treinamento remarcado por indisponibilidade do instrutor.'),
+        ('ana.ferreira.005@example.com', 35, 'Capacitação para trabalho em altura', 'Capacitação obrigatória para profissionais que executam atividades acima de dois metros.', 'https://treinamentos.astro.local/nr-35', 'LISTA_PRESENCA', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.ferreira.005@example.com', 18, 'Segurança no canteiro de obras', 'Boas práticas de prevenção de acidentes e organização das frentes de trabalho.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
+        ('ana.ferreira.005@example.com', 10, 'Segurança elétrica no canteiro', 'Treinamento para identificação e controle de riscos elétricos temporários no canteiro.', 'https://treinamentos.astro.local/nr-10-construcao', 'FUNCIONARIO', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.ferreira.005@example.com', 33, 'Espaços confinados na construção', 'Preparação de equipes para entrada, monitoramento e resgate em espaços confinados.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-07-18 10:00:00', 'Atividade suspensa para revisão do plano de resgate.'),
+        ('ana.gomes.006@example.com', 31, 'Segurança nas atividades rurais', 'Treinamento sobre riscos ocupacionais nas operações agrícolas e medidas preventivas.', 'https://treinamentos.astro.local/nr-31', 'FUNCIONARIO', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.gomes.006@example.com', 20, 'Manuseio de inflamáveis e defensivos', 'Orientações para armazenamento e manipulação segura de produtos inflamáveis e defensivos.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
+        ('ana.gomes.006@example.com', 12, 'Operação de máquinas agrícolas', 'Capacitação para inspeção e operação segura de tratores e implementos agrícolas.', 'https://treinamentos.astro.local/nr-12-agricola', 'LISTA_PRESENCA', FALSE, 'CONCLUIDO', NULL, NULL),
+        ('ana.gomes.006@example.com', 6, 'Proteção individual no campo', 'Orientações sobre escolha e conservação de equipamentos de proteção para atividades rurais.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-07-20 09:00:00', 'Turmas canceladas durante a atualização do conteúdo programático.')
 ),
 atualizados AS (
     UPDATE eventos e
