@@ -92,6 +92,15 @@ ALTER TABLE admin
     ADD CONSTRAINT uq_admin_email UNIQUE (email),
     ADD CONSTRAINT ck_admin_senha_hash CHECK (CHAR_LENGTH(BTRIM(senha_hash)) >= 40);
 
+ALTER TABLE usuario_foto_perfil
+    ALTER COLUMN usuario_id SET NOT NULL,
+    ALTER COLUMN caminho_objeto SET NOT NULL;
+
+ALTER TABLE usuario_foto_perfil
+    ADD CONSTRAINT pk_usuario_foto_perfil PRIMARY KEY (usuario_id),
+    ADD CONSTRAINT uq_usuario_foto_perfil_caminho UNIQUE (caminho_objeto),
+    ADD CONSTRAINT ck_usuario_foto_perfil_caminho CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1);
+
 ALTER TABLE nr_catalogos
     ALTER COLUMN codigo_nr SET NOT NULL,
     ALTER COLUMN titulo SET NOT NULL,
@@ -210,20 +219,20 @@ ALTER TABLE conclusao_eventos
 ALTER TABLE evidencias
     ALTER COLUMN id_evidencia SET NOT NULL,
     ALTER COLUMN conclusao_evento_id SET NOT NULL,
-    ALTER COLUMN nome_arquivo SET NOT NULL,
-    ALTER COLUMN caminho_arquivo SET NOT NULL,
+    ALTER COLUMN nome_original SET NOT NULL,
+    ALTER COLUMN caminho_objeto SET NOT NULL,
     ALTER COLUMN mime_type SET NOT NULL,
-    ALTER COLUMN tamanho SET NOT NULL;
+    ALTER COLUMN tamanho_bytes SET NOT NULL;
 
 ALTER TABLE evidencias
     ADD CONSTRAINT pk_evidencias PRIMARY KEY (id_evidencia),
-    ADD CONSTRAINT uq_evidencias_conclusao UNIQUE (conclusao_evento_id), -- O documento permite no máximo uma evidência por conclusão.
-    ADD CONSTRAINT ck_evidencias_nome CHECK (CHAR_LENGTH(BTRIM(nome_arquivo)) >= 1),
-    ADD CONSTRAINT ck_evidencias_caminho CHECK (CHAR_LENGTH(BTRIM(caminho_arquivo)) >= 1),
+    ADD CONSTRAINT uq_evidencias_caminho_objeto UNIQUE (caminho_objeto),
+    ADD CONSTRAINT ck_evidencias_nome_original CHECK (CHAR_LENGTH(BTRIM(nome_original)) >= 1),
+    ADD CONSTRAINT ck_evidencias_caminho_objeto CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1),
     ADD CONSTRAINT ck_evidencias_mime_type CHECK (
         mime_type ~ '^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$'
     ),
-    ADD CONSTRAINT ck_evidencias_tamanho CHECK (tamanho > 0);
+    ADD CONSTRAINT ck_evidencias_tamanho_bytes CHECK (tamanho_bytes > 0);
 
 ALTER TABLE conformidades
     ALTER COLUMN id_conformidade SET NOT NULL,
@@ -258,6 +267,11 @@ ALTER TABLE usuarios
         ON UPDATE CASCADE ON DELETE RESTRICT,
     ADD CONSTRAINT fk_usuarios_unidade FOREIGN KEY (unidade_id)
         REFERENCES unidades (id_unidade)
+        ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE usuario_foto_perfil
+    ADD CONSTRAINT fk_usuario_foto_perfil_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE cargo_nrs
@@ -303,9 +317,9 @@ ALTER TABLE conclusao_eventos
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE evidencias
-    ADD CONSTRAINT fk_evidencias_conclusao FOREIGN KEY (conclusao_evento_id)
+    ADD CONSTRAINT fk_evidencias_conclusao_evento FOREIGN KEY (conclusao_evento_id)
         REFERENCES conclusao_eventos (id_conclusao_evento)
-        ON UPDATE CASCADE ON DELETE CASCADE;
+        ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE conformidades
     ADD CONSTRAINT fk_conformidades_usuario FOREIGN KEY (usuario_id)

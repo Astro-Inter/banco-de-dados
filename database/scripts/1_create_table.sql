@@ -90,6 +90,20 @@ CREATE TABLE admin (
 COMMENT ON TABLE admin IS 'Administradores técnicos da plataforma, independentes dos usuários de cada workspace.';
 COMMENT ON COLUMN admin.id_admin IS 'Identificador interno e autoincrementado do administrador.';
 
+CREATE TABLE usuario_foto_perfil (
+    usuario_id BIGINT,
+    caminho_objeto VARCHAR(2048)
+);
+
+COMMENT ON TABLE usuario_foto_perfil IS
+'Armazena a referência da foto de perfil do usuário mantida no bucket avatars do Supabase Storage.';
+
+COMMENT ON COLUMN usuario_foto_perfil.usuario_id IS
+'Identificador do usuário proprietário da foto de perfil.';
+
+COMMENT ON COLUMN usuario_foto_perfil.caminho_objeto IS
+'Caminho permanente da imagem dentro do bucket avatars do Supabase Storage. Não deve armazenar URL pública ou assinada.';
+
 CREATE TABLE nr_catalogos (
     codigo_nr INTEGER,
     titulo VARCHAR(255),
@@ -196,19 +210,32 @@ COMMENT ON COLUMN conclusao_eventos.motivo_rejeicao IS 'Justificativa registrada
 CREATE TABLE evidencias (
     id_evidencia BIGSERIAL,
     conclusao_evento_id BIGINT,
-    nome_arquivo VARCHAR(255),
-    caminho_arquivo VARCHAR(2048),
-    mime_type VARCHAR(255),
-    tamanho BIGINT
+    nome_original VARCHAR(255),
+    caminho_objeto VARCHAR(2048),
+    mime_type VARCHAR(127),
+    tamanho_bytes BIGINT
 );
 
-COMMENT ON TABLE evidencias IS 'Metadados do arquivo usado como evidência de uma conclusão de evento.';
-COMMENT ON COLUMN evidencias.id_evidencia IS 'Identificador interno e autoincrementado da evidência.';
-COMMENT ON COLUMN evidencias.conclusao_evento_id IS 'Conclusão de evento comprovada pela evidência.';
-COMMENT ON COLUMN evidencias.nome_arquivo IS 'Nome original do arquivo enviado.';
-COMMENT ON COLUMN evidencias.caminho_arquivo IS 'Caminho ou chave usada para localizar o arquivo no armazenamento.';
-COMMENT ON COLUMN evidencias.mime_type IS 'Tipo MIME do arquivo, como application/pdf ou image/png.';
-COMMENT ON COLUMN evidencias.tamanho IS 'Tamanho do arquivo em bytes.';
+COMMENT ON TABLE evidencias IS
+'Armazena os metadados dos arquivos utilizados como evidência de conclusão de eventos. O conteúdo do arquivo permanece no Supabase Storage.';
+
+COMMENT ON COLUMN evidencias.id_evidencia IS
+'Identificador único da evidência gerado automaticamente pelo PostgreSQL.';
+
+COMMENT ON COLUMN evidencias.conclusao_evento_id IS
+'Identificador da conclusão de evento à qual o arquivo de evidência pertence.';
+
+COMMENT ON COLUMN evidencias.nome_original IS
+'Nome original do arquivo informado pelo dispositivo do usuário, utilizado apenas para exibição e download.';
+
+COMMENT ON COLUMN evidencias.caminho_objeto IS
+'Caminho permanente do objeto dentro do bucket evidencias do Supabase Storage. Não deve armazenar uma URL pública ou assinada.';
+
+COMMENT ON COLUMN evidencias.mime_type IS
+'Tipo de conteúdo do arquivo, como application/pdf, image/jpeg ou application/vnd.openxmlformats-officedocument.wordprocessingml.document.';
+
+COMMENT ON COLUMN evidencias.tamanho_bytes IS
+'Tamanho total do arquivo em bytes.';
 
 CREATE TABLE conformidades (
     id_conformidade BIGSERIAL,
