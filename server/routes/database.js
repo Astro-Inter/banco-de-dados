@@ -54,6 +54,7 @@ async function handleDatabaseRoute(request, response, url, { getDatabase }) {
     return sendJson(response, 200, {
       enabled: config.enabled,
       stopOnError: config.stopOnError,
+      recreateExistingObjects: config.recreateExistingObjects,
       transactionMode: config.transactionMode,
       connectionTimeout: config.connectionTimeout,
       queryTimeout: config.queryTimeout,
@@ -124,7 +125,7 @@ async function handleDatabaseRoute(request, response, url, { getDatabase }) {
 
     const run = createRun(plan, {
       sessionId: session.id,
-      transactionMode: config.transactionMode,
+      transactionMode: plan.transactionMode,
       stopOnError: config.stopOnError
     });
     executeRun(run, { plan, session, readFile: readSqlFile }).catch((error) => {

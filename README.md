@@ -357,6 +357,7 @@ Host `localhost` e porta `5432` já vêm preenchidos. Database, usuário e senha
 - **Gerar plano** ordena os arquivos por dependência (ordenação topológica). Quando dois arquivos não dependem um do outro, vale a ordem base configurável: estruturais → tables → data loads → functions → views → procedures → indexes → triggers. Essa ordem vive só em `server/database/execution-config.js`.
 - **Validar migração** confere conexão, dialeto, arquivos encontrados, arquivos vazios, erros do parser, dependências, dependências ausentes, ciclos, ordem, operações destrutivas, scripts já executados e scripts modificados.
 - **Executar Banco** só é habilitado com conexão válida, plano gerado e validação sem erros. O progresso mostra cada arquivo como Pendente, Executando, Sucesso, Erro, Ignorado, Já executado, Modificado ou Não executado, e o relatório final traz executados, ignorados, erros e tempo total.
+- Quando `recreateExistingObjects` está habilitado, o plano gera `DROP ... IF EXISTS` para os objetos que serão aplicados. As remoções seguem a ordem inversa das dependências, tabelas relacionadas são removidas juntas e a recriação ocorre em uma única transação. Qualquer erro executa `ROLLBACK`; objetos externos ao plano não são removidos com `CASCADE`.
 
 Dependências circulares interrompem o planejamento e listam os objetos envolvidos, em vez de gerar uma ordem arbitrária. Dependências que não existem em nenhum arquivo aparecem como aviso na validação.
 
@@ -394,14 +395,15 @@ Apenas valores **não sensíveis** ficam em [database-workspace.config.json](dat
 "execution": {
   "enabled": true,
   "stopOnError": true,
-  "transactionMode": "per-script",
+  "recreateExistingObjects": true,
+  "transactionMode": "single",
   "connectionTimeout": 10000,
   "queryTimeout": 60000,
   "historyTable": "_astroworkspace_migrations"
 }
 ```
 
-`transactionMode` aceita `per-script`, `single` ou `none`. Chaves como `password`, `user` e `host` são descartadas se alguém as escrever nesse arquivo.
+`transactionMode` aceita `per-script`, `single` ou `none`. A opção `recreateExistingObjects` força `single`, pois a remoção e a recriação precisam ser atômicas. Chaves como `password`, `user` e `host` são descartadas se alguém as escrever nesse arquivo.
 
 ### Segurança da execução
 

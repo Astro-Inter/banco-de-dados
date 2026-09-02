@@ -8,6 +8,7 @@ import { MigrationHistory } from '../server/database/migration-history.js';
 import { createAdapter, supportedDatabases } from '../server/database/adapters/index.js';
 import { normalizeConnectionInput } from '../server/database/connection-service.js';
 import { approximateLine } from '../server/database/adapters/base-adapter.js';
+import { mergeExecutionConfig } from '../server/database/execution-config.js';
 import { readSqlFile, writeSqlFile } from '../server/services/file-service.js';
 
 /** Adapter falso: os testes do runner não precisam de um PostgreSQL real. */
@@ -125,6 +126,63 @@ test('script alterado depois do plano não é executado', async () => {
   const first = run.items[0];
   assert.equal(first.status, 'error');
   assert.match(first.error.message, /plano foi gerado/);
+});
+
+test('recria objetos existentes e confirma tudo em uma única transação', async () => {
+  const config = mergeExecutionConfig({ recreateExistingObjects: true });
+  const plan = buildExecutionPlan(fakeDatabase(), { config });
+  const adapter = fakeAdapter();
+  const session = fakeSession(adapter);
+  const run = createRun(plan, { sessionId: 'x', transactionMode: 'per-script', stopOnError: true });
+
+  await executeRun(run, { plan, session, readFile });
+
+  assert.equal(run.transactionMode, 'single');
+  assert.equal(run.recreateExistingObjects, true);
+  assert.equal(adapter.calls[0], 'BEGIN');
+  assert.match(adapter.calls[1], /^EXECUTE:DROP PROCEDURE IF E/);
+  assert.equal(adapter.calls.filter((call) => call === 'BEGIN').length, 1);
+  assert.equal(adapter.calls.filter((call) => call === 'COMMIT').length, 1);
+  assert.equal(adapter.calls.filter((call) => call === 'ROLLBACK').length, 0);
+  assert.equal(session.history.recorded.length, 4);
+  assert.equal(run.state, 'finished');
+});
+
+test('erro durante a recriação reverte os objetos aplicados anteriormente', async () => {
+  const config = mergeExecutionConfig({ recreateExistingObjects: true });
+  const plan = buildExecutionPlan(fakeDatabase(), { config });
+  const adapter = fakeAdapter({ failOn: 'cliente_nome' });
+  const session = fakeSession(adapter);
+  const run = createRun(plan, { sessionId: 'x', transactionMode: 'per-script', stopOnError: false });
+
+  await executeRun(run, { plan, session, readFile });
+
+  const byName = Object.fromEntries(run.items.map((item) => [item.name, item]));
+  assert.equal(byName['02_create_tables.sql'].status, 'rolled-back');
+  assert.equal(byName['fn_total_cliente.sql'].status, 'rolled-back');
+  assert.equal(byName['vw_pedidos_cliente.sql'].status, 'error');
+  assert.equal(byName['sp_relatorio_cliente.sql'].status, 'not-executed');
+  assert.equal(adapter.calls.filter((call) => call === 'ROLLBACK').length, 1);
+  assert.equal(adapter.calls.filter((call) => call === 'COMMIT').length, 0);
+  assert.deepEqual(session.history.recorded.map((entry) => entry.status), ['error']);
+  assert.equal(serializeRun(run).summary.rolledBack, 2);
+  assert.equal(run.state, 'failed');
+});
+
+test('erro na remoção inicial impede qualquer criação e executa rollback', async () => {
+  const config = mergeExecutionConfig({ recreateExistingObjects: true });
+  const plan = buildExecutionPlan(fakeDatabase(), { config });
+  const adapter = fakeAdapter({ failOn: 'DROP VIEW' });
+  const session = fakeSession(adapter);
+  const run = createRun(plan, { sessionId: 'x', transactionMode: 'single', stopOnError: true });
+
+  await executeRun(run, { plan, session, readFile });
+
+  assert.equal(run.state, 'failed');
+  assert.ok(run.items.every((item) => item.status === 'not-executed'));
+  assert.equal(adapter.calls.filter((call) => call === 'ROLLBACK').length, 1);
+  assert.equal(adapter.calls.filter((call) => call.startsWith('EXECUTE:CREATE')).length, 0);
+  assert.equal(session.history.recorded.length, 0);
 });
 
 test('validação aprova o cenário completo e explica cada verificação', () => {

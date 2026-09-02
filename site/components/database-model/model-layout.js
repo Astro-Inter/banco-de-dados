@@ -29,7 +29,7 @@ export function nodeHeight(table, metrics = layoutMetrics) {
   return metrics.headerHeight + visible * metrics.rowHeight + (total > visible ? metrics.footerHeight : 0) + 10;
 }
 
-/** Arestas de chave estrangeira entre as tabelas informadas. */
+/** Arestas de chave estrangeira e herança entre as tabelas informadas. */
 export function relationshipsOf(tables) {
   const relationships = [];
   for (const table of tables) {
@@ -43,7 +43,21 @@ export function relationshipsOf(tables) {
         to: target.id,
         fromColumn: column.name,
         toColumn: column.referencesColumn ?? 'id',
-        constraint: constraintFor(table, column)
+        constraint: constraintFor(table, column),
+        type: 'foreign-key'
+      });
+    }
+    for (const parentName of table.inherits ?? []) {
+      const parent = tables.find((item) => sameIdentifier(item.name, parentName));
+      if (!parent || parent.id === table.id) continue;
+      relationships.push({
+        id: `${table.id}::inherits::${parent.id}`,
+        from: table.id,
+        to: parent.id,
+        fromColumn: null,
+        toColumn: null,
+        constraint: null,
+        type: 'inheritance'
       });
     }
   }

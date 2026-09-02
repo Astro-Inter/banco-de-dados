@@ -23,7 +23,8 @@ import {
 } from '../site/components/database-model/model-state.js';
 import { columnAnchorY, columnRowIndex, renderDiagram } from '../site/components/database-model/model-renderer.js';
 import { modelingView, relatedIds } from '../site/components/database-model/model-view.js';
-import { mainTablesFile, newTableTemplate } from '../site/views.js';
+import { relationshipPanel } from '../site/components/database-model/model-controls.js';
+import { mainTablesFile, newTableTemplate, tableDetail } from '../site/views.js';
 import { formatColumnType } from '../site/utils.js';
 import { iconLibrary } from '../site/icons-library.js';
 import { icon, pendingIcons } from '../site/icons.js';
@@ -43,6 +44,27 @@ test('relacionamentos saem das chaves estrangeiras já extraídas pelo Analyzer'
   const [first] = relationships;
   assert.deepEqual([first.from, first.to, first.fromColumn, first.toColumn], ['table:pedidos', 'table:clientes', 'cliente_id', 'id']);
   assert.equal(relationshipsOf([clientes]).length, 0);
+});
+
+test('herança entre tabelas aparece como relacionamento distinto', () => {
+  const conta = table('conta', [{ name: 'email', dataType: 'TEXT' }]);
+  const usuarios = { ...table('usuarios', [{ name: 'id', dataType: 'BIGINT' }]), inherits: ['conta'] };
+  const tables = [usuarios, conta];
+  const [inheritance] = relationshipsOf(tables);
+  const layout = computeLayout(tables);
+  const state = { ...createModelState(), relatedIds: new Set() };
+  const svg = renderDiagram(tables, layout, layout.positions, state);
+  const panel = relationshipPanel(inheritance, new Map(tables.map((item) => [item.id, item])));
+
+  assert.equal(inheritance.type, 'inheritance');
+  assert.deepEqual([inheritance.from, inheritance.to], ['table:usuarios', 'table:conta']);
+  assert.ok(layout.positions.get('table:conta').x < layout.positions.get('table:usuarios').x);
+  assert.match(svg, /model-edge is-inheritance/);
+  assert.match(svg, /model-inheritance-arrow/);
+  assert.match(svg, /usuarios herda de conta/);
+  assert.match(panel, /Relação de herança/);
+  assert.match(panel, /tabela filha/);
+  assert.match(panel, /tabela pai/);
 });
 
 test('layout organiza clientes → pedidos → log_pedidos da esquerda para a direita', () => {
@@ -208,6 +230,22 @@ test('tipo da coluna não duplica o tamanho já declarado no SQL', () => {
 
   const svg = renderDiagram([pedidosComTipos], computeLayout([pedidosComTipos]), computeLayout([pedidosComTipos]).positions, { ...createModelState(), relatedIds: new Set() });
   assert.doesNotMatch(svg, /\(30\)\(30\)/);
+});
+
+test('tags de constraints da tabela têm contêiner com espaçamento', () => {
+  const object = table('usuarios', [{
+    name: 'workspace_id',
+    dataType: 'BIGINT',
+    references: 'workspaces',
+    referencesColumn: 'id_workspace',
+    unique: true,
+    nullable: false
+  }]);
+  object.code = '';
+  const markup = tableDetail(object, { objects: [object] });
+
+  assert.match(markup, /class="table-constraint-badges"/);
+  assert.match(markup, /class="pill fk"[^>]*>FK → workspaces\.id_workspace<\/span><span class="pill unique">UNIQUE<\/span>/);
 });
 
 const pedidosComTipos = table('pedidos_tipos', [

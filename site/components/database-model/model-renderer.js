@@ -85,8 +85,9 @@ export function renderRelationship(relationship, tables, positions, state, metri
   if (!from || !to) return '';
   const fromTable = tables.get(relationship.from);
   const toTable = tables.get(relationship.to);
-  const y1 = columnAnchorY(fromTable, relationship.fromColumn, from, metrics);
-  const y2 = columnAnchorY(toTable, relationship.toColumn, to, metrics);
+  const inheritance = relationship.type === 'inheritance';
+  const y1 = inheritance ? from.y + metrics.headerHeight / 2 : columnAnchorY(fromTable, relationship.fromColumn, from, metrics);
+  const y2 = inheritance ? to.y + metrics.headerHeight / 2 : columnAnchorY(toTable, relationship.toColumn, to, metrics);
   const leftToRight = from.x + metrics.nodeWidth / 2 <= to.x + metrics.nodeWidth / 2;
   const x1 = leftToRight ? from.x + metrics.nodeWidth : from.x;
   const x2 = leftToRight ? to.x : to.x + metrics.nodeWidth;
@@ -95,13 +96,18 @@ export function renderRelationship(relationship, tables, positions, state, metri
   const active = state.selectedId && (state.selectedId === relationship.from || state.selectedId === relationship.to);
   const dimmed = state.selectedId && !active;
 
-  return `<g class="model-edge ${active ? 'is-active' : ''} ${dimmed ? 'is-dimmed' : ''}" data-model-edge="${escapeHtml(relationship.id)}"
+  const description = inheritance
+    ? `Herança ${fromTable.name} para ${toTable.name}`
+    : `Relacionamento ${fromTable.name}.${relationship.fromColumn} para ${toTable.name}.${relationship.toColumn}`;
+
+  return `<g class="model-edge ${inheritance ? 'is-inheritance' : 'is-foreign-key'} ${active ? 'is-active' : ''} ${dimmed ? 'is-dimmed' : ''}" data-model-edge="${escapeHtml(relationship.id)}"
       data-from="${escapeHtml(relationship.from)}" data-to="${escapeHtml(relationship.to)}"
-      data-from-column="${escapeHtml(relationship.fromColumn)}" data-to-column="${escapeHtml(relationship.toColumn)}"
-      tabindex="0" role="button" aria-label="${escapeHtml(`Relacionamento ${fromTable.name}.${relationship.fromColumn} para ${toTable.name}.${relationship.toColumn}`)}">
-    <title>${escapeHtml(`${fromTable.name}.${relationship.fromColumn} → ${toTable.name}.${relationship.toColumn}`)}</title>
+      data-from-column="${escapeHtml(relationship.fromColumn ?? '')}" data-to-column="${escapeHtml(relationship.toColumn ?? '')}"
+      data-relationship-type="${escapeHtml(relationship.type)}"
+      tabindex="0" role="button" aria-label="${escapeHtml(description)}">
+    <title>${escapeHtml(inheritance ? `${fromTable.name} herda de ${toTable.name}` : `${fromTable.name}.${relationship.fromColumn} → ${toTable.name}.${relationship.toColumn}`)}</title>
     <path class="model-edge-hit" d="M ${x1} ${y1} C ${x1 + bend * direction} ${y1}, ${x2 - bend * direction} ${y2}, ${x2} ${y2}"/>
-    <path class="model-edge-line" d="M ${x1} ${y1} C ${x1 + bend * direction} ${y1}, ${x2 - bend * direction} ${y2}, ${x2} ${y2}" marker-end="url(#model-arrow)"/>
+    <path class="model-edge-line" d="M ${x1} ${y1} C ${x1 + bend * direction} ${y1}, ${x2 - bend * direction} ${y2}, ${x2} ${y2}" marker-end="url(#${inheritance ? 'model-inheritance-arrow' : 'model-arrow'})"/>
     <circle class="model-edge-dot" cx="${x1}" cy="${y1}" r="3.5"/>
   </g>`;
 }
@@ -115,7 +121,10 @@ export function renderDiagram(tables, layout, positions, state, metrics = layout
   return `<svg class="model-svg" id="model-svg" viewBox="0 0 ${layout.bounds.width} ${layout.bounds.height}"
       style="width:${Math.round(layout.bounds.width * state.zoom)}px;height:${Math.round(layout.bounds.height * state.zoom)}px"
       role="img" aria-label="Diagrama da modelagem física do banco">
-    <defs><marker id="model-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+    <defs>
+      <marker id="model-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker>
+      <marker id="model-inheritance-arrow" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 1 1 L 11 5 L 1 9 z"/></marker>
+    </defs>
     <g class="model-edges">${edges}</g>
     <g class="model-nodes">${nodes}</g>
   </svg>`;

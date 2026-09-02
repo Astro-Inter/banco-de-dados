@@ -18,6 +18,7 @@ const statusPresentation = {
   modified: { icon: 'edit', label: 'Modificado', tone: 'warning' },
   'admin-required': { icon: 'lock', label: 'Requer execução administrativa', tone: 'warning' },
   'not-executed': { icon: 'minus', label: 'Não executado', tone: 'neutral' },
+  'rolled-back': { icon: 'history', label: 'Revertido', tone: 'warning' },
   empty: { icon: 'documentMissing', label: 'Arquivo vazio', tone: 'muted' }
 };
 
@@ -98,7 +99,7 @@ function planItemRow(item) {
     ? '<div class="readonly-note">Contém CREATE/DROP DATABASE. Execute esse arquivo manualmente em uma sessão administrativa; o runner não o executa automaticamente.</div>'
     : '';
   const destructive = (item.destructive ?? []).length
-    ? `<ul class="destructive-list">${item.destructive.map((finding) => `<li><strong>${escapeHtml(finding.operation)}</strong>${finding.target ? ` ${escapeHtml(finding.target)}` : ''} <small>linha ${finding.line} · ${escapeHtml(finding.message)}</small></li>`).join('')}</ul>`
+    ? `<ul class="destructive-list">${item.destructive.map((finding) => `<li><strong>${escapeHtml(finding.operation)}</strong>${finding.target ? ` ${escapeHtml(finding.target)}` : ''} <small>${finding.generated ? 'gerado pelo plano' : `linha ${finding.line}`} · ${escapeHtml(finding.message)}</small></li>`).join('')}</ul>`
     : '';
   return `<li class="plan-item">
     <span class="plan-order">${String(item.order).padStart(2, '0')}</span>
@@ -158,7 +159,7 @@ function destructiveConfirmation(execution) {
   if (!validation?.requiresConfirmation) return '';
   return `<div class="execution-alert tone-danger">
     <strong>Operação destrutiva detectada</strong>
-    <ul>${validation.destructive.slice(0, 8).map((finding) => `<li><strong>${escapeHtml(finding.operation)}</strong>${finding.target ? ` ${escapeHtml(finding.target)}` : ''} · <span class="muted">${escapeHtml(finding.file ?? '')} (linha ${finding.line})</span><br><small>${escapeHtml(finding.message)}</small></li>`).join('')}</ul>
+    <ul>${validation.destructive.slice(0, 8).map((finding) => `<li><strong>${escapeHtml(finding.operation)}</strong>${finding.target ? ` ${escapeHtml(finding.target)}` : ''} · <span class="muted">${escapeHtml(finding.file ?? '')} (${finding.generated ? 'gerado pelo plano' : `linha ${finding.line}`})</span><br><small>${escapeHtml(finding.message)}</small></li>`).join('')}</ul>
     <div class="field"><label for="execution-confirmation">Digite EXECUTAR para confirmar:</label><input id="execution-confirmation" autocomplete="off" placeholder="EXECUTAR" value="${escapeHtml(execution.confirmation ?? '')}"></div>
   </div>`;
 }

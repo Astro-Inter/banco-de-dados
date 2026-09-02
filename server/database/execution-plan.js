@@ -2,6 +2,7 @@ import { checksumOf, checksumStatus } from './checksum.js';
 import { analyzeDestructiveOperations } from './destructive-analyzer.js';
 import { defaultExecutionConfig } from './execution-config.js';
 import { findNonTransactionalStatements, requiresAdministrativeExecution } from './sql-text.js';
+import { combineTableDrops, dropStatementForObject, recreateFinding } from './recreate-script.js';
 
 /**
  * Planejador de execução.
@@ -18,14 +19,20 @@ function key(value) {
 
 /** Prioridade base quando dois arquivos não dependem um do outro. */
 export function basePriority(file, objects, baseOrder = defaultExecutionConfig.baseOrder) {
+  // A ordem dos scripts estruturais é declarada pelo nome dos arquivos.
+  // Aplicar a prioridade do objeto antes da categoria fazia um arquivo sem
+  // objeto reconhecido (por exemplo, 2_constraints.sql) passar na frente do
+  // arquivo que cria as tabelas (1_create_table.sql).
+  if (file.category === 'scripts') return baseOrder.structural;
   const types = objects.map((object) => baseOrder.types[object.type]).filter((value) => Number.isFinite(value));
   if (types.length) return Math.min(...types);
-  if (file.category === 'scripts') return baseOrder.structural;
   return baseOrder.categories[file.category] ?? 99;
 }
 
+const pathCollator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+
 function compareItems(a, b) {
-  return a.basePriority - b.basePriority || a.path.localeCompare(b.path);
+  return a.basePriority - b.basePriority || pathCollator.compare(a.path, b.path);
 }
 
 /** Componentes fortemente conexos (Tarjan) usados para explicar ciclos. */
@@ -153,6 +160,10 @@ export function buildExecutionPlan(database, { config = defaultExecutionConfig, 
 
     const destructive = analyzeDestructiveOperations(content, file.path);
     const nonTransactional = findNonTransactionalStatements(content);
+    const recreateStatements = fileObjects.map((object) => {
+      const sql = dropStatementForObject(object);
+      return sql ? { sql, finding: recreateFinding(object, file.path, sql) } : null;
+    }).filter(Boolean);
     return {
       path: file.path,
       name: file.path.split('/').at(-1),
@@ -164,6 +175,7 @@ export function buildExecutionPlan(database, { config = defaultExecutionConfig, 
       basePriority: basePriority(file, fileObjects, baseOrder),
       dependsOn: [...required],
       destructive,
+      recreateStatements,
       nonTransactional,
       requiresAdmin: requiresAdministrativeExecution(content),
       empty: content.trim().length === 0
@@ -188,6 +200,10 @@ export function buildExecutionPlan(database, { config = defaultExecutionConfig, 
     if (status === 'modified' && decision === 'skip') status = 'skipped';
     if (decision === 'skip' && status === 'pending') status = 'skipped';
 
+    const generatedDestructive = config.recreateExistingObjects && status === 'pending'
+      ? item.recreateStatements.map((entry) => entry.finding)
+      : [];
+
     return {
       ...item,
       order: index + 1,
@@ -197,9 +213,19 @@ export function buildExecutionPlan(database, { config = defaultExecutionConfig, 
       decision,
       previousExecution: previous ? { executedAt: previous.executed_at, checksum: previous.checksum, status: previous.status } : null,
       willExecute: status === 'pending',
+      destructive: [...item.destructive, ...generatedDestructive],
       blockedByCycle: blocked.some((blockedItem) => blockedItem.path === item.path)
     };
   });
+
+  // Objetos dependentes são removidos primeiro; a criação continua usando a
+  // ordem topológica normal. Sem CASCADE, dependências externas bloqueiam a
+  // operação em vez de serem apagadas silenciosamente.
+  const recreateStatements = config.recreateExistingObjects
+    ? combineTableDrops([...planned].reverse()
+      .filter((item) => item.willExecute)
+      .flatMap((item) => [...item.recreateStatements].reverse().map((entry) => entry.sql)))
+    : [];
 
   // O resumo conta objetos (um arquivo pode declarar duas tabelas); arquivos sem
   // objeto interpretado entram como "script".
@@ -215,8 +241,13 @@ export function buildExecutionPlan(database, { config = defaultExecutionConfig, 
   return {
     dialect: database?.dialect ?? null,
     generatedAt: new Date().toISOString(),
-    transactionMode: config.transactionMode ?? defaultExecutionConfig.transactionMode,
+    transactionMode: recreateStatements.length ? 'single' : config.transactionMode ?? defaultExecutionConfig.transactionMode,
     stopOnError: config.stopOnError !== false,
+    recreate: {
+      enabled: Boolean(config.recreateExistingObjects),
+      statements: recreateStatements,
+      sql: recreateStatements.join('\n')
+    },
     items: planned,
     cycles: cycleDetails,
     hasCycles: cycleDetails.length > 0,

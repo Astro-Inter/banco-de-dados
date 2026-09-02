@@ -145,7 +145,7 @@ export function tableDetail(object, database, mode = { editable: false }) {
   const columns = (object.columns ?? []).map((column) => `<tr>
     <td><span class="column-cell">${columnKeyIcon(column)}<strong>${escapeHtml(column.name)}</strong></span></td>
     <td>${formatColumnType(column)}</td>
-    <td>${column.primaryKey ? '<span class="pill pk">PK</span>' : ''}${column.references ? `<span class="pill fk">FK → ${escapeHtml(column.references)}${column.referencesColumn ? `.${escapeHtml(column.referencesColumn)}` : ''}</span>` : ''}${column.unique ? '<span class="pill unique">UNIQUE</span>' : ''}</td>
+    <td><span class="table-constraint-badges">${column.primaryKey ? '<span class="pill pk">PK</span>' : ''}${column.references ? `<span class="pill fk">FK → ${escapeHtml(column.references)}${column.referencesColumn ? `.${escapeHtml(column.referencesColumn)}` : ''}</span>` : ''}${column.unique ? '<span class="pill unique">UNIQUE</span>' : ''}</span></td>
     <td>${column.notNull || !column.nullable || column.primaryKey ? 'Não' : 'Sim'}</td>
     <td><code>${escapeHtml(column.default ?? '—')}</code></td>
     <td>${column.check ? `<code title="${escapeHtml(column.check)}">${escapeHtml(column.check.length > 40 ? column.check.slice(0, 40) + '…' : column.check)}</code>` : '—'}</td>
