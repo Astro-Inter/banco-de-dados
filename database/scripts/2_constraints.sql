@@ -10,9 +10,11 @@ ALTER TABLE workspaces
     ADD CONSTRAINT ck_workspaces_cnpj CHECK (cnpj ~ '^[0-9]{14}$'); 
 
 ALTER TABLE conta
-    ALTER COLUMN email SET NOT NULL;
+    ALTER COLUMN email SET NOT NULL,
+    ALTER COLUMN firebase_uid SET NOT NULL;
 
 ALTER TABLE conta
+    ADD CONSTRAINT uq_conta_firebase_uid UNIQUE (firebase_uid),
     ADD CONSTRAINT ck_conta_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
     ADD CONSTRAINT ck_conta_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$');
 
@@ -71,26 +73,22 @@ ALTER TABLE usuarios
 ALTER TABLE usuarios
     ADD CONSTRAINT pk_usuarios PRIMARY KEY (id_usuario),
     ADD CONSTRAINT uq_usuarios_email UNIQUE (email),
+    ADD CONSTRAINT uq_usuarios_firebase_uid UNIQUE (firebase_uid),
     ADD CONSTRAINT uq_usuarios_cpf UNIQUE (cpf), 
     ADD CONSTRAINT ck_usuarios_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
     ADD CONSTRAINT ck_usuarios_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
     ADD CONSTRAINT ck_usuarios_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
     ADD CONSTRAINT ck_usuarios_modalidade CHECK (
         modalidade IS NULL OR CHAR_LENGTH(BTRIM(modalidade)) >= 2
-    ),
-    ADD CONSTRAINT ck_usuarios_senha CHECK (
-        status = 'PRE_CADASTRADO'
-        OR (senha_hash IS NOT NULL AND CHAR_LENGTH(BTRIM(senha_hash)) >= 40)
-    ); 
+    );
 
 ALTER TABLE admin
-    ALTER COLUMN id_admin SET NOT NULL,
-    ALTER COLUMN senha_hash SET NOT NULL;
+    ALTER COLUMN id_admin SET NOT NULL;
 
 ALTER TABLE admin
     ADD CONSTRAINT pk_admin PRIMARY KEY (id_admin),
     ADD CONSTRAINT uq_admin_email UNIQUE (email),
-    ADD CONSTRAINT ck_admin_senha_hash CHECK (CHAR_LENGTH(BTRIM(senha_hash)) >= 40);
+    ADD CONSTRAINT uq_admin_firebase_uid UNIQUE (firebase_uid);
 
 ALTER TABLE usuario_foto_perfil
     ALTER COLUMN usuario_id SET NOT NULL,

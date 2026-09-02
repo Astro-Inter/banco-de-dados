@@ -55,13 +55,13 @@ COMMENT ON COLUMN unidade_enderecos.complemento IS 'Informação complementar e 
 CREATE TABLE conta (
     nome VARCHAR(255),
     email VARCHAR(255),
-    senha_hash VARCHAR(255)
+    firebase_uid VARCHAR(128)
 );
 
 COMMENT ON TABLE conta IS 'Dados comuns de identificação e autenticação herdados por usuários e administradores.';
 COMMENT ON COLUMN conta.nome IS 'Nome completo da conta.';
 COMMENT ON COLUMN conta.email IS 'Endereço de e-mail usado para identificação e autenticação.';
-COMMENT ON COLUMN conta.senha_hash IS 'Hash seguro da senha da conta.';
+COMMENT ON COLUMN conta.firebase_uid IS 'Identificador único da conta no Firebase Authentication.';
 
 CREATE TABLE usuarios (
     id_usuario BIGSERIAL,
