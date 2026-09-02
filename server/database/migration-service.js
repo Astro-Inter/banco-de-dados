@@ -24,6 +24,7 @@ export const runStates = Object.freeze({
   modified: 'Modificado',
   'admin-required': 'Requer execução administrativa',
   'not-executed': 'Não executado',
+  'rolled-back': 'Revertido',
   empty: 'Arquivo vazio'
 });
 
@@ -34,11 +35,13 @@ function initialStatus(item) {
 }
 
 export function createRun(plan, { sessionId, transactionMode, stopOnError }) {
+  const recreating = Boolean(plan.recreate?.statements?.length);
   const run = {
     id: randomUUID(),
     sessionId,
     state: 'running',
-    transactionMode,
+    transactionMode: recreating ? 'single' : transactionMode,
+    recreateExistingObjects: recreating,
     stopOnError,
     startedAt: new Date().toISOString(),
     finishedAt: null,
@@ -75,6 +78,7 @@ export function summarizeRun(run) {
     alreadyExecuted: items.filter((item) => item.status === 'already-executed').length,
     skipped: items.filter((item) => ['skipped', 'admin-required', 'modified', 'empty'].includes(item.status)).length,
     notExecuted: items.filter((item) => item.status === 'not-executed').length,
+    rolledBack: items.filter((item) => item.status === 'rolled-back').length,
     errors: items.filter((item) => item.status === 'error').length,
     totalMs: items.reduce((total, item) => total + (item.durationMs ?? 0), 0)
   };
@@ -87,6 +91,7 @@ export function serializeRun(run) {
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
     transactionMode: run.transactionMode,
+    recreateExistingObjects: run.recreateExistingObjects,
     stopOnError: run.stopOnError,
     error: run.error,
     items: run.items,
@@ -111,10 +116,22 @@ export async function executeRun(run, { plan, session, readFile }) {
   const single = run.transactionMode === 'single';
   const adapter = session.adapter;
   const databaseVersion = session.info?.version ?? null;
+  const successfulHistory = [];
+  let failedHistory = null;
   let stopped = false;
 
   if (single) {
-    try { await adapter.beginTransaction(); } catch (error) { run.error = sanitizeMessage(error.message, secrets); }
+    try {
+      await adapter.beginTransaction();
+      if (plan.recreate?.sql) await adapter.execute(plan.recreate.sql);
+    } catch (error) {
+      await adapter.rollback();
+      run.error = sanitizeMessage(error.message, secrets);
+      for (const item of run.items) if (item.status === 'pending') setStatus(item, 'not-executed');
+      run.state = 'failed';
+      run.finishedAt = new Date().toISOString();
+      return run;
+    }
   }
 
   for (const item of run.items) {
@@ -143,14 +160,16 @@ export async function executeRun(run, { plan, session, readFile }) {
         rowCount: result?.rowCount ?? null,
         transaction: transactional ? 'per-script' : run.transactionMode === 'single' ? 'single' : 'none'
       });
-      await session.history.record({
+      const historyEntry = {
         filePath: item.path,
         fileName: item.name,
         checksum: planned.checksum,
         durationMs,
         status: 'success',
         databaseVersion
-      }).catch(() => { /* o histórico não deve invalidar uma execução bem-sucedida */ });
+      };
+      if (single) successfulHistory.push(historyEntry);
+      else await session.history.record(historyEntry).catch(() => { /* o histórico não deve invalidar uma execução bem-sucedida */ });
     } catch (error) {
       if (transactional) await adapter.rollback();
       const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
@@ -166,7 +185,7 @@ export async function executeRun(run, { plan, session, readFile }) {
           hint: details.hint ? sanitizeMessage(details.hint, secrets) : null
         }
       });
-      await session.history.record({
+      const historyEntry = {
         filePath: item.path,
         fileName: item.name,
         checksum: planned.checksum,
@@ -174,18 +193,30 @@ export async function executeRun(run, { plan, session, readFile }) {
         status: 'error',
         errorMessage: sanitizeMessage(error.message, secrets),
         databaseVersion
-      }).catch(() => {});
-      if (run.stopOnError) stopped = true;
+      };
+      if (single) failedHistory = historyEntry;
+      else await session.history.record(historyEntry).catch(() => {});
+      if (single || run.stopOnError) stopped = true;
     }
   }
 
   if (single) {
     const failed = run.items.some((item) => item.status === 'error');
-    try { failed ? await adapter.rollback() : await adapter.commit(); }
-    catch (error) { run.error = sanitizeMessage(error.message, secrets); }
+    try {
+      if (failed) {
+        await adapter.rollback();
+        for (const item of run.items) if (item.status === 'success') setStatus(item, 'rolled-back', { transaction: 'single' });
+        if (failedHistory) await session.history.record(failedHistory).catch(() => {});
+      } else {
+        await adapter.commit();
+        for (const entry of successfulHistory) await session.history.record(entry).catch(() => {});
+      }
+    } catch (error) {
+      run.error = sanitizeMessage(error.message, secrets);
+    }
   }
 
-  run.state = run.items.some((item) => item.status === 'error') ? 'failed' : 'finished';
+  run.state = run.error || run.items.some((item) => item.status === 'error') ? 'failed' : 'finished';
   run.finishedAt = new Date().toISOString();
   return run;
 }

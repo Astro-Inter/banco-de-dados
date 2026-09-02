@@ -3,6 +3,7 @@ import test from 'node:test';
 import { basePriority, buildExecutionPlan, topologicalSort } from '../server/database/execution-plan.js';
 import { defaultExecutionConfig, mergeExecutionConfig } from '../server/database/execution-config.js';
 import { checksumOf, checksumStatus } from '../server/database/checksum.js';
+import { dropStatementForObject } from '../server/database/recreate-script.js';
 
 function file(path, category, content = '-- sql') {
   return { path, category, content };
@@ -70,10 +71,31 @@ test('usa a ordem base configurada quando não há dependência entre os arquivo
 test('prioridade base vem da configuração central', () => {
   const { baseOrder } = defaultExecutionConfig;
   assert.equal(basePriority({ category: 'scripts' }, [], baseOrder), baseOrder.structural);
-  assert.equal(basePriority({ category: 'scripts' }, [{ type: 'table' }], baseOrder), baseOrder.types.table);
+  assert.equal(basePriority({ category: 'scripts' }, [{ type: 'table' }], baseOrder), baseOrder.structural);
   assert.equal(basePriority({ category: 'triggers' }, [{ type: 'trigger' }], baseOrder), baseOrder.types.trigger);
   assert.ok(baseOrder.types.function < baseOrder.types.view);
   assert.ok(baseOrder.types.view < baseOrder.types.procedure);
+});
+
+test('preserva a ordem numérica dos scripts estruturais', () => {
+  const structural = {
+    dialect: 'postgresql',
+    files: [
+      file('database/scripts/10_comments.sql', 'scripts'),
+      file('database/scripts/2_constraints.sql', 'scripts'),
+      file('database/scripts/1_create_table.sql', 'scripts', 'CREATE TABLE clientes (id INT);')
+    ],
+    objects: [object('clientes', 'table', 'database/scripts/1_create_table.sql')],
+    issues: []
+  };
+
+  const plan = buildExecutionPlan(structural);
+
+  assert.deepEqual(plan.items.map((item) => item.name), [
+    '1_create_table.sql',
+    '2_constraints.sql',
+    '10_comments.sql'
+  ]);
 });
 
 test('detecta dependência circular e não gera ordem silenciosamente', () => {
@@ -202,4 +224,26 @@ test('a configuração de execução ignora credenciais e valores inválidos', (
   assert.equal(config.historyTable, '_astroworkspace_migrations');
   assert.deepEqual(config.ignoredKeys.sort(), ['host', 'password', 'user']);
   assert.equal('password' in config, false);
+});
+
+test('recriação de objetos força transação única e gera drops em ordem inversa', () => {
+  const config = mergeExecutionConfig({ recreateExistingObjects: true, transactionMode: 'per-script' });
+  const plan = buildExecutionPlan(database, { config });
+
+  assert.equal(config.transactionMode, 'single');
+  assert.equal(plan.transactionMode, 'single');
+  assert.deepEqual(plan.recreate.statements, [
+    'DROP INDEX IF EXISTS "idx_cliente_email";',
+    'DROP PROCEDURE IF EXISTS "sp_relatorio_cliente"();',
+    'DROP VIEW IF EXISTS "vw_pedidos_cliente";',
+    'DROP FUNCTION IF EXISTS "fn_total_cliente"();',
+    'DROP TABLE IF EXISTS "clientes";'
+  ]);
+  assert.equal(plan.items.flatMap((item) => item.destructive).filter((finding) => finding.generated).length, 5);
+});
+
+test('drop de trigger também funciona quando a tabela ainda não existe', () => {
+  const statement = dropStatementForObject({ type: 'trigger', name: 'trg_clientes', table: 'clientes' });
+  assert.match(statement, /to_regclass\('\"clientes\"'\) IS NOT NULL/);
+  assert.match(statement, /DROP TRIGGER IF EXISTS \"trg_clientes\" ON \"clientes\"/);
 });

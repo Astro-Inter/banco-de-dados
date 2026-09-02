@@ -10,6 +10,7 @@ import { loadConfig } from '../../analyzer/config.js';
 export const defaultExecutionConfig = Object.freeze({
   enabled: true,
   stopOnError: true,
+  recreateExistingObjects: false,
   transactionMode: 'per-script',
   connectionTimeout: 10_000,
   queryTimeout: 60_000,
@@ -47,10 +48,15 @@ function positiveNumber(value, fallback) {
 export function mergeExecutionConfig(execution = {}) {
   const { clean, rejected } = sanitizeFileConfig(execution ?? {});
   const baseOrder = clean.baseOrder ?? {};
+  const recreateExistingObjects = clean.recreateExistingObjects === true;
   return {
     enabled: clean.enabled !== false,
     stopOnError: clean.stopOnError !== false,
-    transactionMode: transactionModes.includes(clean.transactionMode) ? clean.transactionMode : defaultExecutionConfig.transactionMode,
+    recreateExistingObjects,
+    // Remover em ordem inversa e recriar em ordem normal precisa ser atômico.
+    transactionMode: recreateExistingObjects
+      ? 'single'
+      : transactionModes.includes(clean.transactionMode) ? clean.transactionMode : defaultExecutionConfig.transactionMode,
     connectionTimeout: positiveNumber(clean.connectionTimeout, defaultExecutionConfig.connectionTimeout),
     queryTimeout: positiveNumber(clean.queryTimeout, defaultExecutionConfig.queryTimeout),
     historyTable: /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(clean.historyTable ?? '')) ? clean.historyTable : defaultExecutionConfig.historyTable,

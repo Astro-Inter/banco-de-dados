@@ -31,7 +31,8 @@
   "execution": {
     "enabled": true,
     "stopOnError": true,
-    "transactionMode": "per-script",
+    "recreateExistingObjects": true,
+    "transactionMode": "single",
     "connectionTimeout": 10000,
     "queryTimeout": 60000,
     "historyTable": "_astroworkspace_migrations"
