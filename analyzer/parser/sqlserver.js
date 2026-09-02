@@ -145,66 +145,102 @@ function parseTable(file, sql) {
     }
     const parsed = parseColumns(sql.slice(bodyStart, cursor - 1));
     const object = { ...base(file, type, name), ...parsed };
-    object.dependencies = unique(parsed.columns.map((column) => column.references));
+    const statementEnd = sql.indexOf(';', cursor);
+    const suffix = sql.slice(cursor, statementEnd === -1 ? sql.length : statementEnd);
+    object.inherits = splitCommaAware(suffix.match(/\bINHERITS\s*\(([^)]+)\)/i)?.[1] ?? '').map(cleanName);
+    object.dependencies = unique([...parsed.columns.map((column) => column.references), ...object.inherits]);
     objects.push(object);
     expression.lastIndex = cursor;
   }
   return objects;
 }
 
-function parseAlterTable(file, sql, tables) {
-  const expression = new RegExp(`ALTER\\s+TABLE\\s+(${identifier})\\s+ADD\\s+(CONSTRAINT\\s+\\S+\\s+)?(PRIMARY\\s+KEY|FOREIGN\\s+KEY|UNIQUE|CHECK)\\b([\\s\\S]*?)(?=;|ALTER\\s+TABLE|$)`, 'gi');
-  let match;
-  while ((match = expression.exec(sql))) {
-    const tableName = cleanName(match[1]);
-    const table = tables.find((item) => item.name.toLowerCase() === tableName.toLowerCase());
-    if (!table) continue;
-    const constraintType = match[3].toUpperCase();
-    const rest = match[4];
-    const constraintName = match[2]?.replace(/CONSTRAINT\s+/i, '').trim() ?? '';
-    if (constraintType === 'FOREIGN KEY') {
-      const foreign = rest.match(/FOREIGN\s+KEY\s*\(([^)]+)\)\s+REFERENCES\s+([\[\]`"\w.]+)(?:\s*\(([^)]+)\))?/i);
-      if (foreign) {
-        const refColumns = splitCommaAware(foreign[3] ?? '');
-        splitCommaAware(foreign[1]).forEach((name, index) => {
-          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
-          if (column) {
-            column.references = cleanName(foreign[2]);
-            column.referencesColumn = refColumns[index] ? cleanName(refColumns[index]) : null;
-          }
-        });
-        table.constraints.push(`CONSTRAINT ${constraintName} FOREIGN KEY (${foreign[1]}) REFERENCES ${foreign[2]}${foreign[3] ? `(${foreign[3]})` : ''}`.trim());
-      }
-    } else if (constraintType === 'PRIMARY KEY') {
-      const primary = rest.match(/PRIMARY\s+KEY\s*\(([^)]+)\)/i);
-      if (primary) {
-        for (const name of splitCommaAware(primary[1])) {
-          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
-          if (column) { column.primaryKey = true; column.nullable = false; column.notNull = true; }
-        }
-        table.constraints.push(`CONSTRAINT ${constraintName} PRIMARY KEY (${primary[1]})`.trim());
-      }
-    } else if (constraintType === 'UNIQUE') {
-      const uniqueMatch = rest.match(/UNIQUE\s*\(([^)]+)\)/i);
-      if (uniqueMatch) {
-        for (const name of splitCommaAware(uniqueMatch[1])) {
-          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
-          if (column) column.unique = true;
-        }
-        table.constraints.push(`CONSTRAINT ${constraintName} UNIQUE (${uniqueMatch[1]})`.trim());
-      }
-    } else if (constraintType === 'CHECK') {
-      const check = rest.match(/CHECK\s*\(([^)]+)\)/i);
-      if (check) {
-        const checkExpr = check[1].replace(/\s+/g, ' ').trim();
-        for (const name of splitCommaAware(check[1])) {
-          const column = table.columns.find((item) => item.name.toLowerCase() === cleanName(name).toLowerCase());
-          if (column) column.check = checkExpr;
-        }
-        table.constraints.push(`CONSTRAINT ${constraintName} CHECK (${check[1]})`.trim());
-      }
+/**
+ * Extrai constraints sem exigir que a tabela tenha sido declarada no mesmo
+ * arquivo. A associação acontece no analyzer, depois que todos os arquivos
+ * SQL já foram interpretados.
+ */
+export function extractAlterTableConstraints(file, sql) {
+  const blocks = new RegExp(`ALTER\\s+TABLE\\s+(?:IF\\s+EXISTS\\s+)?(?:ONLY\\s+)?(${identifier})\\s+([\\s\\S]*?);`, 'gi');
+  const constraints = [];
+  let block;
+  while ((block = blocks.exec(sql))) {
+    const table = cleanName(block[1]);
+    const actions = block[2];
+    const additions = /(?:^|,)\s*ADD\s+(?:CONSTRAINT\s+([\[\]`"\w]+)\s+)?(PRIMARY\s+KEY|FOREIGN\s+KEY|UNIQUE|CHECK)\b([\s\S]*?)(?=,\s*ADD\s+(?:CONSTRAINT\s+[\[\]`"\w]+\s+)?(?:PRIMARY\s+KEY|FOREIGN\s+KEY|UNIQUE|CHECK)\b|$)/gi;
+    let addition;
+    while ((addition = additions.exec(actions))) {
+      const name = cleanName(addition[1] ?? '');
+      const type = addition[2].replace(/\s+/g, ' ').toUpperCase();
+      const rest = addition[3].trim();
+      const columns = ['PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE'].includes(type)
+        ? splitCommaAware(rest.match(/^\s*\(([^)]+)\)/)?.[1] ?? '').map(cleanName)
+        : [];
+      const referenced = type === 'FOREIGN KEY'
+        ? rest.match(/^\s*\([^)]+\)\s+REFERENCES\s+([\[\]`"\w.]+)\s*\(([^)]+)\)/i)
+        : null;
+      constraints.push({
+        file: file.path,
+        table,
+        name,
+        type,
+        columns,
+        referencedTable: referenced ? cleanName(referenced[1]) : null,
+        referencedColumns: referenced ? splitCommaAware(referenced[2]).map(cleanName) : [],
+        definition: `${name ? `CONSTRAINT ${name} ` : ''}${type} ${rest}`.replace(/\s+/g, ' ').trim()
+      });
     }
   }
+  return constraints;
+}
+
+function tableKey(value) {
+  return cleanName(String(value ?? '')).toLowerCase();
+}
+
+/** Aplica constraints extraídas de qualquer arquivo às tabelas do snapshot. */
+export function applyAlterTableConstraints(objects, constraints = []) {
+  const tables = objects.filter((object) => object?.databaseType === 'table' || ['table', 'log-table'].includes(object?.type));
+  const byName = new Map(tables.map((table) => [tableKey(table.name), table]));
+  const issues = [];
+
+  for (const constraint of constraints) {
+    const table = byName.get(tableKey(constraint.table));
+    if (!table) {
+      issues.push({ file: constraint.file, severity: 'warning', message: `A constraint ${constraint.name || constraint.type} referencia a tabela inexistente ${constraint.table}.` });
+      continue;
+    }
+
+    table.constraints = table.constraints ?? [];
+    if (constraint.definition && !table.constraints.includes(constraint.definition)) table.constraints.push(constraint.definition);
+
+    constraint.columns.forEach((columnName, index) => {
+      const column = (table.columns ?? []).find((item) => tableKey(item.name) === tableKey(columnName));
+      if (!column) {
+        // Colunas herdadas podem não estar materializadas no objeto filho. Para
+        // relacionamentos, porém, a ausência impediria desenhar uma aresta real.
+        if (constraint.type === 'FOREIGN KEY') {
+          issues.push({ file: constraint.file, severity: 'warning', message: `A constraint ${constraint.name || constraint.type} referencia a coluna inexistente ${constraint.table}.${columnName}.` });
+        }
+        return;
+      }
+      if (constraint.type === 'PRIMARY KEY') {
+        column.primaryKey = true;
+        column.nullable = false;
+        column.notNull = true;
+      } else if (constraint.type === 'UNIQUE') {
+        column.unique = true;
+      } else if (constraint.type === 'FOREIGN KEY') {
+        column.references = constraint.referencedTable;
+        column.referencesColumn = constraint.referencedColumns[index] ?? null;
+      }
+    });
+
+    if (constraint.type === 'FOREIGN KEY' && constraint.referencedTable) {
+      table.dependencies = unique([...(table.dependencies ?? []), constraint.referencedTable]);
+    }
+  }
+  return issues;
 }
 
 function parseProgrammable(file, sql, keyword, type, dialect) {
@@ -304,7 +340,7 @@ export function parseSqlDialectFile(file, dialect = 'sqlserver') {
   const comments = extractFileComments({ path: file.path, content: sql }, dialect);
   try {
     const tables = parseTable(file, sql);
-    parseAlterTable(file, sql, tables);
+    const constraints = extractAlterTableConstraints(file, sql);
     const objects = [
       ...tables,
       ...parseProgrammable(file, sql, 'VIEW', 'view', dialect),
@@ -314,12 +350,15 @@ export function parseSqlDialectFile(file, dialect = 'sqlserver') {
       ...parseTriggers(file, sql, dialect),
       ...parseDataLoad(file, sql)
     ];
+    // Mantém o parser de um arquivo isolado autocontido; o analyzer reaplica
+    // as mesmas constraints globalmente para resolver referências entre arquivos.
+    applyAlterTableConstraints(objects, constraints);
     const interpreted = objects.length || comments.length || file.category === 'scripts';
     const issues = interpreted ? [] : [{ file: file.path, severity: 'warning', message: 'Não foi possível interpretar completamente este arquivo.' }];
-    return { objects, issues, comments };
+    return { objects, issues, comments, constraints };
   } catch (error) {
     // Um arquivo inválido não pode derrubar os demais: ele vira uma ocorrência.
-    return { objects: [], issues: [{ file: file.path, severity: 'error', message: error.message }], comments };
+    return { objects: [], issues: [{ file: file.path, severity: 'error', message: error.message }], comments, constraints: [] };
   }
 }
 

@@ -325,6 +325,9 @@ body.model-expanded { overflow: hidden; }
 .model-edge:hover .model-edge-line, .model-edge:focus-visible .model-edge-line, .model-edge.is-active .model-edge-line { stroke: var(--purple); stroke-width: 2.6; }
 .model-edge:hover .model-edge-dot, .model-edge.is-active .model-edge-dot { fill: var(--purple); }
 .model-edge.is-dimmed { opacity: .25; }
+.model-edge.is-inheritance .model-edge-line { stroke: var(--purple); stroke-dasharray: 7 5; }
+.model-edge.is-inheritance .model-edge-dot { fill: white; stroke: var(--purple); stroke-width: 1.5; }
+.model-svg #model-inheritance-arrow path { fill: white; stroke: var(--purple); stroke-width: 1.4; }
 
 .model-node { cursor: pointer; }
 .model-node-bg { fill: white; stroke: #d8d4e1; stroke-width: 1.2; filter: drop-shadow(0 5px 9px rgba(28,24,57,.08)); transition: stroke .16s; }
@@ -372,6 +375,7 @@ body.model-expanded { overflow: hidden; }
 .model-relationship-arrow { color: var(--purple); display: inline-flex; }
 .model-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 .model-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.model-legend-inheritance { display: inline-block; width: 24px; height: 0; border-top: 2px dashed var(--purple); }
 .model-legend-hint { margin-left: auto; }
 @media (max-width: 900px) {
   .model-stage:has(.model-panel) { grid-template-columns: minmax(0, 1fr); }

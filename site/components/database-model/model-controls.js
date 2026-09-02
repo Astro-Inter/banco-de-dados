@@ -55,7 +55,7 @@ export function modelLegend() {
     ['primaryKey', 'Primary Key'],
     ['foreignKey', 'Foreign Key']
   ];
-  return `<div class="model-legend" aria-label="Legenda da modelagem">${entries.map(([name, label]) => `<span>${icon(name, 14)}${escapeHtml(label)}</span>`).join('')}<span class="model-legend-hint">Arraste para navegar · role para aplicar zoom · duplo clique abre os detalhes</span></div>`;
+  return `<div class="model-legend" aria-label="Legenda da modelagem">${entries.map(([name, label]) => `<span>${icon(name, 14)}${escapeHtml(label)}</span>`).join('')}<span><i class="model-legend-inheritance" aria-hidden="true"></i>Herança</span><span class="model-legend-hint">Arraste para navegar · role para aplicar zoom · duplo clique abre os detalhes</span></div>`;
 }
 
 function summaryRow(label, value) {
@@ -93,16 +93,19 @@ export function relationshipPanel(relationship, tables) {
   if (!relationship) return '';
   const from = tables.get(relationship.from);
   const to = tables.get(relationship.to);
+  const inheritance = relationship.type === 'inheritance';
   return `<aside class="model-panel" id="model-panel" aria-label="Detalhes do relacionamento">
     <div class="model-panel-head">
-      <div><p class="eyebrow">Foreign Key</p><h3>${icon('foreignKey', 16)} Relacionamento</h3></div>
+      <div><p class="eyebrow">${inheritance ? 'Herança' : 'Foreign Key'}</p><h3>${icon(inheritance ? 'link' : 'foreignKey', 16)} ${inheritance ? 'Relação de herança' : 'Relacionamento'}</h3></div>
       <button class="icon-button" data-model-action="close-panel" aria-label="Fechar painel" title="Fechar painel">${icon('minus', 16)}</button>
     </div>
     <div class="model-relationship">
-      <button class="model-relationship-side" data-model-focus="${escapeHtml(relationship.from)}">${escapeHtml(from?.name ?? '')}<small>${escapeHtml(relationship.fromColumn)}</small></button>
+      <button class="model-relationship-side" data-model-focus="${escapeHtml(relationship.from)}">${escapeHtml(from?.name ?? '')}<small>${escapeHtml(inheritance ? 'tabela filha' : relationship.fromColumn)}</small></button>
       <span class="model-relationship-arrow">${icon('right', 18)}</span>
-      <button class="model-relationship-side" data-model-focus="${escapeHtml(relationship.to)}">${escapeHtml(to?.name ?? '')}<small>${escapeHtml(relationship.toColumn)}</small></button>
+      <button class="model-relationship-side" data-model-focus="${escapeHtml(relationship.to)}">${escapeHtml(to?.name ?? '')}<small>${escapeHtml(inheritance ? 'tabela pai' : relationship.toColumn)}</small></button>
     </div>
-    ${relationship.constraint ? `<p class="model-panel-description">Constraint: <code>${escapeHtml(relationship.constraint)}</code></p>` : '<p class="model-panel-description muted">Constraint sem nome declarado no SQL.</p>'}
+    ${inheritance
+      ? `<p class="model-panel-description"><code>${escapeHtml(from?.name ?? '')}</code> herda as colunas de <code>${escapeHtml(to?.name ?? '')}</code> por meio de <code>INHERITS</code>.</p>`
+      : relationship.constraint ? `<p class="model-panel-description">Constraint: <code>${escapeHtml(relationship.constraint)}</code></p>` : '<p class="model-panel-description muted">Constraint sem nome declarado no SQL.</p>'}
   </aside>`;
 }
