@@ -9,6 +9,13 @@ ALTER TABLE workspaces
     ADD CONSTRAINT ck_workspaces_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2), 
     ADD CONSTRAINT ck_workspaces_cnpj CHECK (cnpj ~ '^[0-9]{14}$'); 
 
+ALTER TABLE conta
+    ALTER COLUMN email SET NOT NULL;
+
+ALTER TABLE conta
+    ADD CONSTRAINT ck_conta_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
+    ADD CONSTRAINT ck_conta_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$');
+
 ALTER TABLE cargos
     ALTER COLUMN id_cargo SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
@@ -54,7 +61,6 @@ ALTER TABLE unidade_enderecos
 ALTER TABLE usuarios
     ALTER COLUMN id_usuario SET NOT NULL,
     ALTER COLUMN nome SET NOT NULL,
-    ALTER COLUMN email SET NOT NULL,
     ALTER COLUMN tipo SET NOT NULL,
     ALTER COLUMN cargo_id SET NOT NULL,   
     ALTER COLUMN unidade_id SET NOT NULL, 
@@ -66,8 +72,6 @@ ALTER TABLE usuarios
     ADD CONSTRAINT pk_usuarios PRIMARY KEY (id_usuario),
     ADD CONSTRAINT uq_usuarios_email UNIQUE (email),
     ADD CONSTRAINT uq_usuarios_cpf UNIQUE (cpf), 
-    ADD CONSTRAINT ck_usuarios_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
-    ADD CONSTRAINT ck_usuarios_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
     ADD CONSTRAINT ck_usuarios_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
     ADD CONSTRAINT ck_usuarios_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
     ADD CONSTRAINT ck_usuarios_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
@@ -81,13 +85,11 @@ ALTER TABLE usuarios
 
 ALTER TABLE admin
     ALTER COLUMN id_admin SET NOT NULL,
-    ALTER COLUMN email SET NOT NULL,
     ALTER COLUMN senha_hash SET NOT NULL;
 
 ALTER TABLE admin
     ADD CONSTRAINT pk_admin PRIMARY KEY (id_admin),
     ADD CONSTRAINT uq_admin_email UNIQUE (email),
-    ADD CONSTRAINT ck_admin_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
     ADD CONSTRAINT ck_admin_senha_hash CHECK (CHAR_LENGTH(BTRIM(senha_hash)) >= 40);
 
 ALTER TABLE nr_catalogos

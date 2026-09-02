@@ -52,11 +52,19 @@ COMMENT ON COLUMN unidade_enderecos.bairro IS 'Bairro onde a unidade está local
 COMMENT ON COLUMN unidade_enderecos.estado IS 'Sigla da unidade federativa em duas letras maiúsculas.';
 COMMENT ON COLUMN unidade_enderecos.complemento IS 'Informação complementar e opcional do endereço.';
 
+CREATE TABLE conta (
+    nome VARCHAR(255),
+    email VARCHAR(255),
+    senha_hash VARCHAR(255)
+);
+
+COMMENT ON TABLE conta IS 'Dados comuns de identificação e autenticação herdados por usuários e administradores.';
+COMMENT ON COLUMN conta.nome IS 'Nome completo da conta.';
+COMMENT ON COLUMN conta.email IS 'Endereço de e-mail usado para identificação e autenticação.';
+COMMENT ON COLUMN conta.senha_hash IS 'Hash seguro da senha da conta.';
+
 CREATE TABLE usuarios (
     id_usuario BIGSERIAL,
-    nome VARCHAR(255),
-    email VARCHAR(320),
-    senha_hash VARCHAR(255),
     tipo VARCHAR(50),
     cargo_id BIGINT,
     unidade_id BIGINT,
@@ -64,13 +72,10 @@ CREATE TABLE usuarios (
     modalidade VARCHAR(50),
     status VARCHAR(50),
     criado_em TIMESTAMP
-);
+) INHERITS (conta);
 
 COMMENT ON TABLE usuarios IS 'Contas dos gestores, gestores de workspace e funcionários que utilizam o Astro.';
 COMMENT ON COLUMN usuarios.id_usuario IS 'Identificador interno e autoincrementado do usuário.';
-COMMENT ON COLUMN usuarios.nome IS 'Nome completo do usuário.';
-COMMENT ON COLUMN usuarios.email IS 'Endereço de e-mail usado para identificação e autenticação.';
-COMMENT ON COLUMN usuarios.senha_hash IS 'Hash seguro da senha; pode permanecer vazio durante o pré-cadastro.';
 COMMENT ON COLUMN usuarios.tipo IS 'Perfil de acesso do usuário no Astro.';
 COMMENT ON COLUMN usuarios.cargo_id IS 'Cargo ao qual o usuário está vinculado.';
 COMMENT ON COLUMN usuarios.unidade_id IS 'Unidade na qual o usuário está alocado.';
@@ -79,15 +84,11 @@ COMMENT ON COLUMN usuarios.modalidade IS 'Modalidade de trabalho ou vínculo inf
 COMMENT ON COLUMN usuarios.status IS 'Situação atual do cadastro e do acesso do usuário.';
 
 CREATE TABLE admin (
-    id_admin BIGSERIAL,
-    email VARCHAR(320),
-    senha_hash VARCHAR(255)
-);
+    id_admin BIGSERIAL
+) INHERITS (conta);
 
 COMMENT ON TABLE admin IS 'Administradores técnicos da plataforma, independentes dos usuários de cada workspace.';
 COMMENT ON COLUMN admin.id_admin IS 'Identificador interno e autoincrementado do administrador.';
-COMMENT ON COLUMN admin.email IS 'Endereço de e-mail usado na autenticação administrativa.';
-COMMENT ON COLUMN admin.senha_hash IS 'Hash seguro da senha do administrador.';
 
 CREATE TABLE nr_catalogos (
     codigo_nr INTEGER,
