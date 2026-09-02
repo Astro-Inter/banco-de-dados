@@ -9,10 +9,20 @@ ALTER TABLE workspaces
     ADD CONSTRAINT ck_workspaces_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2), 
     ADD CONSTRAINT ck_workspaces_cnpj CHECK (cnpj ~ '^[0-9]{14}$'); 
 
+ALTER TABLE conta
+    ALTER COLUMN email SET NOT NULL,
+    ALTER COLUMN firebase_uid SET NOT NULL;
+
+ALTER TABLE conta
+    ADD CONSTRAINT uq_conta_firebase_uid UNIQUE (firebase_uid),
+    ADD CONSTRAINT ck_conta_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
+    ADD CONSTRAINT ck_conta_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$');
+
 ALTER TABLE cargos
     ALTER COLUMN id_cargo SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
-    ALTER COLUMN nome SET NOT NULL;
+    ALTER COLUMN nome SET NOT NULL,
+    ALTER COLUMN ativo SET DEFAULT TRUE;
 
 ALTER TABLE cargos
     ADD CONSTRAINT pk_cargos PRIMARY KEY (id_cargo),
@@ -23,7 +33,8 @@ ALTER TABLE cargos
 ALTER TABLE unidades
     ALTER COLUMN id_unidade SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
-    ALTER COLUMN nome SET NOT NULL;
+    ALTER COLUMN nome SET NOT NULL,
+    ALTER COLUMN ativo SET DEFAULT TRUE;
 
 ALTER TABLE unidades
     ADD CONSTRAINT pk_unidades PRIMARY KEY (id_unidade),
@@ -52,40 +63,41 @@ ALTER TABLE unidade_enderecos
 ALTER TABLE usuarios
     ALTER COLUMN id_usuario SET NOT NULL,
     ALTER COLUMN nome SET NOT NULL,
-    ALTER COLUMN email SET NOT NULL,
     ALTER COLUMN tipo SET NOT NULL,
     ALTER COLUMN cargo_id SET NOT NULL,   
     ALTER COLUMN unidade_id SET NOT NULL, 
     ALTER COLUMN status SET DEFAULT 'PRE_CADASTRADO',
-    ALTER COLUMN status SET NOT NULL;
+    ALTER COLUMN status SET NOT NULL,
+    ALTER COLUMN criado_em SET DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE usuarios
     ADD CONSTRAINT pk_usuarios PRIMARY KEY (id_usuario),
     ADD CONSTRAINT uq_usuarios_email UNIQUE (email),
+    ADD CONSTRAINT uq_usuarios_firebase_uid UNIQUE (firebase_uid),
     ADD CONSTRAINT uq_usuarios_cpf UNIQUE (cpf), 
-    ADD CONSTRAINT ck_usuarios_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
-    ADD CONSTRAINT ck_usuarios_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
     ADD CONSTRAINT ck_usuarios_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
     ADD CONSTRAINT ck_usuarios_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
     ADD CONSTRAINT ck_usuarios_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
     ADD CONSTRAINT ck_usuarios_modalidade CHECK (
         modalidade IS NULL OR CHAR_LENGTH(BTRIM(modalidade)) >= 2
-    ),
-    ADD CONSTRAINT ck_usuarios_senha CHECK (
-        status = 'PRE_CADASTRADO'
-        OR (senha_hash IS NOT NULL AND CHAR_LENGTH(BTRIM(senha_hash)) >= 40)
-    ); 
+    );
 
 ALTER TABLE admin
-    ALTER COLUMN id_admin SET NOT NULL,
-    ALTER COLUMN email SET NOT NULL,
-    ALTER COLUMN senha_hash SET NOT NULL;
+    ALTER COLUMN id_admin SET NOT NULL;
 
 ALTER TABLE admin
     ADD CONSTRAINT pk_admin PRIMARY KEY (id_admin),
     ADD CONSTRAINT uq_admin_email UNIQUE (email),
-    ADD CONSTRAINT ck_admin_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
-    ADD CONSTRAINT ck_admin_senha_hash CHECK (CHAR_LENGTH(BTRIM(senha_hash)) >= 40);
+    ADD CONSTRAINT uq_admin_firebase_uid UNIQUE (firebase_uid);
+
+ALTER TABLE usuario_foto_perfil
+    ALTER COLUMN usuario_id SET NOT NULL,
+    ALTER COLUMN caminho_objeto SET NOT NULL;
+
+ALTER TABLE usuario_foto_perfil
+    ADD CONSTRAINT pk_usuario_foto_perfil PRIMARY KEY (usuario_id),
+    ADD CONSTRAINT uq_usuario_foto_perfil_caminho UNIQUE (caminho_objeto),
+    ADD CONSTRAINT ck_usuario_foto_perfil_caminho CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1);
 
 ALTER TABLE nr_catalogos
     ALTER COLUMN codigo_nr SET NOT NULL,
@@ -205,20 +217,20 @@ ALTER TABLE conclusao_eventos
 ALTER TABLE evidencias
     ALTER COLUMN id_evidencia SET NOT NULL,
     ALTER COLUMN conclusao_evento_id SET NOT NULL,
-    ALTER COLUMN nome_arquivo SET NOT NULL,
-    ALTER COLUMN caminho_arquivo SET NOT NULL,
+    ALTER COLUMN nome_original SET NOT NULL,
+    ALTER COLUMN caminho_objeto SET NOT NULL,
     ALTER COLUMN mime_type SET NOT NULL,
-    ALTER COLUMN tamanho SET NOT NULL;
+    ALTER COLUMN tamanho_bytes SET NOT NULL;
 
 ALTER TABLE evidencias
     ADD CONSTRAINT pk_evidencias PRIMARY KEY (id_evidencia),
-    ADD CONSTRAINT uq_evidencias_conclusao UNIQUE (conclusao_evento_id), -- O documento permite no máximo uma evidência por conclusão.
-    ADD CONSTRAINT ck_evidencias_nome CHECK (CHAR_LENGTH(BTRIM(nome_arquivo)) >= 1),
-    ADD CONSTRAINT ck_evidencias_caminho CHECK (CHAR_LENGTH(BTRIM(caminho_arquivo)) >= 1),
+    ADD CONSTRAINT uq_evidencias_caminho_objeto UNIQUE (caminho_objeto),
+    ADD CONSTRAINT ck_evidencias_nome_original CHECK (CHAR_LENGTH(BTRIM(nome_original)) >= 1),
+    ADD CONSTRAINT ck_evidencias_caminho_objeto CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1),
     ADD CONSTRAINT ck_evidencias_mime_type CHECK (
         mime_type ~ '^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$'
     ),
-    ADD CONSTRAINT ck_evidencias_tamanho CHECK (tamanho > 0);
+    ADD CONSTRAINT ck_evidencias_tamanho_bytes CHECK (tamanho_bytes > 0);
 
 ALTER TABLE conformidades
     ALTER COLUMN id_conformidade SET NOT NULL,
@@ -253,6 +265,11 @@ ALTER TABLE usuarios
         ON UPDATE CASCADE ON DELETE RESTRICT,
     ADD CONSTRAINT fk_usuarios_unidade FOREIGN KEY (unidade_id)
         REFERENCES unidades (id_unidade)
+        ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE usuario_foto_perfil
+    ADD CONSTRAINT fk_usuario_foto_perfil_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE cargo_nrs
@@ -298,9 +315,9 @@ ALTER TABLE conclusao_eventos
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE evidencias
-    ADD CONSTRAINT fk_evidencias_conclusao FOREIGN KEY (conclusao_evento_id)
+    ADD CONSTRAINT fk_evidencias_conclusao_evento FOREIGN KEY (conclusao_evento_id)
         REFERENCES conclusao_eventos (id_conclusao_evento)
-        ON UPDATE CASCADE ON DELETE CASCADE;
+        ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE conformidades
     ADD CONSTRAINT fk_conformidades_usuario FOREIGN KEY (usuario_id)

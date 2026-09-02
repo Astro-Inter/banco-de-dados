@@ -12,7 +12,8 @@ COMMENT ON COLUMN workspaces.cnpj IS 'CNPJ do workspace, armazenado somente com 
 CREATE TABLE cargos (
     id_cargo BIGSERIAL,
     workspace_id BIGINT,
-    nome VARCHAR(255)
+    nome VARCHAR(255),
+    ativo BOOLEAN
 );
 
 COMMENT ON TABLE cargos IS 'Cargos profissionais cadastrados dentro de um workspace.';
@@ -23,7 +24,8 @@ COMMENT ON COLUMN cargos.nome IS 'Nome do cargo exercido pelo usuário.';
 CREATE TABLE unidades (
     id_unidade BIGSERIAL,
     workspace_id BIGINT,
-    nome VARCHAR(255)
+    nome VARCHAR(255),
+    ativo BOOLEAN
 );
 
 COMMENT ON TABLE unidades IS 'Estabelecimentos ou unidades organizacionais pertencentes a um workspace.';
@@ -50,24 +52,30 @@ COMMENT ON COLUMN unidade_enderecos.bairro IS 'Bairro onde a unidade está local
 COMMENT ON COLUMN unidade_enderecos.estado IS 'Sigla da unidade federativa em duas letras maiúsculas.';
 COMMENT ON COLUMN unidade_enderecos.complemento IS 'Informação complementar e opcional do endereço.';
 
+CREATE TABLE conta (
+    nome VARCHAR(255),
+    email VARCHAR(255),
+    firebase_uid VARCHAR(128)
+);
+
+COMMENT ON TABLE conta IS 'Dados comuns de identificação e autenticação herdados por usuários e administradores.';
+COMMENT ON COLUMN conta.nome IS 'Nome completo da conta.';
+COMMENT ON COLUMN conta.email IS 'Endereço de e-mail usado para identificação e autenticação.';
+COMMENT ON COLUMN conta.firebase_uid IS 'Identificador único da conta no Firebase Authentication.';
+
 CREATE TABLE usuarios (
     id_usuario BIGSERIAL,
-    nome VARCHAR(255),
-    email VARCHAR(320),
-    senha_hash VARCHAR(255),
     tipo VARCHAR(50),
     cargo_id BIGINT,
     unidade_id BIGINT,
     cpf CHAR(11),
     modalidade VARCHAR(50),
-    status VARCHAR(50)
-);
+    status VARCHAR(50),
+    criado_em TIMESTAMP
+) INHERITS (conta);
 
 COMMENT ON TABLE usuarios IS 'Contas dos gestores, gestores de workspace e funcionários que utilizam o Astro.';
 COMMENT ON COLUMN usuarios.id_usuario IS 'Identificador interno e autoincrementado do usuário.';
-COMMENT ON COLUMN usuarios.nome IS 'Nome completo do usuário.';
-COMMENT ON COLUMN usuarios.email IS 'Endereço de e-mail usado para identificação e autenticação.';
-COMMENT ON COLUMN usuarios.senha_hash IS 'Hash seguro da senha; pode permanecer vazio durante o pré-cadastro.';
 COMMENT ON COLUMN usuarios.tipo IS 'Perfil de acesso do usuário no Astro.';
 COMMENT ON COLUMN usuarios.cargo_id IS 'Cargo ao qual o usuário está vinculado.';
 COMMENT ON COLUMN usuarios.unidade_id IS 'Unidade na qual o usuário está alocado.';
@@ -76,15 +84,25 @@ COMMENT ON COLUMN usuarios.modalidade IS 'Modalidade de trabalho ou vínculo inf
 COMMENT ON COLUMN usuarios.status IS 'Situação atual do cadastro e do acesso do usuário.';
 
 CREATE TABLE admin (
-    id_admin BIGSERIAL,
-    email VARCHAR(320),
-    senha_hash VARCHAR(255)
-);
+    id_admin BIGSERIAL
+) INHERITS (conta);
 
 COMMENT ON TABLE admin IS 'Administradores técnicos da plataforma, independentes dos usuários de cada workspace.';
 COMMENT ON COLUMN admin.id_admin IS 'Identificador interno e autoincrementado do administrador.';
-COMMENT ON COLUMN admin.email IS 'Endereço de e-mail usado na autenticação administrativa.';
-COMMENT ON COLUMN admin.senha_hash IS 'Hash seguro da senha do administrador.';
+
+CREATE TABLE usuario_foto_perfil (
+    usuario_id BIGINT,
+    caminho_objeto VARCHAR(2048)
+);
+
+COMMENT ON TABLE usuario_foto_perfil IS
+'Armazena a referência da foto de perfil do usuário mantida no bucket avatars do Supabase Storage.';
+
+COMMENT ON COLUMN usuario_foto_perfil.usuario_id IS
+'Identificador do usuário proprietário da foto de perfil.';
+
+COMMENT ON COLUMN usuario_foto_perfil.caminho_objeto IS
+'Caminho permanente da imagem dentro do bucket avatars do Supabase Storage. Não deve armazenar URL pública ou assinada.';
 
 CREATE TABLE nr_catalogos (
     codigo_nr INTEGER,
@@ -192,19 +210,32 @@ COMMENT ON COLUMN conclusao_eventos.motivo_rejeicao IS 'Justificativa registrada
 CREATE TABLE evidencias (
     id_evidencia BIGSERIAL,
     conclusao_evento_id BIGINT,
-    nome_arquivo VARCHAR(255),
-    caminho_arquivo VARCHAR(2048),
-    mime_type VARCHAR(255),
-    tamanho BIGINT
+    nome_original VARCHAR(255),
+    caminho_objeto VARCHAR(2048),
+    mime_type VARCHAR(127),
+    tamanho_bytes BIGINT
 );
 
-COMMENT ON TABLE evidencias IS 'Metadados do arquivo usado como evidência de uma conclusão de evento.';
-COMMENT ON COLUMN evidencias.id_evidencia IS 'Identificador interno e autoincrementado da evidência.';
-COMMENT ON COLUMN evidencias.conclusao_evento_id IS 'Conclusão de evento comprovada pela evidência.';
-COMMENT ON COLUMN evidencias.nome_arquivo IS 'Nome original do arquivo enviado.';
-COMMENT ON COLUMN evidencias.caminho_arquivo IS 'Caminho ou chave usada para localizar o arquivo no armazenamento.';
-COMMENT ON COLUMN evidencias.mime_type IS 'Tipo MIME do arquivo, como application/pdf ou image/png.';
-COMMENT ON COLUMN evidencias.tamanho IS 'Tamanho do arquivo em bytes.';
+COMMENT ON TABLE evidencias IS
+'Armazena os metadados dos arquivos utilizados como evidência de conclusão de eventos. O conteúdo do arquivo permanece no Supabase Storage.';
+
+COMMENT ON COLUMN evidencias.id_evidencia IS
+'Identificador único da evidência gerado automaticamente pelo PostgreSQL.';
+
+COMMENT ON COLUMN evidencias.conclusao_evento_id IS
+'Identificador da conclusão de evento à qual o arquivo de evidência pertence.';
+
+COMMENT ON COLUMN evidencias.nome_original IS
+'Nome original do arquivo informado pelo dispositivo do usuário, utilizado apenas para exibição e download.';
+
+COMMENT ON COLUMN evidencias.caminho_objeto IS
+'Caminho permanente do objeto dentro do bucket evidencias do Supabase Storage. Não deve armazenar uma URL pública ou assinada.';
+
+COMMENT ON COLUMN evidencias.mime_type IS
+'Tipo de conteúdo do arquivo, como application/pdf, image/jpeg ou application/vnd.openxmlformats-officedocument.wordprocessingml.document.';
+
+COMMENT ON COLUMN evidencias.tamanho_bytes IS
+'Tamanho total do arquivo em bytes.';
 
 CREATE TABLE conformidades (
     id_conformidade BIGSERIAL,

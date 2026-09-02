@@ -1,40 +1,70 @@
+WITH participacoes AS (
+    SELECT
+        turma_funcionario.id_turma_funcionario,
+        turma.data_termino,
+        nr.tempo_reciclagem_meses,
+        ROW_NUMBER() OVER (
+            ORDER BY participante.email, evento.titulo, turma.nome
+        ) AS ordem
+    FROM turma_funcionarios turma_funcionario
+    INNER JOIN usuarios participante
+        ON participante.id_usuario = turma_funcionario.usuario_id
+    INNER JOIN turmas turma
+        ON turma.id_turma = turma_funcionario.turma_id
+    INNER JOIN eventos evento
+        ON evento.id_evento = turma.evento_id
+    INNER JOIN usuarios gestor
+        ON gestor.id_usuario = evento.gestor_id
+    LEFT JOIN nr_catalogos nr
+        ON nr.codigo_nr = evento.nr_id
+    WHERE participante.email LIKE '%@example.com'
+      AND gestor.email IN (
+          'ana.dias.004@example.com',
+          'ana.ferreira.005@example.com',
+          'ana.gomes.006@example.com'
+      )
+),
+dados AS (
+    SELECT
+        id_turma_funcionario,
+        CASE
+            WHEN MOD(ordem, 5) = 0 THEN 'PENDENTE'
+            WHEN MOD(ordem, 5) = 1 THEN 'REJEITADO'
+            ELSE 'CONCLUIDO'
+        END AS status,
+        CASE
+            WHEN MOD(ordem, 5) = 0 THEN NULL
+            ELSE data_termino
+        END AS data_conclusao,
+        CASE
+            WHEN MOD(ordem, 5) = 0 THEN NULL
+            ELSE data_termino + INTERVAL '1 day'
+        END AS data_validacao,
+        CASE
+            WHEN MOD(ordem, 5) IN (0, 1) OR tempo_reciclagem_meses IS NULL THEN NULL
+            ELSE (
+                data_termino
+                + MAKE_INTERVAL(months => tempo_reciclagem_meses)
+            )::DATE
+        END AS data_validade,
+        CASE
+            WHEN MOD(ordem, 5) = 1
+                THEN 'Participação rejeitada para revisão dos dados de conclusão.'
+            ELSE NULL
+        END AS motivo_rejeicao
+    FROM participacoes
+)
 INSERT INTO conclusao_eventos
     (turma_funcionario_id, status, data_conclusao,
      data_validacao, data_validade, motivo_rejeicao)
 SELECT
-    tf.id_turma_funcionario,
-    dados.status,
-    dados.data_conclusao::TIMESTAMP,
-    dados.data_validacao::TIMESTAMP,
-    dados.data_validade::DATE,
-    dados.motivo_rejeicao
-FROM (
-    VALUES
-        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma A - Matriz', 'joao.pereira@brasilfer.local', 'CONCLUIDO', '2026-05-12 12:00:00', '2026-05-13 09:00:00', '2028-05-12', NULL),
-        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma B - Guarulhos', 'maria.oliveira@brasilfer.local', 'CONCLUIDO', '2026-05-14 17:00:00', '2026-05-15 09:30:00', '2028-05-14', NULL),
-        ('carlos.souza@brasilfer.local', 'Reciclagem de uso de EPI', 'Turma B - Guarulhos', 'roberto.lima@brasilfer.local', 'CONCLUIDO', '2026-05-14 17:00:00', '2026-05-15 10:00:00', '2028-05-14', NULL),
-        ('carlos.souza@brasilfer.local', 'Segurança na operação de máquinas', 'Turma Única - Máquinas', 'joao.pereira@brasilfer.local', 'PENDENTE', NULL, NULL, NULL, NULL),
-        ('carlos.souza@brasilfer.local', 'Segurança na operação de máquinas', 'Turma Única - Máquinas', 'maria.oliveira@brasilfer.local', 'PENDENTE', NULL, NULL, NULL, NULL),
-        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma A - Sede', 'lucas.andrade@horizonte.local', 'CONCLUIDO', '2026-06-03 16:00:00', '2026-06-03 16:20:00', '2028-06-03', NULL),
-        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma A - Sede', 'pedro.santos@horizonte.local', 'CONCLUIDO', '2026-06-03 16:00:00', '2026-06-03 16:20:00', '2028-06-03', NULL),
-        ('fernanda.rocha@horizonte.local', 'Capacitação para trabalho em altura', 'Turma B - Canteiro', 'juliana.ribeiro@horizonte.local', 'CONCLUIDO', '2026-06-05 16:00:00', '2026-06-05 16:20:00', '2028-06-05', NULL),
-        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'mariana.costa@verdecampo.local', 'PENDENTE', NULL, NULL, NULL, NULL),
-        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'diego.carvalho@verdecampo.local', 'REJEITADO', '2026-09-22 16:30:00', '2026-09-23 09:00:00', NULL, 'Evidência apresentada não permite identificar o participante.'),
-        ('rafael.nogueira@verdecampo.local', 'Segurança na aplicação de defensivos', 'Turma Aplicação Segura', 'sofia.mendes@verdecampo.local', 'PENDENTE', NULL, NULL, NULL, NULL)
-) AS dados(gestor_email, titulo_evento, nome_turma, participante_email, status, data_conclusao, data_validacao, data_validade, motivo_rejeicao)
-INNER JOIN usuarios gestor
-    ON gestor.email = dados.gestor_email
-INNER JOIN eventos e
-    ON e.gestor_id = gestor.id_usuario
-   AND e.titulo = dados.titulo_evento
-INNER JOIN turmas t
-    ON t.evento_id = e.id_evento
-   AND t.nome = dados.nome_turma
-INNER JOIN usuarios participante
-    ON participante.email = dados.participante_email
-INNER JOIN turma_funcionarios tf
-    ON tf.turma_id = t.id_turma
-   AND tf.usuario_id = participante.id_usuario
+    id_turma_funcionario,
+    status,
+    data_conclusao,
+    data_validacao,
+    data_validade,
+    motivo_rejeicao
+FROM dados
 ON CONFLICT (turma_funcionario_id) DO UPDATE
 SET status = EXCLUDED.status,
     data_conclusao = EXCLUDED.data_conclusao,

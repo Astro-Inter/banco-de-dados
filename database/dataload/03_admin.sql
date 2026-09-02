@@ -1,7 +1,9 @@
-INSERT INTO admin (email, senha_hash)
+INSERT INTO admin (nome, email, firebase_uid)
 VALUES (
-    'admin@astro.local',
-    '$2b$12$01234567890123456789012345678901234567890123456789012'
+    'Astro',
+    'app.4str0@gmail.com',
+    'cvZAMfXsrzNooRHSGCwAmRJ3bx63'
 )
 ON CONFLICT (email) DO UPDATE
-SET senha_hash = EXCLUDED.senha_hash;
+SET nome = EXCLUDED.nome,
+    firebase_uid = EXCLUDED.firebase_uid;
