@@ -116,7 +116,15 @@ h2 { font-size: 20px; letter-spacing: -.02em; }
 .filter-button .icon { color: currentColor; }
 .filter-button.active { color: white; border-color: var(--purple); background: var(--purple); }
 .object-layout { display: grid; grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); gap: 18px; }
-.object-list { max-height: calc(100vh - 220px); overflow: auto; }
+.object-list {
+  position: sticky;
+  top: 94px;
+  align-self: start;
+  max-height: calc(100vh - 112px);
+  max-height: calc(100dvh - 112px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 .empty { padding: 50px 24px; color: var(--muted); text-align: center; border: 1px dashed #d8d4e0; border-radius: var(--radius); background: rgba(255,255,255,.55); }
 .table-wrap { overflow: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -219,7 +227,7 @@ dialog::backdrop { background: rgba(15,12,30,.62); backdrop-filter: blur(3px); }
   .dependency-focus { width: 100%; }
   .path-form { grid-template-columns: 1fr; }
   .path-arrow { display: none; }
-  .object-list { max-height: 330px; }
+  .object-list { position: static; max-height: 330px; }
 }
 @media (max-width: 560px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
