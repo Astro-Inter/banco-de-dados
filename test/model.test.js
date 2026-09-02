@@ -24,7 +24,7 @@ import {
 import { columnAnchorY, columnRowIndex, renderDiagram } from '../site/components/database-model/model-renderer.js';
 import { modelingView, relatedIds } from '../site/components/database-model/model-view.js';
 import { relationshipPanel } from '../site/components/database-model/model-controls.js';
-import { mainTablesFile, newTableTemplate } from '../site/views.js';
+import { mainTablesFile, newTableTemplate, tableDetail } from '../site/views.js';
 import { formatColumnType } from '../site/utils.js';
 import { iconLibrary } from '../site/icons-library.js';
 import { icon, pendingIcons } from '../site/icons.js';
@@ -230,6 +230,22 @@ test('tipo da coluna não duplica o tamanho já declarado no SQL', () => {
 
   const svg = renderDiagram([pedidosComTipos], computeLayout([pedidosComTipos]), computeLayout([pedidosComTipos]).positions, { ...createModelState(), relatedIds: new Set() });
   assert.doesNotMatch(svg, /\(30\)\(30\)/);
+});
+
+test('tags de constraints da tabela têm contêiner com espaçamento', () => {
+  const object = table('usuarios', [{
+    name: 'workspace_id',
+    dataType: 'BIGINT',
+    references: 'workspaces',
+    referencesColumn: 'id_workspace',
+    unique: true,
+    nullable: false
+  }]);
+  object.code = '';
+  const markup = tableDetail(object, { objects: [object] });
+
+  assert.match(markup, /class="table-constraint-badges"/);
+  assert.match(markup, /class="pill fk"[^>]*>FK → workspaces\.id_workspace<\/span><span class="pill unique">UNIQUE<\/span>/);
 });
 
 const pedidosComTipos = table('pedidos_tipos', [

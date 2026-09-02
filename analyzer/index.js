@@ -4,7 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { applyComments } from './comments/index.js';
 import { loadConfig, workspaceRoot } from './config.js';
 import { buildDependencyGraph } from './dependencies/graph.js';
-import { applyAlterTableConstraints, parseSqlServerFile } from './parser/sqlserver.js';
+import {
+  applyAlterTableColumnChanges,
+  applyAlterTableConstraints,
+  materializeTableInheritance,
+  parseSqlServerFile
+} from './parser/sqlserver.js';
 import { parsePostgreSqlFile } from './parser/postgresql.js';
 import { scanSqlFiles } from './scanners/sql-file-scanner.js';
 
@@ -17,7 +22,10 @@ export async function analyzeWorkspace({ write = true } = {}) {
   if (!parser) throw new Error(`Dialeto não suportado: ${config.database.dialect}`);
   const parsed = files.map(parser);
   const objects = parsed.flatMap((result) => result.objects);
+  const columnChangeIssues = applyAlterTableColumnChanges(objects, parsed.flatMap((result) => result.columnChanges ?? []));
+  materializeTableInheritance(objects);
   const constraintIssues = applyAlterTableConstraints(objects, parsed.flatMap((result) => result.constraints ?? []));
+  materializeTableInheritance(objects);
   // As descrições (COMMENT ON) são aplicadas depois de ler todos os arquivos,
   // porque o comentário pode estar em um script de documentação separado.
   const commentIssues = applyComments(
@@ -41,7 +49,7 @@ export async function analyzeWorkspace({ write = true } = {}) {
     files: files.map(({ category, path: filePath, content }) => ({ category, path: filePath, size: Buffer.byteLength(content), content })),
     objects,
     dependencies,
-    issues: [...parsed.flatMap((result) => result.issues), ...constraintIssues, ...commentIssues]
+    issues: [...parsed.flatMap((result) => result.issues), ...columnChangeIssues, ...constraintIssues, ...commentIssues]
   };
   if (write) {
     const generated = path.resolve(workspaceRoot, config.generated);

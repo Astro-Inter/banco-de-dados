@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildDependencyGraph, findPath, traversal } from '../analyzer/dependencies/graph.js';
 import { analyzeImpact } from '../analyzer/impact/analyze-impact.js';
-import { applyAlterTableConstraints, parseSqlServerFile } from '../analyzer/parser/sqlserver.js';
+import {
+  applyAlterTableColumnChanges,
+  applyAlterTableConstraints,
+  materializeTableInheritance,
+  parseSqlServerFile
+} from '../analyzer/parser/sqlserver.js';
 import { parsePostgreSqlFile } from '../analyzer/parser/postgresql.js';
 import { readSqlFile } from '../server/services/file-service.js';
 import { relationshipsOf } from '../site/components/database-model/model-layout.js';
@@ -66,6 +71,39 @@ test('aplica relacionamentos declarados em arquivo separado de constraints', () 
   assert.equal(relationshipsOf(objects).length, 2);
 });
 
+test('aplica nulabilidade, default e check declarados em arquivo separado', () => {
+  const tablesFile = parsePostgreSqlFile({
+    path: 'database/scripts/1_create_tables.sql',
+    category: 'scripts',
+    content: 'CREATE TABLE eventos (id BIGINT, titulo TEXT, status TEXT);'
+  });
+  const constraintsFile = parsePostgreSqlFile({
+    path: 'database/scripts/2_constraints.sql',
+    category: 'scripts',
+    content: `
+      ALTER TABLE eventos
+        ALTER COLUMN titulo SET NOT NULL,
+        ALTER COLUMN status SET DEFAULT 'ATIVO';
+      ALTER TABLE eventos
+        ADD CONSTRAINT chk_eventos_status CHECK (status IN ('ATIVO', 'CANCELADO'));
+    `
+  });
+  const objects = [...tablesFile.objects, ...constraintsFile.objects];
+  const changeIssues = applyAlterTableColumnChanges(objects, constraintsFile.columnChanges);
+  const constraintIssues = applyAlterTableConstraints(objects, constraintsFile.constraints);
+  const eventos = objects.find((object) => object.name === 'eventos');
+  const titulo = eventos.columns.find((column) => column.name === 'titulo');
+  const status = eventos.columns.find((column) => column.name === 'status');
+
+  assert.equal(changeIssues.length, 0);
+  assert.equal(constraintIssues.length, 0);
+  assert.equal(titulo.nullable, false);
+  assert.equal(titulo.notNull, true);
+  assert.equal(status.default, "'ATIVO'");
+  assert.equal(status.check, "status IN ('ATIVO', 'CANCELADO')");
+  assert.equal(eventos.constraints.length, 1);
+});
+
 test('interpreta herança de tabelas PostgreSQL como dependência', () => {
   const result = parsePostgreSqlFile({
     path: 'database/scripts/tables.sql',
@@ -84,6 +122,40 @@ test('interpreta herança de tabelas PostgreSQL como dependência', () => {
   assert.deepEqual(admin.inherits, ['conta']);
   assert.ok(usuarios.dependencies.includes('conta'));
   assert.equal(graph.edges.filter((edge) => edge.from === 'table:conta' && edge.resolved).length, 2);
+});
+
+test('materializa colunas herdadas e aplica alterações e constraints na tabela filha', () => {
+  const tablesFile = parsePostgreSqlFile({
+    path: 'database/scripts/1_create_tables.sql',
+    category: 'scripts',
+    content: `
+      CREATE TABLE conta (nome TEXT, email TEXT, firebase_uid TEXT);
+      CREATE TABLE usuarios (id BIGINT) INHERITS (conta);
+      CREATE TABLE admin (id BIGINT) INHERITS (conta);
+    `
+  });
+  const constraintsFile = parsePostgreSqlFile({
+    path: 'database/scripts/2_constraints.sql',
+    category: 'scripts',
+    content: `
+      ALTER TABLE conta ALTER COLUMN email SET NOT NULL;
+      ALTER TABLE usuarios ALTER COLUMN nome SET NOT NULL;
+      ALTER TABLE usuarios ADD CONSTRAINT uk_usuarios_email UNIQUE (email);
+      ALTER TABLE admin ADD CONSTRAINT uk_admin_firebase UNIQUE (firebase_uid);
+    `
+  });
+  const objects = [...tablesFile.objects, ...constraintsFile.objects];
+  assert.equal(applyAlterTableColumnChanges(objects, constraintsFile.columnChanges).length, 0);
+  materializeTableInheritance(objects);
+  assert.equal(applyAlterTableConstraints(objects, constraintsFile.constraints).length, 0);
+
+  const usuarios = objects.find((object) => object.name === 'usuarios');
+  const admin = objects.find((object) => object.name === 'admin');
+  assert.equal(usuarios.columns.find((column) => column.name === 'nome').nullable, false);
+  assert.equal(usuarios.columns.find((column) => column.name === 'email').nullable, false);
+  assert.equal(usuarios.columns.find((column) => column.name === 'email').unique, true);
+  assert.equal(usuarios.columns.find((column) => column.name === 'email').inheritedFrom, 'conta');
+  assert.equal(admin.columns.find((column) => column.name === 'firebase_uid').unique, true);
 });
 
 test('interpreta trigger PostgreSQL e suas dependências', () => {

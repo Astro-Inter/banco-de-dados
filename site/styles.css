@@ -258,6 +258,7 @@ dialog::backdrop { background: rgba(15,12,30,.62); backdrop-filter: blur(3px); }
 .column-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 720; }
 .column-type { min-width: 0; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: 10px/1.3 "Cascadia Code", Consolas, monospace; text-align: right; }
 .column-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.table-constraint-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .pill.pk { color: #674500; background: #fff0b8; }
 .pill.fk { color: #1d5b8e; background: #deefff; }
 .pill.unique { color: #087448; background: #daf5e9; }
