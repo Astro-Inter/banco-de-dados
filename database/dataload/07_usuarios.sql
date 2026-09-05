@@ -136,3 +136,149 @@ SET nome = EXCLUDED.nome,
     modalidade = EXCLUDED.modalidade,
     status = EXCLUDED.status,
     criado_em = EXCLUDED.criado_em;
+
+-- SCRUM-172: 100 funcionários do TXT, mantendo nome, e-mail e Firebase UID.
+-- CPF não informado no arquivo de origem; cargo, modalidade e datas são dados de teste.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM unidades u
+        INNER JOIN workspaces w ON w.id_workspace = u.workspace_id
+        WHERE u.id_unidade = 1
+          AND w.cnpj = '11222333000144'
+    ) THEN
+        RAISE EXCEPTION 'SCRUM-172: a unidade 1 deve pertencer ao workspace Brasilfer.';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM usuarios
+        WHERE unidade_id = 1 AND status = 'ATIVO'
+          AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
+    ) THEN
+        RAISE EXCEPTION 'SCRUM-172: a unidade 1 precisa de um gestor ativo para os eventos.';
+    END IF;
+END;
+$$;
+
+INSERT INTO usuarios
+    (nome, email, firebase_uid, tipo, cargo_id, unidade_id, cpf,
+     modalidade, status, criado_em)
+SELECT
+    dados.nome, dados.email, dados.firebase_uid, 'FUNCIONARIO',
+    c.id_cargo, u.id_unidade, NULL, 'PRESENCIAL', 'ATIVO',
+    TIMESTAMP '2026-09-01 09:00:00'
+FROM (
+    VALUES
+        ('Lucas Silva', 'lucas.c689bedf0fc64d4c.1@example.com', 'IcK6qNc4f9aVA9DY8Re99UHhAFk1', 'Soldador'),
+        ('Ana Silva', 'ana.c689bedf0fc64d4c.2@example.com', 'sOKxjLFDSnSRfThtbfC5v5fSUR83', 'Soldador'),
+        ('Pedro Silva', 'pedro.c689bedf0fc64d4c.3@example.com', 'ls8vyvwYIGP3N3Pv9CqhlJZdnOi1', 'Soldador'),
+        ('Maria Silva', 'maria.c689bedf0fc64d4c.4@example.com', '2k8EbvQOole1VcTGJA3DuJ9qiVj2', 'Soldador'),
+        ('João Silva', 'joao.c689bedf0fc64d4c.5@example.com', 'YoExxfhP4eYEmVVLEAZ7ECHou243', 'Soldador'),
+        ('Julia Silva', 'julia.c689bedf0fc64d4c.6@example.com', 'jUx0T1loZrXrhO9BbR1JDruEBDI2', 'Soldador'),
+        ('Gabriel Silva', 'gabriel.c689bedf0fc64d4c.7@example.com', '0lQ4HzTiQFO8AkflpnEkaCgyDmm2', 'Soldador'),
+        ('Beatriz Silva', 'beatriz.c689bedf0fc64d4c.8@example.com', 'mItga3S7pHUgOwFyGxcGmQxI2393', 'Soldador'),
+        ('Rafael Silva', 'rafael.c689bedf0fc64d4c.9@example.com', 'r07bwczX3fhmEj5U2rD4lJknymz1', 'Soldador'),
+        ('Laura Silva', 'laura.c689bedf0fc64d4c.10@example.com', 'GOMhrvBgJ0TAG9goRzcWP89FCPv2', 'Soldador'),
+        ('Felipe Silva', 'felipe.c689bedf0fc64d4c.11@example.com', 'lPo8EUYVeLZl1KqsNxPf9Stln6c2', 'Soldador'),
+        ('Mariana Silva', 'mariana.c689bedf0fc64d4c.12@example.com', 'RSb3yQkTCmPJLFzR0azT9rIe27m2', 'Soldador'),
+        ('Bruno Silva', 'bruno.c689bedf0fc64d4c.13@example.com', 'zuZlDf4xVfXmvcsmGZukHCu8H3A3', 'Soldador'),
+        ('Camila Silva', 'camila.c689bedf0fc64d4c.14@example.com', 'g9Wgd6SC6NMGa0rhYHRhbgpxmaV2', 'Soldador'),
+        ('Gustavo Silva', 'gustavo.c689bedf0fc64d4c.15@example.com', 'kNqfFRNdqzMmgrpEoDWBDxKAysC3', 'Soldador'),
+        ('Amanda Silva', 'amanda.c689bedf0fc64d4c.16@example.com', 'n9KDc0oyaWQetjujR7RfkqMsYn62', 'Soldador'),
+        ('Diego Silva', 'diego.c689bedf0fc64d4c.17@example.com', '0UB1UyPejkb3FcqDby7DHo6wrCB2', 'Soldador'),
+        ('Isabela Silva', 'isabela.c689bedf0fc64d4c.18@example.com', 'QoZEEF1UDDNsPzt9TK1cbgZDjDv2', 'Soldador'),
+        ('Vinicius Silva', 'vinicius.c689bedf0fc64d4c.19@example.com', 'DhP7pwYSBPOSfrIKpxlLAhwsJzB2', 'Soldador'),
+        ('Leticia Silva', 'leticia.c689bedf0fc64d4c.20@example.com', '6MdFs9NXeYXZQC2R6F0erP3fBCI2', 'Soldador'),
+        ('Lucas Santos', 'lucas.c689bedf0fc64d4c.21@example.com', 'mZKvitZtsCRCMTMTwceulg7v6Gw2', 'Soldador'),
+        ('Ana Santos', 'ana.c689bedf0fc64d4c.22@example.com', 'sMHtsTRcJuXiM0P0yyF6L6WRpdv2', 'Soldador'),
+        ('Pedro Santos', 'pedro.c689bedf0fc64d4c.23@example.com', 'ojWceBfaYjaCzek78QlNqTpug182', 'Soldador'),
+        ('Maria Santos', 'maria.c689bedf0fc64d4c.24@example.com', '4mnKzdOanSRkujN3wDGwlJWUf3j1', 'Soldador'),
+        ('João Santos', 'joao.c689bedf0fc64d4c.25@example.com', 'dLEhcKcnUJOzWGC8ySsZDpMSPRf2', 'Soldador'),
+        ('Julia Santos', 'julia.c689bedf0fc64d4c.26@example.com', 'v6pq4as8G7QIDOi3teF8MRCwCdx1', 'Soldador'),
+        ('Gabriel Santos', 'gabriel.c689bedf0fc64d4c.27@example.com', 'CczvV6VcQ4aiePlsK2A976rZGun2', 'Soldador'),
+        ('Beatriz Santos', 'beatriz.c689bedf0fc64d4c.28@example.com', 'm5rTHT0CpQXLEJZiiU94R66gE443', 'Soldador'),
+        ('Rafael Santos', 'rafael.c689bedf0fc64d4c.29@example.com', 'dA2vxPp9llSx4aEHk1RDs6FaaX72', 'Soldador'),
+        ('Laura Santos', 'laura.c689bedf0fc64d4c.30@example.com', 'XJqTu71xNAQq2unntmhxfJB79mh2', 'Soldador'),
+        ('Felipe Santos', 'felipe.c689bedf0fc64d4c.31@example.com', 'jjDIIIvDmqSSVVxZwCSwcQ8A63v1', 'Soldador'),
+        ('Mariana Santos', 'mariana.c689bedf0fc64d4c.32@example.com', 'EFv7TKvxJOQ16oAqAQEVHlX7B0j1', 'Soldador'),
+        ('Bruno Santos', 'bruno.c689bedf0fc64d4c.33@example.com', 'GcPf0vF5clXzgL8oGfEZAXQmqgh2', 'Soldador'),
+        ('Camila Santos', 'camila.c689bedf0fc64d4c.34@example.com', 'VBNafEzTqWcd5lHDJ23ukssdBlt1', 'Soldador'),
+        ('Gustavo Santos', 'gustavo.c689bedf0fc64d4c.35@example.com', 'cN0tdDybTQWa8xUvRvCsYVfQ5pC3', 'Soldador'),
+        ('Amanda Santos', 'amanda.c689bedf0fc64d4c.36@example.com', 'vqLPrkGAMqf3Mkixtla5AufswJs1', 'Soldador'),
+        ('Diego Santos', 'diego.c689bedf0fc64d4c.37@example.com', 'DEVgwakP34Oq7lRvnGZDZuM7hNY2', 'Soldador'),
+        ('Isabela Santos', 'isabela.c689bedf0fc64d4c.38@example.com', 'oNC69duGZEUpNtGUHLnc4L5vNQp2', 'Soldador'),
+        ('Vinicius Santos', 'vinicius.c689bedf0fc64d4c.39@example.com', 'f4fPrh2LJTWP7CoGcsjrg6nOEH72', 'Soldador'),
+        ('Leticia Santos', 'leticia.c689bedf0fc64d4c.40@example.com', 'XSEfwBef4ob4eaBxwNRCtYivAkx1', 'Soldador'),
+        ('Lucas Oliveira', 'lucas.c689bedf0fc64d4c.41@example.com', 'mLLON39LBMMCT0vcfEynLq7mpmC3', 'Operador de Máquinas'),
+        ('Ana Oliveira', 'ana.c689bedf0fc64d4c.42@example.com', 'lLVYSBEzt1RKIyUY9LlYJSrSGBk1', 'Operador de Máquinas'),
+        ('Pedro Oliveira', 'pedro.c689bedf0fc64d4c.43@example.com', '9CjXOVxJF0MIrRLRa0mAd05Jma63', 'Operador de Máquinas'),
+        ('Maria Oliveira', 'maria.c689bedf0fc64d4c.44@example.com', 'EgoTnVC2NfTBh1m5J83Z798mtjI3', 'Operador de Máquinas'),
+        ('João Oliveira', 'joao.c689bedf0fc64d4c.45@example.com', 'pd31cnH8LzZrN2bA89z9TievBv62', 'Operador de Máquinas'),
+        ('Julia Oliveira', 'julia.c689bedf0fc64d4c.46@example.com', 'LQtR4cpKFITSgdftZ7Rh9NZYPA63', 'Operador de Máquinas'),
+        ('Gabriel Oliveira', 'gabriel.c689bedf0fc64d4c.47@example.com', 'efMfvTGGnph3Ff5ldKZg3krybKs1', 'Operador de Máquinas'),
+        ('Beatriz Oliveira', 'beatriz.c689bedf0fc64d4c.48@example.com', 'ct7B1NDUboOi0wRUfizuy9Fes1n2', 'Operador de Máquinas'),
+        ('Rafael Oliveira', 'rafael.c689bedf0fc64d4c.49@example.com', 'KtwONFwRi8Vak4qUhgNdN3XtEkw1', 'Operador de Máquinas'),
+        ('Laura Oliveira', 'laura.c689bedf0fc64d4c.50@example.com', '19Glg1F40JZeClj5gPHW1R0H81F2', 'Operador de Máquinas'),
+        ('Felipe Oliveira', 'felipe.c689bedf0fc64d4c.51@example.com', 'e8LP7QkIHKUm3TUrWDIaDa3n1ZC2', 'Operador de Máquinas'),
+        ('Mariana Oliveira', 'mariana.c689bedf0fc64d4c.52@example.com', 'iJL0eoFafTWZaO8RmNEHQDQqTL93', 'Operador de Máquinas'),
+        ('Bruno Oliveira', 'bruno.c689bedf0fc64d4c.53@example.com', 'lQissYDkT9bBZRwpvDe8byXLWFI3', 'Operador de Máquinas'),
+        ('Camila Oliveira', 'camila.c689bedf0fc64d4c.54@example.com', 'xpToio0FM6f0scWwoBv0ZsUGe0g1', 'Operador de Máquinas'),
+        ('Gustavo Oliveira', 'gustavo.c689bedf0fc64d4c.55@example.com', 'bo0bMg1AfQYbjyp39us4xczhGYy1', 'Operador de Máquinas'),
+        ('Amanda Oliveira', 'amanda.c689bedf0fc64d4c.56@example.com', '6XWwCiSRFXMaO657387vdcIWHrs2', 'Operador de Máquinas'),
+        ('Diego Oliveira', 'diego.c689bedf0fc64d4c.57@example.com', 'suBOjTW2CLTDF10FhJApRNfM3L12', 'Operador de Máquinas'),
+        ('Isabela Oliveira', 'isabela.c689bedf0fc64d4c.58@example.com', 'qlF9h5HYEdQlcLL09ySDkHlf5Pw2', 'Operador de Máquinas'),
+        ('Vinicius Oliveira', 'vinicius.c689bedf0fc64d4c.59@example.com', 'GT8hQOD1buNfLNvI8OmUsnsl5Wd2', 'Operador de Máquinas'),
+        ('Leticia Oliveira', 'leticia.c689bedf0fc64d4c.60@example.com', 'daaR01cpQANgVkgoKvxDN2HxmfP2', 'Operador de Máquinas'),
+        ('Lucas Souza', 'lucas.c689bedf0fc64d4c.61@example.com', '1WCIvh2fjlaNhZoHUrJJexW9JFh1', 'Operador de Máquinas'),
+        ('Ana Souza', 'ana.c689bedf0fc64d4c.62@example.com', 'uMdXv865NxdFmK8bzkrZu6y4TMI2', 'Operador de Máquinas'),
+        ('Pedro Souza', 'pedro.c689bedf0fc64d4c.63@example.com', 'IiqolNO08MSX79XQzyfgj3TU0cL2', 'Operador de Máquinas'),
+        ('Maria Souza', 'maria.c689bedf0fc64d4c.64@example.com', 'yVDUNhCbBuSfcWcaHKaNan9a4GB3', 'Operador de Máquinas'),
+        ('João Souza', 'joao.c689bedf0fc64d4c.65@example.com', 'AAKrJ35ZLYULthAn2axZGB8MsYv1', 'Operador de Máquinas'),
+        ('Julia Souza', 'julia.c689bedf0fc64d4c.66@example.com', 'yB8U1hCJmehBQiJ9SumVsfdTQqK2', 'Operador de Máquinas'),
+        ('Gabriel Souza', 'gabriel.c689bedf0fc64d4c.67@example.com', 'mLDWWXl2D2Qq9PsLfqlfhRnvX623', 'Operador de Máquinas'),
+        ('Beatriz Souza', 'beatriz.c689bedf0fc64d4c.68@example.com', 'EYbhIEKqWWW9h8lhdgcSrQi1xcI3', 'Operador de Máquinas'),
+        ('Rafael Souza', 'rafael.c689bedf0fc64d4c.69@example.com', 'R0x2MTXrq7Ucix1Elwn6b8R08qo2', 'Operador de Máquinas'),
+        ('Laura Souza', 'laura.c689bedf0fc64d4c.70@example.com', 'rGqS3VPCrybBXwYuWf3d0xga4SL2', 'Operador de Máquinas'),
+        ('Felipe Souza', 'felipe.c689bedf0fc64d4c.71@example.com', 'CDhweHEuYvRDK5zIaCjzIg21ulf1', 'Operador de Máquinas'),
+        ('Mariana Souza', 'mariana.c689bedf0fc64d4c.72@example.com', 'DhzaoXembJMtBG8aLegN5Lqjj2T2', 'Operador de Máquinas'),
+        ('Bruno Souza', 'bruno.c689bedf0fc64d4c.73@example.com', 'zdVZllS4GNbpJFWyR5EYkzQ9xhf2', 'Operador de Máquinas'),
+        ('Camila Souza', 'camila.c689bedf0fc64d4c.74@example.com', 'KTZCAcpcbVhd3DSFsQPFfu52u0w2', 'Operador de Máquinas'),
+        ('Gustavo Souza', 'gustavo.c689bedf0fc64d4c.75@example.com', 'k0vCi6rBrGOWNB128z7BTOB7bfg1', 'Operador de Máquinas'),
+        ('Amanda Souza', 'amanda.c689bedf0fc64d4c.76@example.com', 'dWeMQ34ZYVb6fX4LnVGbR0WNJui2', 'Operador de Máquinas'),
+        ('Diego Souza', 'diego.c689bedf0fc64d4c.77@example.com', 'inSbqIXoKZOjf0Y3wMkJoGbxNTt1', 'Operador de Máquinas'),
+        ('Isabela Souza', 'isabela.c689bedf0fc64d4c.78@example.com', 'a3D557o3mpbCMBmRsgj4IrKBywg2', 'Operador de Máquinas'),
+        ('Vinicius Souza', 'vinicius.c689bedf0fc64d4c.79@example.com', 'ZtzTECOoQzZ25ToxaE8QlCMLkS02', 'Operador de Máquinas'),
+        ('Leticia Souza', 'leticia.c689bedf0fc64d4c.80@example.com', 'dtNtF18HNCR1wrWKXsUofDAkBTz1', 'Operador de Máquinas'),
+        ('Lucas Lima', 'lucas.c689bedf0fc64d4c.81@example.com', 'EYPwnZMx1lSBMXnm6N5lYAdOCaC2', 'Operador de Máquinas'),
+        ('Ana Lima', 'ana.c689bedf0fc64d4c.82@example.com', 'iZLYsJ7dJHbIrj2v13vQqZYwVDj1', 'Operador de Máquinas'),
+        ('Pedro Lima', 'pedro.c689bedf0fc64d4c.83@example.com', 'ma4M6hbY2AcLBIwloyyecmyD4gf2', 'Operador de Máquinas'),
+        ('Maria Lima', 'maria.c689bedf0fc64d4c.84@example.com', 'RccqrbF9RtPZkFGAogWa2gVOrUO2', 'Operador de Máquinas'),
+        ('João Lima', 'joao.c689bedf0fc64d4c.85@example.com', 'TMAcbf0crTZQ9iBvXrWyqPkdUU22', 'Operador de Máquinas'),
+        ('Julia Lima', 'julia.c689bedf0fc64d4c.86@example.com', 'xpXVbOs27GMNfv22aGWLCd9B9Te2', 'Operador de Máquinas'),
+        ('Gabriel Lima', 'gabriel.c689bedf0fc64d4c.87@example.com', 'tngHueuN4oY76GF7CDxeWASZMWo1', 'Operador de Máquinas'),
+        ('Beatriz Lima', 'beatriz.c689bedf0fc64d4c.88@example.com', 'RmlP9IYFGLeC7ih4PXkuD3vLHXi1', 'Operador de Máquinas'),
+        ('Rafael Lima', 'rafael.c689bedf0fc64d4c.89@example.com', 'LMmmL0pg8RXlFsrudb6cCj7et6x2', 'Operador de Máquinas'),
+        ('Laura Lima', 'laura.c689bedf0fc64d4c.90@example.com', 'DHnq0LqUs7WTOixgoBIByOeESUv1', 'Operador de Máquinas'),
+        ('Felipe Lima', 'felipe.c689bedf0fc64d4c.91@example.com', 'zsjjd0ZYcDYcODKnes3bP91CRfv2', 'Operador de Máquinas'),
+        ('Mariana Lima', 'mariana.c689bedf0fc64d4c.92@example.com', 'aTZTaOjbwPQgSJEobkKdDSUY8ex1', 'Operador de Máquinas'),
+        ('Bruno Lima', 'bruno.c689bedf0fc64d4c.93@example.com', '2X6LmSRluNSzdr1k6YpIeJJXAxz2', 'Operador de Máquinas'),
+        ('Camila Lima', 'camila.c689bedf0fc64d4c.94@example.com', 'eVBpcIQx65RhOFDEc109gGOnEiF3', 'Operador de Máquinas'),
+        ('Gustavo Lima', 'gustavo.c689bedf0fc64d4c.95@example.com', 'klCmJ6v7oMNyEFm6qHzXpTFeHD22', 'Operador de Máquinas'),
+        ('Amanda Lima', 'amanda.c689bedf0fc64d4c.96@example.com', '5RRgAGvxWTMfc9lh5rd8Wz3ik6C2', 'Operador de Máquinas'),
+        ('Diego Lima', 'diego.c689bedf0fc64d4c.97@example.com', 'r9GJ5KyOYAgWGvlXCJnFhfvBy2f1', 'Operador de Máquinas'),
+        ('Isabela Lima', 'isabela.c689bedf0fc64d4c.98@example.com', 'trGPJDngu6OrfznWqbSFADT2c273', 'Operador de Máquinas'),
+        ('Vinicius Lima', 'vinicius.c689bedf0fc64d4c.99@example.com', 'uKkEOpvO95cK9P7XiApJNIm8jap2', 'Operador de Máquinas'),
+        ('Leticia Lima', 'leticia.c689bedf0fc64d4c.100@example.com', 'gl1Dhgq14ENbKnMcEfyxhSGhHJS2', 'Operador de Máquinas')
+) AS dados(nome, email, firebase_uid, nome_cargo)
+INNER JOIN unidades u ON u.id_unidade = 1
+INNER JOIN cargos c
+    ON c.workspace_id = u.workspace_id AND c.nome = dados.nome_cargo
+ON CONFLICT (email) DO UPDATE
+SET nome = EXCLUDED.nome,
+    firebase_uid = EXCLUDED.firebase_uid,
+    tipo = EXCLUDED.tipo,
+    cargo_id = EXCLUDED.cargo_id,
+    unidade_id = EXCLUDED.unidade_id,
+    modalidade = EXCLUDED.modalidade,
+    status = EXCLUDED.status,
+    criado_em = EXCLUDED.criado_em;

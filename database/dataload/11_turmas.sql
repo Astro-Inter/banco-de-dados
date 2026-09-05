@@ -1,4 +1,13 @@
-WITH eventos_base (gestor_email, titulo_evento, data_base) AS (
+WITH gestor_unidade AS (
+    -- IDs das unidades não dependem da ordem dos VALUES do dataload.
+    SELECT email
+    FROM usuarios
+    WHERE unidade_id = 1 AND status = 'ATIVO'
+      AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
+    ORDER BY CASE WHEN tipo = 'GESTOR' THEN 0 ELSE 1 END, email
+    LIMIT 1
+),
+eventos_base (gestor_email, titulo_evento, data_base) AS (
     VALUES
         ('ana.dias.004@example.com', 'Integração para uso de EPI', '2026-02-10'::DATE),
         ('ana.dias.004@example.com', 'Operação segura de máquinas', '2026-03-10'::DATE),
@@ -11,7 +20,13 @@ WITH eventos_base (gestor_email, titulo_evento, data_base) AS (
         ('ana.gomes.006@example.com', 'Segurança nas atividades rurais', '2026-02-24'::DATE),
         ('ana.gomes.006@example.com', 'Manuseio de inflamáveis e defensivos', '2026-03-24'::DATE),
         ('ana.gomes.006@example.com', 'Operação de máquinas agrícolas', '2026-04-28'::DATE),
-        ('ana.gomes.006@example.com', 'Proteção individual no campo', '2026-07-28'::DATE)
+        ('ana.gomes.006@example.com', 'Proteção individual no campo', '2026-07-28'::DATE),
+        -- SCRUM-172: Turma A e Turma B para cada novo evento.
+        ((SELECT email FROM gestor_unidade), 'Integração de EPI - Unidade 1', '2026-09-02'::DATE),
+        ((SELECT email FROM gestor_unidade), 'Movimentação de materiais - Unidade 1', '2026-09-02'::DATE),
+        ((SELECT email FROM gestor_unidade), 'Operação de máquinas - Unidade 1', '2026-09-02'::DATE),
+        ((SELECT email FROM gestor_unidade), 'Reciclagem de EPI - Unidade 1', '2026-09-10'::DATE),
+        ((SELECT email FROM gestor_unidade), 'Bloqueio de máquinas - Unidade 1', '2026-09-10'::DATE)
 ),
 dados AS (
     SELECT
