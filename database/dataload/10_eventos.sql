@@ -1,4 +1,13 @@
-WITH dados (
+WITH gestor_unidade AS (
+    -- IDs das unidades não dependem da ordem dos VALUES do dataload.
+    SELECT email
+    FROM usuarios
+    WHERE unidade_id = 1 AND status = 'ATIVO'
+      AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
+    ORDER BY CASE WHEN tipo = 'GESTOR' THEN 0 ELSE 1 END, email
+    LIMIT 1
+),
+dados (
     gestor_email, nr_id, titulo, descricao, link_externo,
     modo_conclusao, evidencia_obrigatoria, status,
     data_cancelamento, motivo_cancelamento
@@ -15,7 +24,13 @@ WITH dados (
         ('ana.gomes.006@example.com', 31, 'Segurança nas atividades rurais', 'Treinamento sobre riscos ocupacionais nas operações agrícolas e medidas preventivas.', 'https://treinamentos.astro.local/nr-31', 'FUNCIONARIO', FALSE, 'CONCLUIDO', NULL, NULL),
         ('ana.gomes.006@example.com', 20, 'Manuseio de inflamáveis e defensivos', 'Orientações para armazenamento e manipulação segura de produtos inflamáveis e defensivos.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
         ('ana.gomes.006@example.com', 12, 'Operação de máquinas agrícolas', 'Capacitação para inspeção e operação segura de tratores e implementos agrícolas.', 'https://treinamentos.astro.local/nr-12-agricola', 'LISTA_PRESENCA', FALSE, 'CONCLUIDO', NULL, NULL),
-        ('ana.gomes.006@example.com', 6, 'Proteção individual no campo', 'Orientações sobre escolha e conservação de equipamentos de proteção para atividades rurais.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-07-20 09:00:00', 'Turmas canceladas durante a atualização do conteúdo programático.')
+        ('ana.gomes.006@example.com', 6, 'Proteção individual no campo', 'Orientações sobre escolha e conservação de equipamentos de proteção para atividades rurais.', NULL, 'GESTOR', FALSE, 'CANCELADO', '2026-07-20 09:00:00', 'Turmas canceladas durante a atualização do conteúdo programático.'),
+        -- SCRUM-172: cinco eventos da unidade 1, com duas turmas de dez funcionários.
+        ((SELECT email FROM gestor_unidade), 6, 'Integração de EPI - Unidade 1', 'Seleção, utilização e conservação de equipamentos de proteção individual.', NULL, 'GESTOR', FALSE, 'CONCLUIDO', NULL, NULL),
+        ((SELECT email FROM gestor_unidade), 11, 'Movimentação de materiais - Unidade 1', 'Transporte, armazenamento e movimentação segura de materiais na unidade.', NULL, 'GESTOR', FALSE, 'CONCLUIDO', NULL, NULL),
+        ((SELECT email FROM gestor_unidade), 12, 'Operação de máquinas - Unidade 1', 'Inspeção e operação segura de máquinas industriais na unidade.', NULL, 'GESTOR', FALSE, 'CONCLUIDO', NULL, NULL),
+        ((SELECT email FROM gestor_unidade), 6, 'Reciclagem de EPI - Unidade 1', 'Revisão prática do uso de equipamentos de proteção para operadores.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL),
+        ((SELECT email FROM gestor_unidade), 12, 'Bloqueio de máquinas - Unidade 1', 'Planejamento de bloqueio e prevenção de acionamento inesperado de máquinas.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL)
 ),
 atualizados AS (
     UPDATE eventos e

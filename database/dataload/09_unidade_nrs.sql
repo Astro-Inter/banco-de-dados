@@ -42,3 +42,10 @@ INNER JOIN unidades u
 INNER JOIN nr_catalogos nr
     ON nr.codigo_nr = dados.nr_id
 ON CONFLICT (unidade_id, nr_id) DO NOTHING;
+-- SCRUM-172: NR 11 aplicável aos soldadores e ao evento de movimentação na unidade 1.
+INSERT INTO unidade_nrs (unidade_id, nr_id)
+SELECT u.id_unidade, nr.codigo_nr
+FROM unidades u
+INNER JOIN nr_catalogos nr ON nr.codigo_nr = 11
+WHERE u.id_unidade = 1
+ON CONFLICT (unidade_id, nr_id) DO NOTHING;

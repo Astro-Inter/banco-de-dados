@@ -18,6 +18,7 @@ WITH participacoes AS (
     LEFT JOIN nr_catalogos nr
         ON nr.codigo_nr = evento.nr_id
     WHERE participante.email LIKE '%@example.com'
+      AND participante.email !~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
       AND gestor.email IN (
           'ana.dias.004@example.com',
           'ana.ferreira.005@example.com',
@@ -65,6 +66,40 @@ SELECT
     data_validade,
     motivo_rejeicao
 FROM dados
+ON CONFLICT (turma_funcionario_id) DO UPDATE
+SET status = EXCLUDED.status,
+    data_conclusao = EXCLUDED.data_conclusao,
+    data_validacao = EXCLUDED.data_validacao,
+    data_validade = EXCLUDED.data_validade,
+    motivo_rejeicao = EXCLUDED.motivo_rejeicao;
+
+-- SCRUM-172: 60 conclusões validadas e 40 pendências nos eventos futuros.
+INSERT INTO conclusao_eventos
+    (turma_funcionario_id, status, data_conclusao, data_validacao, data_validade, motivo_rejeicao)
+SELECT
+    tf.id_turma_funcionario,
+    CASE WHEN evento.status = 'CONCLUIDO' THEN 'CONCLUIDO' ELSE 'PENDENTE' END,
+    CASE WHEN evento.status = 'CONCLUIDO' THEN turma.data_termino END,
+    CASE WHEN evento.status = 'CONCLUIDO' THEN turma.data_termino + INTERVAL '1 hour' END,
+    CASE WHEN evento.status = 'CONCLUIDO'
+        THEN (turma.data_termino + MAKE_INTERVAL(months => nr.tempo_reciclagem_meses))::DATE END,
+    NULL
+FROM turma_funcionarios tf
+INNER JOIN usuarios participante ON participante.id_usuario = tf.usuario_id
+INNER JOIN turmas turma ON turma.id_turma = tf.turma_id
+INNER JOIN eventos evento ON evento.id_evento = turma.evento_id
+INNER JOIN usuarios gestor ON gestor.id_usuario = evento.gestor_id
+INNER JOIN nr_catalogos nr ON nr.codigo_nr = evento.nr_id
+WHERE participante.unidade_id = 1
+  AND participante.email ~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
+  AND gestor.unidade_id = 1 AND gestor.tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
+  AND evento.titulo IN (
+      'Integração de EPI - Unidade 1',
+      'Movimentação de materiais - Unidade 1',
+      'Operação de máquinas - Unidade 1',
+      'Reciclagem de EPI - Unidade 1',
+      'Bloqueio de máquinas - Unidade 1'
+  )
 ON CONFLICT (turma_funcionario_id) DO UPDATE
 SET status = EXCLUDED.status,
     data_conclusao = EXCLUDED.data_conclusao,
