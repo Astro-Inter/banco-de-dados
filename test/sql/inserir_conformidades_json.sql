@@ -1,5 +1,5 @@
 -- Regressão executável em um banco de teste com scripts/1_create_table.sql,
--- scripts/2_constraints.sql e procedures/inserir_conformidades_json.sql aplicados.
+-- scripts/2_constraints.sql e procedures/02_inserir_conformidades_json.sql aplicados.
 -- Todos os dados de teste são revertidos ao final.
 BEGIN;
 DO $$
