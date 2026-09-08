@@ -285,3 +285,59 @@ COMMENT ON COLUMN acessos.data IS
 
 COMMENT ON COLUMN acessos.usuario_id IS
 'Identificador do usuário que acessou o sistema na data registrada.';
+
+CREATE TABLE IF NOT EXISTS funcionario_posicao (
+    data_evento DATE,
+    ordem_funcionario INT,
+    id_funcionario INT,
+    nome VARCHAR(255),
+    cargo VARCHAR(255),
+    id_empresa INT,
+    id_unidade INT,
+    data_criacao DATE
+);
+
+COMMENT ON TABLE funcionario_posicao IS
+'Armazena a posição e as informações dos funcionários por data, empresa e unidade.';
+
+COMMENT ON COLUMN funcionario_posicao.data_evento IS
+'Data de referência do evento relacionado à posição do funcionário.';
+
+COMMENT ON COLUMN funcionario_posicao.ordem_funcionario IS
+'Posição ou ordem do funcionário dentro da classificação registrada.';
+
+COMMENT ON COLUMN funcionario_posicao.id_funcionario IS
+'Identificador do funcionário associado ao registro.';
+
+COMMENT ON COLUMN funcionario_posicao.nome IS
+'Nome do funcionário.';
+
+COMMENT ON COLUMN funcionario_posicao.cargo IS
+'Cargo ocupado pelo funcionário.';
+
+COMMENT ON COLUMN funcionario_posicao.id_empresa IS
+'Identificador da empresa à qual o funcionário pertence.';
+
+COMMENT ON COLUMN funcionario_posicao.id_unidade IS
+'Identificador da unidade à qual o funcionário pertence.';
+
+COMMENT ON COLUMN funcionario_posicao.data_criacao IS
+'Data de criação do registro.';
+
+CREATE TABLE IF NOT EXISTS resumo_funcionario_dia (
+    data_evento DATE,
+    id_unidade INT,
+    qtd_funcionarios INT
+);
+
+COMMENT ON TABLE resumo_funcionario_dia IS
+'Armazena o resumo diário da quantidade de funcionários por unidade.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.data_evento IS
+'Data de referência utilizada para contabilizar os funcionários.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.id_unidade IS
+'Identificador da unidade à qual o resumo de funcionários pertence.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.qtd_funcionarios IS
+'Quantidade de funcionários contabilizados na unidade na data de referência.';
