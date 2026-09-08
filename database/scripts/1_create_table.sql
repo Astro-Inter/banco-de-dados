@@ -323,3 +323,21 @@ COMMENT ON COLUMN funcionario_posicao.id_unidade IS
 
 COMMENT ON COLUMN funcionario_posicao.data_criacao IS
 'Data de criação do registro.';
+
+CREATE TABLE IF NOT EXISTS resumo_funcionario_dia (
+    data_evento DATE,
+    id_unidade INT,
+    qtd_funcionarios INT
+);
+
+COMMENT ON TABLE resumo_funcionario_dia IS
+'Armazena o resumo diário da quantidade de funcionários por unidade.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.data_evento IS
+'Data de referência utilizada para contabilizar os funcionários.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.id_unidade IS
+'Identificador da unidade à qual o resumo de funcionários pertence.';
+
+COMMENT ON COLUMN resumo_funcionario_dia.qtd_funcionarios IS
+'Quantidade de funcionários contabilizados na unidade na data de referência.';
