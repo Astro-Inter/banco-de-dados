@@ -341,3 +341,52 @@ COMMENT ON COLUMN resumo_funcionario_dia.id_unidade IS
 
 COMMENT ON COLUMN resumo_funcionario_dia.qtd_funcionarios IS
 'Quantidade de funcionários contabilizados na unidade na data de referência.';
+
+CREATE TABLE IF NOT EXISTS fato_historico_geral_unidade (
+    id_fato_historico BIGSERIAL PRIMARY KEY,
+    id_unidade INT NOT NULL,
+    nome_unidade VARCHAR(255),
+    id_dim_nr_catalogo BIGINT,
+    id_dim_resumo BIGINT,
+    qtd_nrs INT DEFAULT 0,
+    qtd_funcionarios INT DEFAULT 0,
+    qtd_treinamentos INT DEFAULT 0,
+    dt_referencia DATE NOT NULL,
+    dt_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_fato_unidade_data
+        UNIQUE (id_unidade, dt_referencia)
+);
+
+COMMENT ON TABLE fato_historico_geral_unidade IS
+'Armazena o histórico diário dos principais indicadores de cada unidade, permitindo acompanhar a evolução de NRs, funcionários e treinamentos ao longo do tempo para utilização na camada de BI.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.id_fato_historico IS
+'Identificador único do registro histórico da unidade.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.id_unidade IS
+'Identificador da unidade à qual os indicadores históricos pertencem.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.nome_unidade IS
+'Nome da unidade correspondente ao registro histórico.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.id_dim_nr_catalogo IS
+'Identificador de referência da dimensão de NRs associada à unidade.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.id_dim_resumo IS
+'Identificador de referência da dimensão de resumo de funcionários associada à unidade.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.qtd_nrs IS
+'Quantidade de NRs consideradas aplicáveis à unidade na data de referência.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.qtd_funcionarios IS
+'Quantidade de funcionários contabilizados na unidade na data de referência.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.qtd_treinamentos IS
+'Quantidade de treinamentos contabilizados para a unidade na data de referência.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.dt_referencia IS
+'Data de referência dos indicadores registrados para a unidade.';
+
+COMMENT ON COLUMN fato_historico_geral_unidade.dt_criacao IS
+'Data e horário em que o registro histórico foi criado.';
