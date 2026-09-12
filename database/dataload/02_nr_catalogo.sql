@@ -1,5 +1,5 @@
-INSERT INTO nr_catalogos
-    (codigo_nr, titulo, tempo_reciclagem_meses, revogada)
+INSERT INTO nr_catalogo
+    (codigo_nr, titulo, tempo_reciclagem_mes, revogada)
 VALUES
     (1,  'Disposições Gerais e Gerenciamento de Riscos Ocupacionais', 24, FALSE),
     (5,  'Comissão Interna de Prevenção de Acidentes e de Assédio', 12, FALSE),
@@ -14,5 +14,5 @@ VALUES
     (35, 'Trabalho em Altura', 24, FALSE)
 ON CONFLICT (codigo_nr) DO UPDATE
 SET titulo = EXCLUDED.titulo,
-    tempo_reciclagem_meses = EXCLUDED.tempo_reciclagem_meses,
+    tempo_reciclagem_mes = EXCLUDED.tempo_reciclagem_mes,
     revogada = EXCLUDED.revogada;

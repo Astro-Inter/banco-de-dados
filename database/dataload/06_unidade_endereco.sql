@@ -1,4 +1,4 @@
-INSERT INTO unidade_enderecos
+INSERT INTO unidade_endereco
     (unidade_id, cep, rua, cidade, bairro, estado, complemento)
 SELECT
     u.id_unidade,
@@ -17,9 +17,9 @@ FROM (
         ('33444555000166', 'Matriz Campinas', '13010000', 'Avenida Francisco Glicério', 'Campinas', 'Centro', 'SP', 'Prédio principal'),
         ('33444555000166', 'Centro de Distribuição Ribeirão Preto', '14020000', 'Avenida Presidente Vargas', 'Ribeirão Preto', 'Jardim América', 'SP', 'Armazém central')
 ) AS dados(cnpj, nome_unidade, cep, rua, cidade, bairro, estado, complemento)
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
-INNER JOIN unidades u
+INNER JOIN unidade u
     ON u.workspace_id = w.id_workspace
    AND u.nome = dados.nome_unidade
 ON CONFLICT (unidade_id) DO UPDATE

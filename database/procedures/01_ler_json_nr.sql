@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE ler_json_nrs(p_json_data text DEFAULT NULL)
+CREATE OR REPLACE PROCEDURE ler_json_nr(p_json_data text DEFAULT NULL)
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -14,18 +14,18 @@ BEGIN
         RAISE EXCEPTION 'O parâmetro enviado não é um JSON válido.';
     END IF;
 
-    INSERT INTO nr_catalogo (codigo_nr, titulo, revogada, tempo_reciclagem_meses)
+    INSERT INTO nr_catalogo (codigo_nr, titulo, revogada, tempo_reciclagem_mes)
     SELECT
         (elem::jsonb ->> 'id')::integer                       AS codigo_nr,
         (elem::jsonb ->> 'nome')::varchar                     AS titulo,
         (elem::jsonb ->> 'revogada')::boolean                 AS revogada,
-        (elem::jsonb ->> 'tempo_reciclagem_meses')::integer   AS tempo_reciclagem_meses
+        (elem::jsonb ->> 'tempo_reciclagem_mes')::integer   AS tempo_reciclagem_mes
     FROM jsonb_array_elements_text(v_json) AS elem
     ON CONFLICT (codigo_nr)
     DO UPDATE SET
         titulo                 = EXCLUDED.titulo,
         revogada               = EXCLUDED.revogada,
-        tempo_reciclagem_meses = EXCLUDED.tempo_reciclagem_meses;
+        tempo_reciclagem_mes = EXCLUDED.tempo_reciclagem_mes;
 
 END;
 $$;

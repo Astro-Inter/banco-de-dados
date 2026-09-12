@@ -1,7 +1,7 @@
 WITH gestor_unidade AS (
     -- IDs das unidades não dependem da ordem dos VALUES do dataload.
     SELECT email
-    FROM usuarios
+    FROM usuario
     WHERE unidade_id = 1 AND status = 'ATIVO'
       AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
     ORDER BY CASE WHEN tipo = 'GESTOR' THEN 0 ELSE 1 END, email
@@ -33,7 +33,7 @@ dados (
         ((SELECT email FROM gestor_unidade), 12, 'Bloqueio de máquinas - Unidade 1', 'Planejamento de bloqueio e prevenção de acionamento inesperado de máquinas.', NULL, 'GESTOR', FALSE, 'ATIVO', NULL, NULL)
 ),
 atualizados AS (
-    UPDATE eventos e
+    UPDATE evento e
     SET nr_id = dados.nr_id,
         descricao = dados.descricao,
         link_externo = dados.link_externo,
@@ -43,13 +43,13 @@ atualizados AS (
         data_cancelamento = dados.data_cancelamento::TIMESTAMP,
         motivo_cancelamento = dados.motivo_cancelamento
     FROM dados
-    INNER JOIN usuarios gestor
+    INNER JOIN usuario gestor
         ON gestor.email = dados.gestor_email
     WHERE e.gestor_id = gestor.id_usuario
       AND e.titulo = dados.titulo
     RETURNING e.id_evento
 )
-INSERT INTO eventos
+INSERT INTO evento
     (gestor_id, nr_id, titulo, descricao, link_externo, modo_conclusao,
      evidencia_obrigatoria, status, data_cancelamento, motivo_cancelamento)
 SELECT
@@ -64,11 +64,11 @@ SELECT
     dados.data_cancelamento::TIMESTAMP,
     dados.motivo_cancelamento
 FROM dados
-INNER JOIN usuarios gestor
+INNER JOIN usuario gestor
     ON gestor.email = dados.gestor_email
 WHERE NOT EXISTS (
     SELECT 1
-    FROM eventos e
+    FROM evento e
     WHERE e.gestor_id = gestor.id_usuario
       AND e.titulo = dados.titulo
 );

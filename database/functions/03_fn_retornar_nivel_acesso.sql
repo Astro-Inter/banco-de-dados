@@ -18,7 +18,7 @@ BEGIN
     END IF;
 
     SELECT tipo INTO v_tipo
-    FROM usuarios
+    FROM usuario
     WHERE firebase_uid = p_firebase_uid;
 
     RETURN COALESCE(v_tipo, 'SEM_ACESSO');
@@ -26,4 +26,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION fn_retornar_nivel_acesso(TEXT) IS
-'Retorna ADMIN quando o Firebase UID existe em admin; caso contrário, retorna o tipo de usuarios ou SEM_ACESSO. A consulta identifica o perfil independentemente do status do usuário.';
+'Retorna ADMIN quando o Firebase UID existe em admin; caso contrário, retorna o tipo de usuario ou SEM_ACESSO. A consulta identifica o perfil independentemente do status do usuário.';

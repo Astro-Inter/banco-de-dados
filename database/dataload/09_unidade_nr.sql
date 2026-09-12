@@ -1,4 +1,4 @@
-INSERT INTO unidade_nrs (unidade_id, nr_id)
+INSERT INTO unidade_nr (unidade_id, nr_id)
 SELECT
     u.id_unidade,
     dados.nr_id
@@ -34,18 +34,18 @@ FROM (
         ('33444555000166', 'Centro de Distribuição Ribeirão Preto', 20),
         ('33444555000166', 'Centro de Distribuição Ribeirão Preto', 31)
 ) AS dados(cnpj, nome_unidade, nr_id)
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
-INNER JOIN unidades u
+INNER JOIN unidade u
     ON u.workspace_id = w.id_workspace
    AND u.nome = dados.nome_unidade
-INNER JOIN nr_catalogos nr
+INNER JOIN nr_catalogo nr
     ON nr.codigo_nr = dados.nr_id
 ON CONFLICT (unidade_id, nr_id) DO NOTHING;
 -- SCRUM-172: NR 11 aplicável aos soldadores e ao evento de movimentação na unidade 1.
-INSERT INTO unidade_nrs (unidade_id, nr_id)
+INSERT INTO unidade_nr (unidade_id, nr_id)
 SELECT u.id_unidade, nr.codigo_nr
-FROM unidades u
-INNER JOIN nr_catalogos nr ON nr.codigo_nr = 11
+FROM unidade u
+INNER JOIN nr_catalogo nr ON nr.codigo_nr = 11
 WHERE u.id_unidade = 1
 ON CONFLICT (unidade_id, nr_id) DO NOTHING;

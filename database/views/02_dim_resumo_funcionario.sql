@@ -6,10 +6,10 @@ WITH func AS (
         c.nome AS cargo,
         u.unidade_id,
         un.nome AS unidade
-    FROM usuarios u
-    INNER JOIN cargos c
+    FROM usuario u
+    INNER JOIN cargo c
         ON c.id_cargo = u.cargo_id
-    INNER JOIN unidades un
+    INNER JOIN unidade un
         ON un.id_unidade = u.unidade_id
     WHERE u.tipo = 'FUNCIONARIO'
       AND u.status = 'ATIVO'

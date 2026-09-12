@@ -13,7 +13,7 @@
 --     "dataValidade": "2027-03-10"
 --   }
 -- ]
-CREATE OR REPLACE PROCEDURE inserir_conformidades_json(
+CREATE OR REPLACE PROCEDURE inserir_conformidade_json(
     IN p_json_data TEXT,
     INOUT p_erros JSONB DEFAULT '[]'::JSONB
 )
@@ -62,7 +62,7 @@ BEGIN
             v_email := LOWER(BTRIM(v_item ->> 'email'));
 
             SELECT ARRAY_AGG(id_usuario) INTO v_usuarios
-            FROM usuarios
+            FROM usuario
             WHERE LOWER(BTRIM(email)) = v_email AND tipo = 'FUNCIONARIO';
 
             IF v_usuarios IS NULL THEN
@@ -82,7 +82,7 @@ BEGIN
             EXCEPTION WHEN numeric_value_out_of_range THEN
                 RAISE EXCEPTION 'Número da NR fora do intervalo permitido.' USING ERRCODE = '22023';
             END;
-            IF NOT EXISTS (SELECT 1 FROM nr_catalogos WHERE codigo_nr = v_nr) THEN
+            IF NOT EXISTS (SELECT 1 FROM nr_catalogo WHERE codigo_nr = v_nr) THEN
                 RAISE EXCEPTION 'NR não encontrada no catálogo.' USING ERRCODE = '22023';
             END IF;
 
@@ -98,19 +98,19 @@ BEGIN
 
             -- Serializa chamadas desta procedure para o mesmo funcionário em READ COMMITTED.
             -- O esquema admite múltiplas conformidades por funcionário/NR; não há UNIQUE do par.
-            PERFORM 1 FROM usuarios
+            PERFORM 1 FROM usuario
             WHERE id_usuario = v_usuario_id
             FOR NO KEY UPDATE;
             IF NOT FOUND THEN
                 RAISE EXCEPTION 'Funcionário não encontrado para o e-mail informado.' USING ERRCODE = '22023';
             END IF;
 
-            UPDATE conformidades
+            UPDATE conformidade
             SET data_validade = v_validade
             WHERE usuario_id = v_usuario_id AND nr_id = v_nr;
 
             IF NOT FOUND THEN
-                INSERT INTO conformidades
+                INSERT INTO conformidade
                     (usuario_id, nr_id, aplicavel, data_validade, origem, conclusao_evento_id)
                 VALUES (v_usuario_id, v_nr, TRUE, v_validade, 'MANUAL', NULL);
             END IF;
@@ -130,5 +130,5 @@ BEGIN
 END;
 $$;
 
-COMMENT ON PROCEDURE inserir_conformidades_json(TEXT, JSONB) IS
+COMMENT ON PROCEDURE inserir_conformidade_json(TEXT, JSONB) IS
 'Importa um array JSON de conformidades por e-mail e NR. Atualiza somente a validade das existentes, insere novas como MANUAL/aplicável e devolve os itens rejeitados em p_erros.';

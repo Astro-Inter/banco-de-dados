@@ -1,4 +1,4 @@
-INSERT INTO usuarios
+INSERT INTO usuario
     (nome, email, firebase_uid, tipo, cargo_id, unidade_id, cpf,
      modalidade, status, criado_em)
 SELECT
@@ -124,12 +124,12 @@ FROM (
     cnpj, nome, email, firebase_uid, tipo, nome_cargo, nome_unidade,
     cpf, modalidade, status, criado_em
 )
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
-INNER JOIN cargos c
+INNER JOIN cargo c
     ON c.workspace_id = w.id_workspace
    AND c.nome = dados.nome_cargo
-INNER JOIN unidades u
+INNER JOIN unidade u
     ON u.workspace_id = w.id_workspace
    AND u.nome = dados.nome_unidade
 ON CONFLICT (email) DO UPDATE
@@ -149,15 +149,15 @@ DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1
-        FROM unidades u
-        INNER JOIN workspaces w ON w.id_workspace = u.workspace_id
+        FROM unidade u
+        INNER JOIN workspace w ON w.id_workspace = u.workspace_id
         WHERE u.id_unidade = 1
           AND w.cnpj = '11222333000144'
     ) THEN
         RAISE EXCEPTION 'SCRUM-172: a unidade 1 deve pertencer ao workspace Brasilfer.';
     END IF;
     IF NOT EXISTS (
-        SELECT 1 FROM usuarios
+        SELECT 1 FROM usuario
         WHERE unidade_id = 1 AND status = 'ATIVO'
           AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
     ) THEN
@@ -166,7 +166,7 @@ BEGIN
 END;
 $$;
 
-INSERT INTO usuarios
+INSERT INTO usuario
     (nome, email, firebase_uid, tipo, cargo_id, unidade_id, cpf,
      modalidade, status, criado_em)
 SELECT
@@ -276,8 +276,8 @@ FROM (
         ('Vinicius Lima', 'vinicius.c689bedf0fc64d4c.99@example.com', 'uKkEOpvO95cK9P7XiApJNIm8jap2', 'Operador de Máquinas'),
         ('Leticia Lima', 'leticia.c689bedf0fc64d4c.100@example.com', 'gl1Dhgq14ENbKnMcEfyxhSGhHJS2', 'Operador de Máquinas')
 ) AS dados(nome, email, firebase_uid, nome_cargo)
-INNER JOIN unidades u ON u.id_unidade = 1
-INNER JOIN cargos c
+INNER JOIN unidade u ON u.id_unidade = 1
+INNER JOIN cargo c
     ON c.workspace_id = u.workspace_id AND c.nome = dados.nome_cargo
 ON CONFLICT (email) DO UPDATE
 SET nome = EXCLUDED.nome,

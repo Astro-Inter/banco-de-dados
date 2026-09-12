@@ -1,4 +1,4 @@
-INSERT INTO workspaces (nome, cnpj)
+INSERT INTO workspace (nome, cnpj)
 VALUES
     ('Metalúrgica Brasilfer Ltda', '11222333000144'),
     ('Construtora Horizonte S.A.', '22333444000155'),

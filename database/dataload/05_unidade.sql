@@ -1,4 +1,4 @@
-INSERT INTO unidades (workspace_id, nome)
+INSERT INTO unidade (workspace_id, nome)
 SELECT
     w.id_workspace,
     dados.nome_unidade
@@ -11,6 +11,6 @@ FROM (
         ('33444555000166', 'Matriz Campinas'),
         ('33444555000166', 'Centro de Distribuição Ribeirão Preto')
 ) AS dados(cnpj, nome_unidade)
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
 ON CONFLICT (workspace_id, nome) DO NOTHING;

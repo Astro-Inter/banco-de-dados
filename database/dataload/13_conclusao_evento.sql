@@ -2,20 +2,20 @@ WITH participacoes AS (
     SELECT
         turma_funcionario.id_turma_funcionario,
         turma.data_termino,
-        nr.tempo_reciclagem_meses,
+        nr.tempo_reciclagem_mes,
         ROW_NUMBER() OVER (
             ORDER BY participante.email, evento.titulo, turma.nome
         ) AS ordem
-    FROM turma_funcionarios turma_funcionario
-    INNER JOIN usuarios participante
+    FROM turma_funcionario turma_funcionario
+    INNER JOIN usuario participante
         ON participante.id_usuario = turma_funcionario.usuario_id
-    INNER JOIN turmas turma
+    INNER JOIN turma turma
         ON turma.id_turma = turma_funcionario.turma_id
-    INNER JOIN eventos evento
+    INNER JOIN evento evento
         ON evento.id_evento = turma.evento_id
-    INNER JOIN usuarios gestor
+    INNER JOIN usuario gestor
         ON gestor.id_usuario = evento.gestor_id
-    LEFT JOIN nr_catalogos nr
+    LEFT JOIN nr_catalogo nr
         ON nr.codigo_nr = evento.nr_id
     WHERE participante.email LIKE '%@example.com'
       AND participante.email !~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
@@ -42,10 +42,10 @@ dados AS (
             ELSE data_termino + INTERVAL '1 day'
         END AS data_validacao,
         CASE
-            WHEN MOD(ordem, 5) IN (0, 1) OR tempo_reciclagem_meses IS NULL THEN NULL
+            WHEN MOD(ordem, 5) IN (0, 1) OR tempo_reciclagem_mes IS NULL THEN NULL
             ELSE (
                 data_termino
-                + MAKE_INTERVAL(months => tempo_reciclagem_meses)
+                + MAKE_INTERVAL(months => tempo_reciclagem_mes)
             )::DATE
         END AS data_validade,
         CASE
@@ -55,7 +55,7 @@ dados AS (
         END AS motivo_rejeicao
     FROM participacoes
 )
-INSERT INTO conclusao_eventos
+INSERT INTO conclusao_evento
     (turma_funcionario_id, status, data_conclusao,
      data_validacao, data_validade, motivo_rejeicao)
 SELECT
@@ -74,7 +74,7 @@ SET status = EXCLUDED.status,
     motivo_rejeicao = EXCLUDED.motivo_rejeicao;
 
 -- SCRUM-172: 60 conclusões validadas e 40 pendências nos eventos futuros.
-INSERT INTO conclusao_eventos
+INSERT INTO conclusao_evento
     (turma_funcionario_id, status, data_conclusao, data_validacao, data_validade, motivo_rejeicao)
 SELECT
     tf.id_turma_funcionario,
@@ -82,14 +82,14 @@ SELECT
     CASE WHEN evento.status = 'CONCLUIDO' THEN turma.data_termino END,
     CASE WHEN evento.status = 'CONCLUIDO' THEN turma.data_termino + INTERVAL '1 hour' END,
     CASE WHEN evento.status = 'CONCLUIDO'
-        THEN (turma.data_termino + MAKE_INTERVAL(months => nr.tempo_reciclagem_meses))::DATE END,
+        THEN (turma.data_termino + MAKE_INTERVAL(months => nr.tempo_reciclagem_mes))::DATE END,
     NULL
-FROM turma_funcionarios tf
-INNER JOIN usuarios participante ON participante.id_usuario = tf.usuario_id
-INNER JOIN turmas turma ON turma.id_turma = tf.turma_id
-INNER JOIN eventos evento ON evento.id_evento = turma.evento_id
-INNER JOIN usuarios gestor ON gestor.id_usuario = evento.gestor_id
-INNER JOIN nr_catalogos nr ON nr.codigo_nr = evento.nr_id
+FROM turma_funcionario tf
+INNER JOIN usuario participante ON participante.id_usuario = tf.usuario_id
+INNER JOIN turma turma ON turma.id_turma = tf.turma_id
+INNER JOIN evento evento ON evento.id_evento = turma.evento_id
+INNER JOIN usuario gestor ON gestor.id_usuario = evento.gestor_id
+INNER JOIN nr_catalogo nr ON nr.codigo_nr = evento.nr_id
 WHERE participante.unidade_id = 1
   AND participante.email ~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
   AND gestor.unidade_id = 1 AND gestor.tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
