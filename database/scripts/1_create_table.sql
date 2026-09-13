@@ -350,7 +350,7 @@ CREATE TABLE IF NOT EXISTS fato_historico_geral_unidade (
     id_dim_resumo BIGINT,
     qtd_nr INT DEFAULT 0,
     qtd_funcionario INT DEFAULT 0,
-    qtd_treinamento INT DEFAULT 0,
+    qtd_eventos INT DEFAULT 0,
     dt_referencia DATE NOT NULL,
     dt_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

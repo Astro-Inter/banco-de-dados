@@ -9,7 +9,7 @@ BEGIN
         id_dim_resumo,
         qtd_nr,
         qtd_funcionario,
-        qtd_treinamento,
+        qtd_eventos,
         dt_referencia
     )
     WITH resumo_nr AS (
@@ -41,6 +41,7 @@ BEGIN
 ),
 base_gestor as (
     select 
+        id_usuario,
         id_unidade
     from usuario
     where tipo = 'GESTOR'
@@ -68,14 +69,15 @@ base_gestor as (
         COALESCE(nr.qtd_nr, 0),
         COALESCE(f.qtd_funcionario, 0),
         COALESCE(c.qtd_certificado, 0),
-        COALESCE(c.qtd_treinamento, 0),
+        COALESCE(re.qtd_eventos, 0),
         CURRENT_DATE
     FROM unidade u
     LEFT JOIN resumo_nr nr
         ON nr.id_unidade = u.id_unidade
     LEFT JOIN resumo_funcionario f
         ON f.id_unidade = u.id_unidade
-    JOIN resumo_eventos re on re.id_unidade = u.id_unidade
+    LEFT JOIN resumo_eventos re
+        ON re.id_unidade = u.id_unidade
     ON CONFLICT (id_unidade, dt_referencia)
     DO NOTHING;
 END;
