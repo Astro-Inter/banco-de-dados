@@ -1,7 +1,7 @@
 WITH gestor_unidade AS (
     -- IDs das unidades não dependem da ordem dos VALUES do dataload.
     SELECT email
-    FROM usuarios
+    FROM usuario
     WHERE unidade_id = 1 AND status = 'ATIVO'
       AND tipo IN ('GESTOR', 'GESTOR_WORKSPACE')
     ORDER BY CASE WHEN tipo = 'GESTOR' THEN 0 ELSE 1 END, email
@@ -41,7 +41,7 @@ dados AS (
             ('Turma B', 2)
     ) AS turma(nome_turma, deslocamento)
 )
-INSERT INTO turmas
+INSERT INTO turma
     (evento_id, nome, data_inicial, data_termino)
 SELECT
     e.id_evento,
@@ -49,9 +49,9 @@ SELECT
     dados.data_turma + TIME '08:00:00',
     dados.data_turma + TIME '12:00:00'
 FROM dados
-INNER JOIN usuarios gestor
+INNER JOIN usuario gestor
     ON gestor.email = dados.gestor_email
-INNER JOIN eventos e
+INNER JOIN evento e
     ON e.gestor_id = gestor.id_usuario
    AND e.titulo = dados.titulo_evento
 ON CONFLICT (evento_id, nome) DO UPDATE

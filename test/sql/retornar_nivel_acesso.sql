@@ -6,14 +6,14 @@ DECLARE
     v_unidade BIGINT;
     v_cargo BIGINT;
 BEGIN
-    INSERT INTO workspaces (nome, cnpj)
+    INSERT INTO workspace (nome, cnpj)
     VALUES ('Teste SCRUM-175', '99999999999175') RETURNING id_workspace INTO v_workspace;
-    INSERT INTO unidades (workspace_id, nome)
+    INSERT INTO unidade (workspace_id, nome)
     VALUES (v_workspace, 'Unidade teste') RETURNING id_unidade INTO v_unidade;
-    INSERT INTO cargos (workspace_id, nome)
+    INSERT INTO cargo (workspace_id, nome)
     VALUES (v_workspace, 'Cargo teste') RETURNING id_cargo INTO v_cargo;
 
-    INSERT INTO usuarios (nome, email, firebase_uid, tipo, cargo_id, unidade_id, status)
+    INSERT INTO usuario (nome, email, firebase_uid, tipo, cargo_id, unidade_id, status)
     VALUES
         ('Gestor teste', 'gestor175@example.com', 'scrum175-gestor', 'GESTOR', v_cargo, v_unidade, 'ATIVO'),
         ('Gestor workspace teste', 'workspace175@example.com', 'scrum175-workspace', 'GESTOR_WORKSPACE', v_cargo, v_unidade, 'ATIVO'),

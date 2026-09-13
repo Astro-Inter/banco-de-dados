@@ -5,7 +5,7 @@ RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO acessos (
+    INSERT INTO acesso (
         data,
         usuario_id
     )

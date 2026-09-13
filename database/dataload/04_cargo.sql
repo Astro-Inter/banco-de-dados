@@ -1,4 +1,4 @@
-INSERT INTO cargos (workspace_id, nome)
+INSERT INTO cargo (workspace_id, nome)
 SELECT
     w.id_workspace,
     dados.nome_cargo
@@ -17,6 +17,6 @@ FROM (
         ('33444555000166', 'Aplicador de Defensivos'),
         ('33444555000166', 'Operador de Máquinas Agrícolas')
 ) AS dados(cnpj, nome_cargo)
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
 ON CONFLICT (workspace_id, nome) DO NOTHING;

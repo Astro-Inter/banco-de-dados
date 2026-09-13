@@ -1,13 +1,13 @@
-ALTER TABLE workspaces
+ALTER TABLE workspace
     ALTER COLUMN id_workspace SET NOT NULL, 
     ALTER COLUMN nome SET NOT NULL,         
     ALTER COLUMN cnpj SET NOT NULL;        
 
-ALTER TABLE workspaces
-    ADD CONSTRAINT pk_workspaces PRIMARY KEY (id_workspace),
-    ADD CONSTRAINT uq_workspaces_cnpj UNIQUE (cnpj),          
-    ADD CONSTRAINT ck_workspaces_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2), 
-    ADD CONSTRAINT ck_workspaces_cnpj CHECK (cnpj ~ '^[0-9]{14}$'); 
+ALTER TABLE workspace
+    ADD CONSTRAINT pk_workspace PRIMARY KEY (id_workspace),
+    ADD CONSTRAINT uq_workspace_cnpj UNIQUE (cnpj),
+    ADD CONSTRAINT ck_workspace_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
+    ADD CONSTRAINT ck_workspace_cnpj CHECK (cnpj ~ '^[0-9]{14}$');
 
 ALTER TABLE conta
     ALTER COLUMN email SET NOT NULL,
@@ -18,30 +18,30 @@ ALTER TABLE conta
     ADD CONSTRAINT ck_conta_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2),
     ADD CONSTRAINT ck_conta_email CHECK (email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$');
 
-ALTER TABLE cargos
+ALTER TABLE cargo
     ALTER COLUMN id_cargo SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
     ALTER COLUMN nome SET NOT NULL,
     ALTER COLUMN ativo SET DEFAULT TRUE;
 
-ALTER TABLE cargos
-    ADD CONSTRAINT pk_cargos PRIMARY KEY (id_cargo),
-    ADD CONSTRAINT uq_cargos_workspace_nome UNIQUE (workspace_id, nome), -- O nome não se repete dentro do mesmo workspace.
-    ADD CONSTRAINT ck_cargos_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2);
+ALTER TABLE cargo
+    ADD CONSTRAINT pk_cargo PRIMARY KEY (id_cargo),
+    ADD CONSTRAINT uq_cargo_workspace_nome UNIQUE (workspace_id, nome), -- O nome não se repete dentro do mesmo workspace.
+    ADD CONSTRAINT ck_cargo_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2);
 
 
-ALTER TABLE unidades
+ALTER TABLE unidade
     ALTER COLUMN id_unidade SET NOT NULL,
     ALTER COLUMN workspace_id SET NOT NULL, 
     ALTER COLUMN nome SET NOT NULL,
     ALTER COLUMN ativo SET DEFAULT TRUE;
 
-ALTER TABLE unidades
-    ADD CONSTRAINT pk_unidades PRIMARY KEY (id_unidade),
-    ADD CONSTRAINT uq_unidades_workspace_nome UNIQUE (workspace_id, nome),
-    ADD CONSTRAINT ck_unidades_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2);
+ALTER TABLE unidade
+    ADD CONSTRAINT pk_unidade PRIMARY KEY (id_unidade),
+    ADD CONSTRAINT uq_unidade_workspace_nome UNIQUE (workspace_id, nome),
+    ADD CONSTRAINT ck_unidade_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 2);
 
-ALTER TABLE unidade_enderecos
+ALTER TABLE unidade_endereco
     ALTER COLUMN unidade_id SET NOT NULL,
     ALTER COLUMN cep SET NOT NULL,
     ALTER COLUMN rua SET NOT NULL,
@@ -49,18 +49,18 @@ ALTER TABLE unidade_enderecos
     ALTER COLUMN bairro SET NOT NULL,
     ALTER COLUMN estado SET NOT NULL;
 
-ALTER TABLE unidade_enderecos
-    ADD CONSTRAINT pk_unidade_enderecos PRIMARY KEY (unidade_id), 
-    ADD CONSTRAINT ck_unidade_enderecos_cep CHECK (cep ~ '^[0-9]{8}$'),
-    ADD CONSTRAINT ck_unidade_enderecos_estado CHECK (estado ~ '^[A-Z]{2}$'),
-    ADD CONSTRAINT ck_unidade_enderecos_rua CHECK (CHAR_LENGTH(BTRIM(rua)) >= 2),
-    ADD CONSTRAINT ck_unidade_enderecos_cidade CHECK (CHAR_LENGTH(BTRIM(cidade)) >= 2),
-    ADD CONSTRAINT ck_unidade_enderecos_bairro CHECK (CHAR_LENGTH(BTRIM(bairro)) >= 2),
-    ADD CONSTRAINT ck_unidade_enderecos_complemento CHECK (
+ALTER TABLE unidade_endereco
+    ADD CONSTRAINT pk_unidade_endereco PRIMARY KEY (unidade_id),
+    ADD CONSTRAINT ck_unidade_endereco_cep CHECK (cep ~ '^[0-9]{8}$'),
+    ADD CONSTRAINT ck_unidade_endereco_estado CHECK (estado ~ '^[A-Z]{2}$'),
+    ADD CONSTRAINT ck_unidade_endereco_rua CHECK (CHAR_LENGTH(BTRIM(rua)) >= 2),
+    ADD CONSTRAINT ck_unidade_endereco_cidade CHECK (CHAR_LENGTH(BTRIM(cidade)) >= 2),
+    ADD CONSTRAINT ck_unidade_endereco_bairro CHECK (CHAR_LENGTH(BTRIM(bairro)) >= 2),
+    ADD CONSTRAINT ck_unidade_endereco_complemento CHECK (
         complemento IS NULL OR CHAR_LENGTH(BTRIM(complemento)) >= 1
     );
 
-ALTER TABLE usuarios
+ALTER TABLE usuario
     ALTER COLUMN id_usuario SET NOT NULL,
     ALTER COLUMN nome SET NOT NULL,
     ALTER COLUMN tipo SET NOT NULL,
@@ -70,15 +70,15 @@ ALTER TABLE usuarios
     ALTER COLUMN status SET NOT NULL,
     ALTER COLUMN criado_em SET DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE usuarios
-    ADD CONSTRAINT pk_usuarios PRIMARY KEY (id_usuario),
-    ADD CONSTRAINT uq_usuarios_email UNIQUE (email),
-    ADD CONSTRAINT uq_usuarios_firebase_uid UNIQUE (firebase_uid),
-    ADD CONSTRAINT uq_usuarios_cpf UNIQUE (cpf), 
-    ADD CONSTRAINT ck_usuarios_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
-    ADD CONSTRAINT ck_usuarios_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
-    ADD CONSTRAINT ck_usuarios_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
-    ADD CONSTRAINT ck_usuarios_modalidade CHECK (
+ALTER TABLE usuario
+    ADD CONSTRAINT pk_usuario PRIMARY KEY (id_usuario),
+    ADD CONSTRAINT uq_usuario_email UNIQUE (email),
+    ADD CONSTRAINT uq_usuario_firebase_uid UNIQUE (firebase_uid),
+    ADD CONSTRAINT uq_usuario_cpf UNIQUE (cpf),
+    ADD CONSTRAINT ck_usuario_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
+    ADD CONSTRAINT ck_usuario_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
+    ADD CONSTRAINT ck_usuario_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
+    ADD CONSTRAINT ck_usuario_modalidade CHECK (
         modalidade IS NULL OR CHAR_LENGTH(BTRIM(modalidade)) >= 2
     );
 
@@ -99,34 +99,34 @@ ALTER TABLE usuario_foto_perfil
     ADD CONSTRAINT uq_usuario_foto_perfil_caminho UNIQUE (caminho_objeto),
     ADD CONSTRAINT ck_usuario_foto_perfil_caminho CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1);
 
-ALTER TABLE nr_catalogos
+ALTER TABLE nr_catalogo
     ALTER COLUMN codigo_nr SET NOT NULL,
     ALTER COLUMN titulo SET NOT NULL,
-    ALTER COLUMN tempo_reciclagem_meses SET NOT NULL,
+    ALTER COLUMN tempo_reciclagem_mes SET NOT NULL,
     ALTER COLUMN revogada SET DEFAULT FALSE,
     ALTER COLUMN revogada SET NOT NULL;
 
-ALTER TABLE nr_catalogos
-    ADD CONSTRAINT pk_nr_catalogos PRIMARY KEY (codigo_nr),
-    ADD CONSTRAINT ck_nr_catalogos_codigo CHECK (codigo_nr > 0),
-    ADD CONSTRAINT ck_nr_catalogos_titulo CHECK (CHAR_LENGTH(BTRIM(titulo)) >= 3),
-    ADD CONSTRAINT ck_nr_catalogos_reciclagem CHECK (tempo_reciclagem_meses > 0);
+ALTER TABLE nr_catalogo
+    ADD CONSTRAINT pk_nr_catalogo PRIMARY KEY (codigo_nr),
+    ADD CONSTRAINT ck_nr_catalogo_codigo CHECK (codigo_nr > 0),
+    ADD CONSTRAINT ck_nr_catalogo_titulo CHECK (CHAR_LENGTH(BTRIM(titulo)) >= 3),
+    ADD CONSTRAINT ck_nr_catalogo_reciclagem CHECK (tempo_reciclagem_mes > 0);
 
-ALTER TABLE cargo_nrs
+ALTER TABLE cargo_nr
     ALTER COLUMN cargo_id SET NOT NULL,
     ALTER COLUMN nr_id SET NOT NULL;
 
-ALTER TABLE cargo_nrs
-    ADD CONSTRAINT pk_cargo_nrs PRIMARY KEY (cargo_id, nr_id); 
+ALTER TABLE cargo_nr
+    ADD CONSTRAINT pk_cargo_nr PRIMARY KEY (cargo_id, nr_id);
 
-ALTER TABLE unidade_nrs
+ALTER TABLE unidade_nr
     ALTER COLUMN unidade_id SET NOT NULL,
     ALTER COLUMN nr_id SET NOT NULL;
 
-ALTER TABLE unidade_nrs
-    ADD CONSTRAINT pk_unidade_nrs PRIMARY KEY (unidade_id, nr_id); 
+ALTER TABLE unidade_nr
+    ADD CONSTRAINT pk_unidade_nr PRIMARY KEY (unidade_id, nr_id);
 
-ALTER TABLE eventos
+ALTER TABLE evento
     ALTER COLUMN id_evento SET NOT NULL,
     ALTER COLUMN gestor_id SET NOT NULL,
     ALTER COLUMN titulo SET NOT NULL,
@@ -137,20 +137,20 @@ ALTER TABLE eventos
     ALTER COLUMN status SET DEFAULT 'ATIVO',
     ALTER COLUMN status SET NOT NULL;
 
-ALTER TABLE eventos
-    ADD CONSTRAINT pk_eventos PRIMARY KEY (id_evento),
-    ADD CONSTRAINT ck_eventos_titulo CHECK (CHAR_LENGTH(BTRIM(titulo)) >= 3),
-    ADD CONSTRAINT ck_eventos_descricao CHECK (CHAR_LENGTH(BTRIM(descricao)) >= 3),
-    ADD CONSTRAINT ck_eventos_link_externo CHECK (
+ALTER TABLE evento
+    ADD CONSTRAINT pk_evento PRIMARY KEY (id_evento),
+    ADD CONSTRAINT ck_evento_titulo CHECK (CHAR_LENGTH(BTRIM(titulo)) >= 3),
+    ADD CONSTRAINT ck_evento_descricao CHECK (CHAR_LENGTH(BTRIM(descricao)) >= 3),
+    ADD CONSTRAINT ck_evento_link_externo CHECK (
         link_externo IS NULL OR link_externo ~* '^https?://[^[:space:]]+$'
     ),
-    ADD CONSTRAINT ck_eventos_modo_conclusao CHECK (
+    ADD CONSTRAINT ck_evento_modo_conclusao CHECK (
         modo_conclusao IN ('FUNCIONARIO', 'GESTOR', 'LISTA_PRESENCA')
     ),
-    ADD CONSTRAINT ck_eventos_status CHECK (
+    ADD CONSTRAINT ck_evento_status CHECK (
         status IN ('ATIVO', 'CONCLUIDO', 'CANCELADO')
     ),
-    ADD CONSTRAINT ck_eventos_cancelamento CHECK (
+    ADD CONSTRAINT ck_evento_cancelamento CHECK (
         (status = 'CANCELADO'
             AND data_cancelamento IS NOT NULL
             AND motivo_cancelamento IS NOT NULL
@@ -161,173 +161,173 @@ ALTER TABLE eventos
             AND motivo_cancelamento IS NULL)
     ); 
 
-ALTER TABLE turmas
+ALTER TABLE turma
     ALTER COLUMN id_turma SET NOT NULL,
     ALTER COLUMN evento_id SET NOT NULL,
     ALTER COLUMN nome SET NOT NULL,
     ALTER COLUMN data_inicial SET NOT NULL,
     ALTER COLUMN data_termino SET NOT NULL;
 
-ALTER TABLE turmas
-    ADD CONSTRAINT pk_turmas PRIMARY KEY (id_turma),
-    ADD CONSTRAINT uq_turmas_evento_nome UNIQUE (evento_id, nome),
-    ADD CONSTRAINT ck_turmas_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 1),
-    ADD CONSTRAINT ck_turmas_periodo CHECK (data_termino > data_inicial);
+ALTER TABLE turma
+    ADD CONSTRAINT pk_turma PRIMARY KEY (id_turma),
+    ADD CONSTRAINT uq_turma_evento_nome UNIQUE (evento_id, nome),
+    ADD CONSTRAINT ck_turma_nome CHECK (CHAR_LENGTH(BTRIM(nome)) >= 1),
+    ADD CONSTRAINT ck_turma_periodo CHECK (data_termino > data_inicial);
 
-ALTER TABLE turma_funcionarios
+ALTER TABLE turma_funcionario
     ALTER COLUMN id_turma_funcionario SET NOT NULL,
     ALTER COLUMN turma_id SET NOT NULL,
     ALTER COLUMN usuario_id SET NOT NULL;
 
-ALTER TABLE turma_funcionarios
-    ADD CONSTRAINT pk_turma_funcionarios PRIMARY KEY (id_turma_funcionario),
-    ADD CONSTRAINT uq_turma_funcionarios_participacao UNIQUE (turma_id, usuario_id); -- Impede incluir o mesmo usuário duas vezes na turma.
+ALTER TABLE turma_funcionario
+    ADD CONSTRAINT pk_turma_funcionario PRIMARY KEY (id_turma_funcionario),
+    ADD CONSTRAINT uq_turma_funcionario_participacao UNIQUE (turma_id, usuario_id); -- Impede incluir o mesmo usuário duas vezes na turma.
 
-ALTER TABLE conclusao_eventos
+ALTER TABLE conclusao_evento
     ALTER COLUMN id_conclusao_evento SET NOT NULL,
     ALTER COLUMN turma_funcionario_id SET NOT NULL,
     ALTER COLUMN status SET DEFAULT 'PENDENTE',
     ALTER COLUMN status SET NOT NULL;
 
-ALTER TABLE conclusao_eventos
-    ADD CONSTRAINT pk_conclusao_eventos PRIMARY KEY (id_conclusao_evento),
-    ADD CONSTRAINT uq_conclusao_eventos_participacao UNIQUE (turma_funcionario_id), -- Materializa a cardinalidade 1:0..1.
-    ADD CONSTRAINT ck_conclusao_eventos_status CHECK (
+ALTER TABLE conclusao_evento
+    ADD CONSTRAINT pk_conclusao_evento PRIMARY KEY (id_conclusao_evento),
+    ADD CONSTRAINT uq_conclusao_evento_participacao UNIQUE (turma_funcionario_id), -- Materializa a cardinalidade 1:0..1.
+    ADD CONSTRAINT ck_conclusao_evento_status CHECK (
         status IN ('PENDENTE', 'CONCLUIDO', 'REJEITADO')
     ),
-    ADD CONSTRAINT ck_conclusao_eventos_data_conclusao CHECK (
+    ADD CONSTRAINT ck_conclusao_evento_data_conclusao CHECK (
         status <> 'CONCLUIDO' OR data_conclusao IS NOT NULL
     ),
-    ADD CONSTRAINT ck_conclusao_eventos_data_validacao CHECK (
+    ADD CONSTRAINT ck_conclusao_evento_data_validacao CHECK (
         status = 'PENDENTE' OR data_validacao IS NOT NULL
     ),
-    ADD CONSTRAINT ck_conclusao_eventos_motivo_rejeicao CHECK (
+    ADD CONSTRAINT ck_conclusao_evento_motivo_rejeicao CHECK (
         (status = 'REJEITADO'
             AND motivo_rejeicao IS NOT NULL
             AND CHAR_LENGTH(BTRIM(motivo_rejeicao)) >= 3)
         OR
         (status <> 'REJEITADO' AND motivo_rejeicao IS NULL)
     ),
-    ADD CONSTRAINT ck_conclusao_eventos_validade CHECK (
+    ADD CONSTRAINT ck_conclusao_evento_validade CHECK (
         data_validade IS NULL
         OR data_conclusao IS NULL
         OR data_validade >= data_conclusao::DATE
     );
 
-ALTER TABLE evidencias
+ALTER TABLE evidencia
     ALTER COLUMN id_evidencia SET NOT NULL,
     ALTER COLUMN conclusao_evento_id SET NOT NULL,
     ALTER COLUMN nome_original SET NOT NULL,
     ALTER COLUMN caminho_objeto SET NOT NULL,
     ALTER COLUMN mime_type SET NOT NULL,
-    ALTER COLUMN tamanho_bytes SET NOT NULL;
+    ALTER COLUMN tamanho_byte SET NOT NULL;
 
-ALTER TABLE evidencias
-    ADD CONSTRAINT pk_evidencias PRIMARY KEY (id_evidencia),
-    ADD CONSTRAINT uq_evidencias_caminho_objeto UNIQUE (caminho_objeto),
-    ADD CONSTRAINT ck_evidencias_nome_original CHECK (CHAR_LENGTH(BTRIM(nome_original)) >= 1),
-    ADD CONSTRAINT ck_evidencias_caminho_objeto CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1),
-    ADD CONSTRAINT ck_evidencias_mime_type CHECK (
+ALTER TABLE evidencia
+    ADD CONSTRAINT pk_evidencia PRIMARY KEY (id_evidencia),
+    ADD CONSTRAINT uq_evidencia_caminho_objeto UNIQUE (caminho_objeto),
+    ADD CONSTRAINT ck_evidencia_nome_original CHECK (CHAR_LENGTH(BTRIM(nome_original)) >= 1),
+    ADD CONSTRAINT ck_evidencia_caminho_objeto CHECK (CHAR_LENGTH(BTRIM(caminho_objeto)) >= 1),
+    ADD CONSTRAINT ck_evidencia_mime_type CHECK (
         mime_type ~ '^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$'
     ),
-    ADD CONSTRAINT ck_evidencias_tamanho_bytes CHECK (tamanho_bytes > 0);
+    ADD CONSTRAINT ck_evidencia_tamanho_byte CHECK (tamanho_byte > 0);
 
-ALTER TABLE conformidades
+ALTER TABLE conformidade
     ALTER COLUMN id_conformidade SET NOT NULL,
     ALTER COLUMN usuario_id SET NOT NULL,
     ALTER COLUMN nr_id SET NOT NULL,
     ALTER COLUMN aplicavel SET NOT NULL,
     ALTER COLUMN origem SET NOT NULL;
 
-ALTER TABLE conformidades
-    ADD CONSTRAINT pk_conformidades PRIMARY KEY (id_conformidade),
-    ADD CONSTRAINT uq_conformidades_conclusao UNIQUE (conclusao_evento_id), 
-    ADD CONSTRAINT ck_conformidades_origem CHECK (CHAR_LENGTH(BTRIM(origem)) >= 2);
+ALTER TABLE conformidade
+    ADD CONSTRAINT pk_conformidade PRIMARY KEY (id_conformidade),
+    ADD CONSTRAINT uq_conformidade_conclusao UNIQUE (conclusao_evento_id),
+    ADD CONSTRAINT ck_conformidade_origem CHECK (CHAR_LENGTH(BTRIM(origem)) >= 2);
 
-ALTER TABLE cargos
-    ADD CONSTRAINT fk_cargos_workspace FOREIGN KEY (workspace_id)
-        REFERENCES workspaces (id_workspace)
+ALTER TABLE cargo
+    ADD CONSTRAINT fk_cargo_workspace FOREIGN KEY (workspace_id)
+        REFERENCES workspace (id_workspace)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE unidades
-    ADD CONSTRAINT fk_unidades_workspace FOREIGN KEY (workspace_id)
-        REFERENCES workspaces (id_workspace)
+ALTER TABLE unidade
+    ADD CONSTRAINT fk_unidade_workspace FOREIGN KEY (workspace_id)
+        REFERENCES workspace (id_workspace)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE unidade_enderecos
-    ADD CONSTRAINT fk_unidade_enderecos_unidade FOREIGN KEY (unidade_id)
-        REFERENCES unidades (id_unidade)
+ALTER TABLE unidade_endereco
+    ADD CONSTRAINT fk_unidade_endereco_unidade FOREIGN KEY (unidade_id)
+        REFERENCES unidade (id_unidade)
         ON UPDATE CASCADE ON DELETE CASCADE; 
 
-ALTER TABLE usuarios
-    ADD CONSTRAINT fk_usuarios_cargo FOREIGN KEY (cargo_id)
-        REFERENCES cargos (id_cargo)
+ALTER TABLE usuario
+    ADD CONSTRAINT fk_usuario_cargo FOREIGN KEY (cargo_id)
+        REFERENCES cargo (id_cargo)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_usuarios_unidade FOREIGN KEY (unidade_id)
-        REFERENCES unidades (id_unidade)
+    ADD CONSTRAINT fk_usuario_unidade FOREIGN KEY (unidade_id)
+        REFERENCES unidade (id_unidade)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE usuario_foto_perfil
     ADD CONSTRAINT fk_usuario_foto_perfil_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id_usuario)
+        REFERENCES usuario (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE cargo_nrs
-    ADD CONSTRAINT fk_cargo_nrs_cargo FOREIGN KEY (cargo_id)
-        REFERENCES cargos (id_cargo)
+ALTER TABLE cargo_nr
+    ADD CONSTRAINT fk_cargo_nr_cargo FOREIGN KEY (cargo_id)
+        REFERENCES cargo (id_cargo)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    ADD CONSTRAINT fk_cargo_nrs_nr FOREIGN KEY (nr_id)
-        REFERENCES nr_catalogos (codigo_nr)
+    ADD CONSTRAINT fk_cargo_nr_nr FOREIGN KEY (nr_id)
+        REFERENCES nr_catalogo (codigo_nr)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE unidade_nrs
-    ADD CONSTRAINT fk_unidade_nrs_unidade FOREIGN KEY (unidade_id)
-        REFERENCES unidades (id_unidade)
+ALTER TABLE unidade_nr
+    ADD CONSTRAINT fk_unidade_nr_unidade FOREIGN KEY (unidade_id)
+        REFERENCES unidade (id_unidade)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    ADD CONSTRAINT fk_unidade_nrs_nr FOREIGN KEY (nr_id)
-        REFERENCES nr_catalogos (codigo_nr)
+    ADD CONSTRAINT fk_unidade_nr_nr FOREIGN KEY (nr_id)
+        REFERENCES nr_catalogo (codigo_nr)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE eventos
-    ADD CONSTRAINT fk_eventos_gestor FOREIGN KEY (gestor_id)
-        REFERENCES usuarios (id_usuario)
+ALTER TABLE evento
+    ADD CONSTRAINT fk_evento_gestor FOREIGN KEY (gestor_id)
+        REFERENCES usuario (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_eventos_nr FOREIGN KEY (nr_id)
-        REFERENCES nr_catalogos (codigo_nr)
+    ADD CONSTRAINT fk_evento_nr FOREIGN KEY (nr_id)
+        REFERENCES nr_catalogo (codigo_nr)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE turmas
-    ADD CONSTRAINT fk_turmas_evento FOREIGN KEY (evento_id)
-        REFERENCES eventos (id_evento)
+ALTER TABLE turma
+    ADD CONSTRAINT fk_turma_evento FOREIGN KEY (evento_id)
+        REFERENCES evento (id_evento)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE turma_funcionarios
-    ADD CONSTRAINT fk_turma_funcionarios_turma FOREIGN KEY (turma_id)
-        REFERENCES turmas (id_turma)
+ALTER TABLE turma_funcionario
+    ADD CONSTRAINT fk_turma_funcionario_turma FOREIGN KEY (turma_id)
+        REFERENCES turma (id_turma)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_turma_funcionarios_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id_usuario)
+    ADD CONSTRAINT fk_turma_funcionario_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE conclusao_eventos
-    ADD CONSTRAINT fk_conclusao_eventos_participacao FOREIGN KEY (turma_funcionario_id)
-        REFERENCES turma_funcionarios (id_turma_funcionario)
+ALTER TABLE conclusao_evento
+    ADD CONSTRAINT fk_conclusao_evento_participacao FOREIGN KEY (turma_funcionario_id)
+        REFERENCES turma_funcionario (id_turma_funcionario)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE evidencias
-    ADD CONSTRAINT fk_evidencias_conclusao_evento FOREIGN KEY (conclusao_evento_id)
-        REFERENCES conclusao_eventos (id_conclusao_evento)
+ALTER TABLE evidencia
+    ADD CONSTRAINT fk_evidencia_conclusao_evento FOREIGN KEY (conclusao_evento_id)
+        REFERENCES conclusao_evento (id_conclusao_evento)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE conformidades
-    ADD CONSTRAINT fk_conformidades_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id_usuario)
+ALTER TABLE conformidade
+    ADD CONSTRAINT fk_conformidade_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuario (id_usuario)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_conformidades_nr FOREIGN KEY (nr_id)
-        REFERENCES nr_catalogos (codigo_nr)
+    ADD CONSTRAINT fk_conformidade_nr FOREIGN KEY (nr_id)
+        REFERENCES nr_catalogo (codigo_nr)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_conformidades_conclusao FOREIGN KEY (conclusao_evento_id)
-        REFERENCES conclusao_eventos (id_conclusao_evento)
+    ADD CONSTRAINT fk_conformidade_conclusao FOREIGN KEY (conclusao_evento_id)
+        REFERENCES conclusao_evento (id_conclusao_evento)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE calendario
@@ -340,7 +340,7 @@ ALTER TABLE calendario
     ADD CONSTRAINT chk_calendario_trimestre
         CHECK (trimestre BETWEEN 1 AND 4);
 
-ALTER TABLE acessos
+ALTER TABLE acesso
     ALTER COLUMN data SET NOT NULL,
     ALTER COLUMN usuario_id SET NOT NULL,
-    ADD CONSTRAINT pk_acessos PRIMARY KEY (data, usuario_id);
+    ADD CONSTRAINT pk_acesso PRIMARY KEY (data, usuario_id);

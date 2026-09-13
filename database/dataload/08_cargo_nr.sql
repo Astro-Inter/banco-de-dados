@@ -1,4 +1,4 @@
-INSERT INTO cargo_nrs (cargo_id, nr_id)
+INSERT INTO cargo_nr (cargo_id, nr_id)
 SELECT
     c.id_cargo,
     dados.nr_id
@@ -31,11 +31,11 @@ FROM (
         ('33444555000166', 'Operador de Máquinas Agrícolas', 12),
         ('33444555000166', 'Operador de Máquinas Agrícolas', 31)
 ) AS dados(cnpj, nome_cargo, nr_id)
-INNER JOIN workspaces w
+INNER JOIN workspace w
     ON w.cnpj = dados.cnpj
-INNER JOIN cargos c
+INNER JOIN cargo c
     ON c.workspace_id = w.id_workspace
    AND c.nome = dados.nome_cargo
-INNER JOIN nr_catalogos nr
+INNER JOIN nr_catalogo nr
     ON nr.codigo_nr = dados.nr_id
 ON CONFLICT (cargo_id, nr_id) DO NOTHING;

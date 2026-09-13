@@ -4,10 +4,10 @@ WITH nr_funcionario AS (
         u.unidade_id AS id_unidade,
         nr.codigo_nr,
         nr.titulo
-    FROM usuarios u
-    JOIN cargo_nrs cn
+    FROM usuario u
+    JOIN cargo_nr cn
         ON cn.cargo_id = u.cargo_id
-    JOIN nr_catalogos nr
+    JOIN nr_catalogo nr
         ON nr.codigo_nr = cn.nr_id
     WHERE u.tipo = 'FUNCIONARIO'
       AND nr.revogada = false
@@ -17,10 +17,10 @@ nr_empresa AS (
         un.id_unidade,
         nr.codigo_nr,
         nr.titulo
-    FROM nr_catalogos nr
-    JOIN unidade_nrs un_nr
+    FROM nr_catalogo nr
+    JOIN unidade_nr un_nr
         ON un_nr.nr_id = nr.codigo_nr
-    JOIN unidades un
+    JOIN unidade un
         ON un.id_unidade = un_nr.unidade_id
     WHERE nr.revogada = false
 ),
