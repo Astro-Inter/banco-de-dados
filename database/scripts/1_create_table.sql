@@ -350,7 +350,7 @@ CREATE TABLE IF NOT EXISTS fato_historico_geral_unidade (
     id_dim_resumo BIGINT,
     qtd_nr INT DEFAULT 0,
     qtd_funcionario INT DEFAULT 0,
-    qtd_eventos INT DEFAULT 0,
+    qtd_evento INT DEFAULT 0,
     dt_referencia DATE NOT NULL,
     dt_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -382,8 +382,8 @@ COMMENT ON COLUMN fato_historico_geral_unidade.qtd_nr IS
 COMMENT ON COLUMN fato_historico_geral_unidade.qtd_funcionario IS
 'Quantidade de funcionários contabilizados na unidade na data de referência.';
 
-COMMENT ON COLUMN fato_historico_geral_unidade.qtd_treinamento IS
-'Quantidade de treinamentos contabilizados para a unidade na data de referência.';
+COMMENT ON COLUMN fato_historico_geral_unidade.qtd_evento IS
+'Quantidade de eventos contabilizados para a unidade na data de referência.';
 
 COMMENT ON COLUMN fato_historico_geral_unidade.dt_referencia IS
 'Data de referência dos indicadores registrados para a unidade.';

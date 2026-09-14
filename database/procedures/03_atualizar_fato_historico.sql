@@ -9,7 +9,7 @@ BEGIN
         id_dim_resumo,
         qtd_nr,
         qtd_funcionario,
-        qtd_eventos,
+        qtd_evento,
         dt_referencia
     )
     WITH resumo_nr AS (
@@ -69,7 +69,7 @@ base_gestor as (
         COALESCE(nr.qtd_nr, 0),
         COALESCE(f.qtd_funcionario, 0),
         COALESCE(c.qtd_certificado, 0),
-        COALESCE(re.qtd_eventos, 0),
+        COALESCE(re.qtd_evento, 0),
         CURRENT_DATE
     FROM unidade u
     LEFT JOIN resumo_nr nr
