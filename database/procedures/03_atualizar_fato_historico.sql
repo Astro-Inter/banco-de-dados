@@ -68,7 +68,6 @@ base_gestor as (
         f.id_dim_resumo,
         COALESCE(nr.qtd_nr, 0),
         COALESCE(f.qtd_funcionario, 0),
-        COALESCE(c.qtd_certificado, 0),
         COALESCE(re.qtd_evento, 0),
         CURRENT_DATE
     FROM unidade u
