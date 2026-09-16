@@ -10,8 +10,7 @@ ALTER TABLE workspace
     ADD CONSTRAINT ck_workspace_cnpj CHECK (cnpj ~ '^[0-9]{14}$');
 
 ALTER TABLE conta
-    ALTER COLUMN email SET NOT NULL,
-    ALTER COLUMN firebase_uid SET NOT NULL;
+    ALTER COLUMN email SET NOT NULL;
 
 ALTER TABLE conta
     ADD CONSTRAINT uq_conta_firebase_uid UNIQUE (firebase_uid),
@@ -79,7 +78,7 @@ ALTER TABLE usuario
     ADD CONSTRAINT ck_usuario_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
     ADD CONSTRAINT ck_usuario_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
     ADD CONSTRAINT ck_usuario_modalidade CHECK (
-        modalidade IS NULL OR CHAR_LENGTH(BTRIM(modalidade)) >= 2
+        modalidade IN ('PRESENCIAL', 'REMOTO', 'HIBRIDO')
     );
 
 ALTER TABLE admin
