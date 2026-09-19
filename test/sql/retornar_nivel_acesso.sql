@@ -17,18 +17,18 @@ BEGIN
     VALUES
         ('Gestor teste', 'gestor175@example.com', 'scrum175-gestor', 'GESTOR', v_cargo, v_unidade, 'ATIVO'),
         ('Gestor workspace teste', 'workspace175@example.com', 'scrum175-workspace', 'GESTOR_WORKSPACE', v_cargo, v_unidade, 'ATIVO'),
-        ('Funcionário teste', 'funcionario175@example.com', 'scrum175-funcionario', 'FUNCIONARIO', v_cargo, v_unidade, 'ATIVO'),
-        ('Funcionário desativado', 'desativado175@example.com', 'scrum175-desativado', 'FUNCIONARIO', v_cargo, v_unidade, 'DESATIVADO'),
-        ('Funcionário pré-cadastrado', 'precadastro175@example.com', 'scrum175-precadastro', 'FUNCIONARIO', v_cargo, v_unidade, 'PRE_CADASTRADO');
+        ('Funcionário teste', 'funcionario175@example.com', 'scrum175-funcionario', 'COLABORADOR', v_cargo, v_unidade, 'ATIVO'),
+        ('Funcionário desativado', 'desativado175@example.com', 'scrum175-desativado', 'COLABORADOR', v_cargo, v_unidade, 'DESATIVADO'),
+        ('Funcionário pré-cadastrado', 'precadastro175@example.com', 'scrum175-precadastro', 'COLABORADOR', v_cargo, v_unidade, 'PRE_CADASTRADO');
     INSERT INTO admin (nome, email, firebase_uid)
     VALUES ('Admin teste', 'admin175@example.com', 'scrum175-admin');
 
     ASSERT fn_retornar_nivel_acesso('scrum175-admin') = 'ADMIN';
     ASSERT fn_retornar_nivel_acesso('scrum175-gestor') = 'GESTOR';
     ASSERT fn_retornar_nivel_acesso('scrum175-workspace') = 'GESTOR_WORKSPACE';
-    ASSERT fn_retornar_nivel_acesso('scrum175-funcionario') = 'FUNCIONARIO';
-    ASSERT fn_retornar_nivel_acesso('scrum175-desativado') = 'FUNCIONARIO';
-    ASSERT fn_retornar_nivel_acesso('scrum175-precadastro') = 'FUNCIONARIO';
+    ASSERT fn_retornar_nivel_acesso('scrum175-funcionario') = 'COLABORADOR';
+    ASSERT fn_retornar_nivel_acesso('scrum175-desativado') = 'COLABORADOR';
+    ASSERT fn_retornar_nivel_acesso('scrum175-precadastro') = 'COLABORADOR';
     ASSERT fn_retornar_nivel_acesso('scrum175-ausente') = 'SEM_ACESSO';
     ASSERT fn_retornar_nivel_acesso(NULL) = 'SEM_ACESSO';
     ASSERT fn_retornar_nivel_acesso('') = 'SEM_ACESSO';

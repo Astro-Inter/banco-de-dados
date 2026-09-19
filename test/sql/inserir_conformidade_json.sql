@@ -23,7 +23,7 @@ BEGIN
     INSERT INTO unidade (workspace_id, nome) VALUES (v_workspace, 'Unidade teste') RETURNING id_unidade INTO v_unidade;
     INSERT INTO cargo (workspace_id, nome) VALUES (v_workspace, 'Cargo teste') RETURNING id_cargo INTO v_cargo;
     INSERT INTO usuario (nome, email, firebase_uid, tipo, cargo_id, unidade_id, status)
-    VALUES ('Funcionário teste', 'scrum174@example.com', 'scrum174-funcionario', 'FUNCIONARIO', v_cargo, v_unidade, 'ATIVO')
+    VALUES ('Funcionário teste', 'scrum174@example.com', 'scrum174-funcionario', 'COLABORADOR', v_cargo, v_unidade, 'ATIVO')
     RETURNING id_usuario INTO v_usuario;
     INSERT INTO usuario (nome, email, firebase_uid, tipo, cargo_id, unidade_id, status)
     VALUES ('Gestor teste', 'gestor174@example.com', 'scrum174-gestor', 'GESTOR', v_cargo, v_unidade, 'ATIVO')
@@ -107,7 +107,7 @@ BEGIN
     ASSERT v_erros = '[]'::JSONB, 'O retorno deve ser reiniciado a cada chamada';
 
     INSERT INTO usuario (nome, email, firebase_uid, tipo, cargo_id, unidade_id, status)
-    VALUES ('Homônimo', 'SCRUM174@example.com', 'scrum174-ambiguo', 'FUNCIONARIO', v_cargo, v_unidade, 'ATIVO');
+    VALUES ('Homônimo', 'SCRUM174@example.com', 'scrum174-ambiguo', 'COLABORADOR', v_cargo, v_unidade, 'ATIVO');
     CALL inserir_conformidade_json('[{"email":"scrum174@example.com","nr":99174,"dataValidade":"2031-01-01"}]', v_erros);
     ASSERT v_erros -> 0 ->> 'erro' = 'E-mail ambíguo: mais de um funcionário encontrado.';
     ASSERT (SELECT COUNT(*) = v_antes FROM conformidade);

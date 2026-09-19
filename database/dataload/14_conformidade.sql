@@ -44,7 +44,7 @@ INNER JOIN cargo_nr cargo_nr ON cargo_nr.cargo_id = participante.cargo_id
 INNER JOIN unidade_nr unidade_nr
     ON unidade_nr.unidade_id = participante.unidade_id AND unidade_nr.nr_id = cargo_nr.nr_id
 WHERE participante.unidade_id = 1
-  AND participante.tipo = 'FUNCIONARIO'
+  AND participante.tipo = 'COLABORADOR'
   AND participante.email ~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
   AND NOT EXISTS (
       SELECT 1 FROM conformidade existente
