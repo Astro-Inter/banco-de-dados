@@ -156,7 +156,7 @@ COMMENT ON COLUMN evento.nr_id IS 'Norma Regulamentadora opcionalmente relaciona
 COMMENT ON COLUMN evento.titulo IS 'Título comum a todas as turmas do evento.';
 COMMENT ON COLUMN evento.descricao IS 'Descrição e orientações gerais do evento.';
 COMMENT ON COLUMN evento.link_externo IS 'Link opcional para conteúdo, reunião ou material externo.';
-COMMENT ON COLUMN evento.modo_conclusao IS 'Forma pela qual a participação será concluída: funcionário, gestor ou lista de presença.';
+COMMENT ON COLUMN evento.modo_conclusao IS 'Forma pela qual a participação será concluída: colaborador, gestor ou lista de presença.';
 COMMENT ON COLUMN evento.evidencia_obrigatoria IS 'Indica se a conclusão exige o envio de uma evidência.';
 COMMENT ON COLUMN evento.status IS 'Situação atual do evento em seu ciclo de vida.';
 COMMENT ON COLUMN evento.data_cancelamento IS 'Data e horário em que o evento foi cancelado, quando aplicável.';

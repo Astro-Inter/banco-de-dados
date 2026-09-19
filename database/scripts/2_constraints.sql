@@ -144,7 +144,7 @@ ALTER TABLE evento
         link_externo IS NULL OR link_externo ~* '^https?://[^[:space:]]+$'
     ),
     ADD CONSTRAINT ck_evento_modo_conclusao CHECK (
-        modo_conclusao IN ('FUNCIONARIO', 'GESTOR', 'LISTA_PRESENCA')
+        modo_conclusao IN ('COLABORADOR', 'GESTOR', 'LISTA_PRESENCA')
     ),
     ADD CONSTRAINT ck_evento_status CHECK (
         status IN ('ATIVO', 'CONCLUIDO', 'CANCELADO')
