@@ -75,7 +75,7 @@ ALTER TABLE usuario
     ADD CONSTRAINT uq_usuario_firebase_uid UNIQUE (firebase_uid),
     ADD CONSTRAINT uq_usuario_cpf UNIQUE (cpf),
     ADD CONSTRAINT ck_usuario_cpf CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
-    ADD CONSTRAINT ck_usuario_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'FUNCIONARIO')),
+    ADD CONSTRAINT ck_usuario_tipo CHECK (tipo IN ('GESTOR', 'GESTOR_WORKSPACE', 'COLABORADOR')),
     ADD CONSTRAINT ck_usuario_status CHECK (status IN ('PRE_CADASTRADO', 'ATIVO', 'DESATIVADO')),
     ADD CONSTRAINT ck_usuario_modalidade CHECK (
         modalidade IN ('PRESENCIAL', 'REMOTO', 'HIBRIDO')
@@ -144,7 +144,7 @@ ALTER TABLE evento
         link_externo IS NULL OR link_externo ~* '^https?://[^[:space:]]+$'
     ),
     ADD CONSTRAINT ck_evento_modo_conclusao CHECK (
-        modo_conclusao IN ('FUNCIONARIO', 'GESTOR', 'LISTA_PRESENCA')
+        modo_conclusao IN ('COLABORADOR', 'GESTOR', 'LISTA_PRESENCA')
     ),
     ADD CONSTRAINT ck_evento_status CHECK (
         status IN ('ATIVO', 'CONCLUIDO', 'CANCELADO')

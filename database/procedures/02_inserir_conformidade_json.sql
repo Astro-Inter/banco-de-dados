@@ -63,7 +63,7 @@ BEGIN
 
             SELECT ARRAY_AGG(id_usuario) INTO v_usuarios
             FROM usuario
-            WHERE LOWER(BTRIM(email)) = v_email AND tipo = 'FUNCIONARIO';
+            WHERE LOWER(BTRIM(email)) = v_email AND tipo = 'COLABORADOR';
 
             IF v_usuarios IS NULL THEN
                 RAISE EXCEPTION 'Funcionário não encontrado para o e-mail informado.' USING ERRCODE = '22023';

@@ -23,7 +23,7 @@ BEGIN
         p.tipo, c.id, u.id, s.status
     FROM (VALUES (v_cargo_a), (v_cargo_b)) c(id)
     CROSS JOIN (VALUES (v_unidade_a), (v_unidade_b)) u(id)
-    CROSS JOIN (VALUES ('FUNCIONARIO'), ('GESTOR'), ('GESTOR_WORKSPACE')) p(tipo)
+    CROSS JOIN (VALUES ('COLABORADOR'), ('GESTOR'), ('GESTOR_WORKSPACE')) p(tipo)
     CROSS JOIN (VALUES ('ATIVO'), ('PRE_CADASTRADO'), ('DESATIVADO')) s(status);
 
     CREATE TEMP TABLE usuarios_antes_scrum176 ON COMMIT DROP AS
@@ -68,7 +68,7 @@ BEGIN
         WHERE u.status <> CASE WHEN a.tipo = 'GESTOR_WORKSPACE' THEN a.status ELSE 'DESATIVADO' END);
 
     SELECT id_usuario INTO v_usuario FROM usuarios_antes_scrum176
-    WHERE cargo_id = v_cargo_a AND tipo = 'FUNCIONARIO' LIMIT 1;
+    WHERE cargo_id = v_cargo_a AND tipo = 'COLABORADOR' LIMIT 1;
     UPDATE usuario SET status = 'ATIVO' WHERE id_usuario = v_usuario;
     UPDATE cargo SET ativo = FALSE WHERE id_cargo = v_cargo_a;
     UPDATE cargo SET nome = 'Cargo inativo renomeado' WHERE id_cargo = v_cargo_a;

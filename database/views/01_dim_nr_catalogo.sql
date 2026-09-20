@@ -9,7 +9,7 @@ WITH nr_funcionario AS (
         ON cn.cargo_id = u.cargo_id
     JOIN nr_catalogo nr
         ON nr.codigo_nr = cn.nr_id
-    WHERE u.tipo = 'FUNCIONARIO'
+    WHERE u.tipo = 'COLABORADOR'
       AND nr.revogada = false
 ),
 nr_empresa AS (

@@ -9,7 +9,7 @@ WITH participantes AS (
     FROM usuario participante
     INNER JOIN unidade unidade
         ON unidade.id_unidade = participante.unidade_id
-    WHERE participante.tipo = 'FUNCIONARIO'
+    WHERE participante.tipo = 'COLABORADOR'
       AND participante.status = 'ATIVO'
       AND participante.email LIKE '%@example.com'
       -- O lote SCRUM-172 possui distribuição própria, sem alterar as turmas anteriores.
@@ -81,7 +81,7 @@ eventos_lote (ordem, titulo) AS (
 participantes_lote AS (
     SELECT id_usuario, SPLIT_PART(SPLIT_PART(email, '@', 1), '.', 3)::INTEGER AS ordem
     FROM usuario
-    WHERE unidade_id = 1 AND tipo = 'FUNCIONARIO' AND status = 'ATIVO'
+    WHERE unidade_id = 1 AND tipo = 'COLABORADOR' AND status = 'ATIVO'
       AND email ~ '^[^.]+[.]c689bedf0fc64d4c[.]([1-9][0-9]?|100)@example[.]com$'
 )
 INSERT INTO turma_funcionario (turma_id, usuario_id)
