@@ -1,0 +1,49 @@
+{
+  "id": "employee-queue",
+  "title": "Fila de primeiro acesso",
+  "key": "<REDIS_QUEUE_KEY>",
+  "type": "List",
+  "category": "Fila",
+  "status": "Implementado",
+  "description": "Contém IDs de usuários pré-cadastrados para envio do e-mail de primeiro acesso. O worker consulta o PostgreSQL antes de gerar o token e enviar a mensagem.",
+  "ttl": "Sem TTL definido pelo worker. Cada item é removido por LPOP.",
+  "producer": "Aplicação que cadastra colaboradores; produtor não localizado nos repositórios consultados.",
+  "consumer": "astro-email-worker · processEmailQueue",
+  "commands": [
+    "LPOP <REDIS_QUEUE_KEY>"
+  ],
+  "fields": [
+    {
+      "name": "item",
+      "type": "String",
+      "description": "ID de usuario.id_usuario; não é um objeto com e-mail e ID."
+    }
+  ],
+  "example": [
+    "123",
+    "456"
+  ],
+  "notes": [
+    "O worker aceita somente usuários do tipo COLABORADOR e status PRE_CADASTRADO; usuários ausentes ou incompatíveis são ignorados.",
+    "A execução termina quando a fila esvazia; não há BRPOP bloqueante.",
+    "Falha na geração do token ou envio do e-mail é registrada, mas o ID removido não é devolvido à fila. Não há confirmação ou fila de falhas implementada.",
+    "A ordem depende do comando do produtor: RPUSH com LPOP mantém FIFO. O produtor deve confirmar o contrato."
+  ],
+  "evidence": [
+    {
+      "repo": "astro-email-worker",
+      "file": "src/workers/emailQueueWorker.js",
+      "symbol": "processEmailQueue"
+    },
+    {
+      "repo": "astro-email-worker",
+      "file": "src/services/userService.js",
+      "symbol": "getEmployeeById"
+    },
+    {
+      "repo": "astro-email-worker",
+      "file": "src/repositories/userRepository.js",
+      "symbol": "findUserById"
+    }
+  ]
+}

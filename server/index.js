@@ -14,6 +14,8 @@ import { closeAllSessions } from './database/connection-service.js';
 import { gitStatus } from './services/git-status.js';
 import { readMongoFile, writeMongoFile } from './services/mongo-file-service.js';
 import { analyzeMongo } from '../analyzer/mongo/index.js';
+import { analyzeRedis } from '../analyzer/redis/index.js';
+import { readRedisFile, writeRedisFile } from './services/redis-file-service.js';
 
 const port = Number(process.env.PORT || 4173);
 let database = await analyzeWorkspace();
@@ -35,6 +37,12 @@ async function refresh() {
 }
 
 async function api(request, response, url) {
+  if (request.method === 'GET' && url.pathname === '/api/redis/content') return sendJson(response, 200, { content: await readRedisFile(url.searchParams.get('path')) });
+  if (request.method === 'PUT' && url.pathname === '/api/redis/content') {
+    const body = await readJson(request);
+    await writeRedisFile(body.path, body.content, body.originalContent);
+    return sendJson(response, 200, { saved: true, data: await analyzeRedis() });
+  }
   if (request.method === 'GET' && url.pathname === '/api/mongo/content') return sendJson(response, 200, { content: await readMongoFile(url.searchParams.get('path')) });
   if (request.method === 'PUT' && url.pathname === '/api/mongo/content') {
     const body = await readJson(request);

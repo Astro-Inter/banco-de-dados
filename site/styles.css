@@ -770,3 +770,49 @@ dialog[open]::backdrop { animation: fade-in .24s ease; }
 .postgresql-area .model-node:hover .model-node-bg, .postgresql-area .model-node:focus-visible .model-node-bg { stroke: var(--postgres-blue); }
 .postgresql-area .model-node.is-selected .model-node-bg { stroke: var(--postgres-blue); filter: drop-shadow(0 8px 18px rgba(51,103,145,.18)); }
 .postgresql-area .model-node.is-focused .model-node-bg { stroke: var(--postgres-blue-light); }
+
+/* Redis mantém a identidade Astro e usa vermelho apenas no contexto do banco. */
+.engine-switch { flex-wrap: wrap; }
+.engine-switch a { flex: 1 1 100px; }
+.redis-area { --redis-red: #a82c28; --redis-soft: #fff2f0; }
+.redis-area a.tab { text-decoration: none; }
+.redis-area .tab.active { color: var(--redis-red); border-color: var(--redis-red); }
+.redis-area .sidebar-nav a.active { box-shadow: inset 3px 0 #e65c55; }
+.redis-area .sidebar-nav a.active .icon { color: #ef8c86; }
+.redis-area .engine-switch a[data-engine-link="redis"].active { background: rgba(210,55,48,.22); }
+.redis-area .mongo-collection.active { background: var(--redis-soft); border-color: #efcac6; }
+.redis-area .mongo-collection.active strong { color: var(--redis-red); }
+.redis-area .search-box:focus-within { border-color: var(--redis-red); box-shadow: 0 0 0 3px rgba(168,44,40,.1); }
+.redis-page-head h1 { display: flex; align-items: center; gap: 12px; }
+.redis-page-head h1 img { width: 42px; height: 38px; object-fit: contain; }
+.redis-detail { min-width: 0; }
+.redis-detail section { margin-top: 25px; }
+.redis-detail li { margin-bottom: 8px; }
+.redis-detail td { vertical-align: top; }
+.redis-status { display: inline-flex; padding: 5px 9px; border-radius: 6px; font-size: 11px; white-space: nowrap; background: #f0eef5; color: #615b71; }
+.redis-status.implemented { color: #8e2823; background: #fff0ed; }
+.redis-key-pattern { display: block; padding: 12px 14px; border-left: 3px solid var(--redis-red); background: var(--redis-soft); color: #842a27; overflow-wrap: anywhere; font-size: 13px; }
+.redis-key span { overflow-wrap: anywhere; }
+.redis-contract { margin: 20px 0; border: 1px solid var(--line); border-radius: 10px; }
+.redis-contract > div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 16px; padding: 12px 14px; }
+.redis-contract > div + div { border-top: 1px solid var(--line); }
+.redis-contract dt { color: var(--muted); font-size: 12px; }
+.redis-contract dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.redis-commands { white-space: pre; overflow: auto; padding: 18px; background: #121020; color: #f3d2ce; font-size: 13px; line-height: 1.8; border-radius: 10px; }
+.redis-evidence { display: grid; gap: 10px; }
+.redis-evidence > div { display: grid; gap: 5px; border-left: 2px solid var(--line); padding-left: 12px; font-size: 12px; }
+.redis-evidence code { overflow-wrap: anywhere; }
+.redis-evidence span { color: var(--muted); }
+.redis-flows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.redis-flow { counter-reset: redis-step; list-style: none; margin: 24px 0 0; padding: 0; }
+.redis-flow li { counter-increment: redis-step; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 26px; }
+.redis-flow li::before { content: counter(redis-step); display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #ebc5bf; border-radius: 8px; background: var(--redis-soft); color: var(--redis-red); font: bold 12px Consolas, monospace; z-index: 1; }
+.redis-flow li:not(:last-child)::after { content: ''; position: absolute; top: 30px; bottom: 0; left: 15px; border-left: 1px solid #ebc5bf; }
+.redis-flow h3 { margin: 4px 0 8px; font-size: 14px; }
+.redis-flow p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.redis-flow-key { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 8px; background: white; color: var(--redis-red); border: 1px solid #ebc5bf; border-radius: 6px; font-size: 11px; cursor: pointer; }
+.redis-flow-key:hover { background: var(--redis-soft); }
+.redis-flow li:last-child { padding-bottom: 0; }
+@media (min-width: 851px) { .redis-area .topbar { display: none; } }
+@media (max-width: 1000px) { .redis-flows { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .redis-contract > div { grid-template-columns: 1fr; gap: 6px; } }

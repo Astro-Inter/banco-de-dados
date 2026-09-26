@@ -21,6 +21,7 @@
       <div class="engine-switch" aria-label="Áreas de documentação">
         <a href="#/database" data-engine-link="postgresql"><img src="images/postgresql.png" alt=""/>PostgreSQL</a>
         <a href="#/mongo" data-engine-link="mongo"><img src="images/mongo.png" alt=""/>MongoDB</a>
+        <a href="#/redis" data-engine-link="redis"><img src="images/redis.png" alt=""/>Redis</a>
       </div>
       <!-- Os ícones são injetados a partir de site/icons.js (assets de site/images). -->
       <nav class="sidebar-nav" aria-label="Navegação principal" id="main-nav">
@@ -50,6 +51,12 @@
           <a href="#/mongo" data-route="mongo" data-icon="table">Collections</a>
           <a href="#/mongo-model" data-route="mongo-model" data-icon="physicalModel">Modelagem</a>
           <a href="#/mongo-decisions" data-route="mongo-decisions" data-icon="modeling">Decisões de modelagem</a>
+        </div>
+        <div data-engine-nav="redis" hidden>
+          <span class="nav-group">Redis</span>
+          <a href="#/redis" data-route="redis" data-icon="table">Chaves</a>
+          <a href="#/redis-flows" data-route="redis-flows" data-icon="physicalModel">Fluxos</a>
+          <a href="#/redis-decisions" data-route="redis-decisions" data-icon="modeling">Decisões de uso</a>
         </div>
       </nav>
       <div class="sidebar-footer">

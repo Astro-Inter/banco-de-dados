@@ -4,6 +4,8 @@ O Astro Database Workspace transforma arquivos `.sql` em documentação navegáv
 
 A navegação separa PostgreSQL e MongoDB. PostgreSQL usa os scripts de `database/` e suas ferramentas SQL. MongoDB oferece um catálogo de collections, campos, exemplos JSON e decisões de modelagem baseado nas definições de `mongo/`, com geração para os modos local e estático. Consulte [a organização do módulo MongoDB](mongo/README.md) para adicionar ou atualizar propostas.
 
+Redis possui uma área própria de chaves, TTL e fluxos de processamento, com edição local e documentação independente em `redis/`. Consulte [a organização do módulo Redis](redis/README.md) para manter os contratos encontrados no código e as propostas.
+
 > Foco em PostgreSQL. Os arquivos SQL continuam sendo a fonte da verdade: no Local Mode eles também podem ser **executados** em um banco informado por você, na ordem calculada pelo grafo de dependências.
 
 ## O que a V1 oferece

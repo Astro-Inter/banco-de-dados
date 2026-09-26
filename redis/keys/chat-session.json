@@ -1,0 +1,30 @@
+{
+  "id": "chat-session",
+  "title": "Retomada de sessão do chatbot",
+  "key": "chat:usuario:{id}",
+  "type": "String",
+  "category": "Sessão",
+  "status": "Proposta",
+  "description": "Associar um usuário à sessão de chat recente para permitir retomar a conversa. Não foi localizada implementação desse contrato nos repositórios consultados.",
+  "ttl": "Prazo curto a definir; proposta de SET seguido de EXPIRE.",
+  "producer": "Chatbot · a definir",
+  "consumer": "Chatbot · a definir",
+  "commands": [
+    "SET chat:usuario:{id} <session_id>",
+    "EXPIRE chat:usuario:{id} <segundos>"
+  ],
+  "fields": [
+    {
+      "name": "valor",
+      "type": "String",
+      "description": "Identificador da sessão; o histórico de mensagens fica no armazenamento próprio de documentos."
+    }
+  ],
+  "example": "sessao-exemplo",
+  "notes": [
+    "astro-ai-api declara REDIS_URL em app/core/config.py e render.yaml, mas a pesquisa no código não encontrou cliente ou comandos Redis. Configuração não comprova uso.",
+    "O cache de consultas MCP encontrado em app/infrastructure/mcp_fetch.py usa um dicionário em memória, não Redis.",
+    "Chave, TTL e responsabilidade por invalidação precisam ser definidos antes da implementação."
+  ],
+  "evidence": []
+}

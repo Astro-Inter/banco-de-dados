@@ -1,6 +1,8 @@
 import { createMongoModelState, mountMongoModel } from './components/mongo/mongo-model.js';
 import { openMongoEditor } from './components/mongo/mongo-editor.js';
 import { mongoView } from './components/mongo/mongo-view.js';
+import { redisView } from './components/redis/redis-view.js';
+import { openDocumentationEditor } from './components/documentation/documentation-editor.js';
 import { api, detectMode, loadDatabase } from './services/api.js';
 import { analyzeImpactClient, findObjectPath } from './services/analysis.js';
 import {
@@ -43,6 +45,7 @@ const state = {
   mode: { mode: 'readonly', editable: false },
   database: null,
   mongo: { data: null, loading: false, error: null, query: '', selected: null, model: createMongoModelState() },
+  redis: { data: null, loading: false, error: null, query: '', selected: null },
   filter: 'all',
   databaseTab: 'list',
   selectedId: null,
@@ -390,17 +393,20 @@ function render() {
   const route = currentRoute();
   setActiveNavigation(route);
   const mongoArea = route.startsWith('mongo');
+  const redisArea = route.startsWith('redis');
+  const engine = mongoArea ? 'mongo' : redisArea ? 'redis' : 'postgresql';
   document.body.classList.toggle('mongo-area', mongoArea);
-  document.body.classList.toggle('postgresql-area', !mongoArea);
-  document.querySelectorAll('[data-engine-nav]').forEach((element) => { element.hidden = (element.dataset.engineNav === 'mongo') !== mongoArea; });
+  document.body.classList.toggle('redis-area', redisArea);
+  document.body.classList.toggle('postgresql-area', engine === 'postgresql');
+  document.querySelectorAll('[data-engine-nav]').forEach((element) => { element.hidden = element.dataset.engineNav !== engine; });
   document.querySelectorAll('[data-engine-link]').forEach((element) => {
-    const active = (element.dataset.engineLink === 'mongo') === mongoArea;
+    const active = element.dataset.engineLink === engine;
     element.classList.toggle('active', active);
     if (active) element.setAttribute('aria-current', 'true');
     else element.removeAttribute('aria-current');
   });
-  document.querySelector('#new-file-button').hidden = mongoArea;
-  document.querySelector('#global-search').closest('label').hidden = mongoArea;
+  document.querySelector('#new-file-button').hidden = mongoArea || redisArea;
+  document.querySelector('#global-search').closest('label').hidden = mongoArea || redisArea;
 
   // A classe sai antes de trocar o conteúdo e só volta quando a rota mudou:
   // enquanto ela estiver aplicada, todo elemento inserido em #content anima, e
@@ -410,7 +416,10 @@ function render() {
   content.classList.remove('page-enter');
   if (routeChanged) void content.offsetWidth; // Força o reflow: sem isso o navegador não reinicia a animação.
 
-  if (mongoArea) {
+  if (redisArea) {
+    content.innerHTML = redisView(state.redis.data, { ...state.redis, mode: state.mode, tab: route === 'redis-flows' ? 'flows' : route === 'redis-decisions' ? 'decisions' : 'keys' });
+    if (!state.redis.data && !state.redis.loading && !state.redis.error) loadRedis();
+  } else if (mongoArea) {
     content.innerHTML = mongoView(state.mongo.data, { ...state.mongo, mode: state.mode, tab: route === 'mongo-decisions' ? 'decisions' : route === 'mongo-model' ? 'model' : 'collections' });
     if (!state.mongo.data && !state.mongo.loading && !state.mongo.error) loadMongo();
   } else if (route === 'overview') content.innerHTML = overview(state.database, state.mode);
@@ -1085,6 +1094,59 @@ async function initialize() {
 }
 
 initialize();
+
+async function loadRedis() {
+  state.redis.loading = true;
+  state.redis.error = null;
+  try {
+    const response = await fetch('./generated/redis.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Execute npm run analyze para gerar a documentação Redis.');
+    state.redis.data = await response.json();
+  } catch (error) { state.redis.error = error.message; }
+  finally {
+    state.redis.loading = false;
+    if (currentRoute().startsWith('redis')) render();
+  }
+}
+
+document.addEventListener('click', async (event) => {
+  const edit = event.target.closest('[data-redis-edit]');
+  if (edit && state.mode.editable) {
+    try {
+      await openDocumentationEditor(modal, edit.dataset.redisEdit, (data) => {
+        state.redis.data = data;
+        state.redis.selected = data.keys.find((key) => key.file === edit.dataset.redisEdit)?.id ?? state.redis.selected;
+        render();
+        toast('Documentação Redis salva.');
+      }, { engine: 'redis', label: 'Redis' });
+    } catch (error) { toast(error.message); }
+  }
+  const select = event.target.closest('[data-redis-select], [data-redis-open]');
+  if (select) {
+    state.redis.selected = select.dataset.redisSelect ?? select.dataset.redisOpen;
+    if (select.dataset.redisOpen) { state.redis.query = ''; location.hash = '#/redis'; }
+    else render();
+  }
+  const copy = event.target.closest('[data-redis-copy]');
+  if (copy) {
+    const key = state.redis.data?.keys.find((key) => key.id === copy.dataset.redisCopy);
+    if (key) {
+      try { await navigator.clipboard.writeText(JSON.stringify(key.example, null, 2)); toast('Exemplo copiado.'); }
+      catch { toast('Não foi possível copiar o exemplo.'); }
+    }
+  }
+  if (event.target.closest('[data-redis-retry]')) loadRedis();
+});
+
+document.addEventListener('input', (event) => {
+  if (event.target.id !== 'redis-search') return;
+  const caret = event.target.selectionStart;
+  state.redis.query = event.target.value;
+  render();
+  const input = document.querySelector('#redis-search');
+  input.focus();
+  input.setSelectionRange(caret, caret);
+});
 
 
 async function loadMongo() {
