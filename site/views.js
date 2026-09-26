@@ -528,8 +528,8 @@ export function modeling(config = {}) {
 }
 
 export function changes(mode) {
-  if (!mode.editable) return `${pageHead('Alterações Locais', 'Acompanhe arquivos modificados no workspace.')}<div class="readonly-note"><strong>Esta versão está em modo somente leitura.</strong><br>Para editar scripts e consultar o status Git local, clone o repositório e execute <code>npm run dev</code>.</div>`;
-  return `${pageHead('Alterações Locais', 'Arquivos identificados pelo status Git local.')}<section class="card" id="changes-list"><p class="muted">Consultando alterações…</p></section>`;
+  if (!mode.editable) return `${pageHead('Alterações Locais', 'Acompanhe arquivos modificados em database/.')}<div class="readonly-note"><strong>Esta versão está em modo somente leitura.</strong><br>Para editar scripts e consultar o status Git local, clone o repositório e execute <code>npm run dev</code>.</div>`;
+  return `${pageHead('Alterações Locais', 'Arquivos modificados, adicionados ou excluídos em database/, identificados pelo Git.')}<section class="card" id="changes-list"><p class="muted">Consultando alterações…</p></section>`;
 }
 
 export function searchResults(database, query) {

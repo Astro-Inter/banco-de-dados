@@ -165,7 +165,7 @@ async function loadChanges() {
     const values = await api('changes');
     container.innerHTML = values.length
       ? `<ul class="list">${values.map((change) => `<li class="list-item"><span class="type-icon">${icon('refresh', 16)}</span><div><strong>${escapeHtml(change.file)}</strong><small>${escapeHtml(change.status.trim() || 'M')} · alteração detectada pelo Git</small></div></li>`).join('')}</ul>`
-      : '<div class="empty"><strong>Workspace limpo.</strong><p>Nenhuma alteração foi identificada pelo Git.</p></div>';
+      : '<div class="empty"><strong>Nenhuma alteração no banco.</strong><p>Nenhum arquivo alterado em database/ foi identificado pelo Git.</p></div>';
   } catch (error) {
     container.innerHTML = `<div class="empty"><strong>Não foi possível consultar o Git.</strong><p>${escapeHtml(error.message)}</p></div>`;
   }
