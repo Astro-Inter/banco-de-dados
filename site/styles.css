@@ -17,6 +17,83 @@
   background: var(--canvas);
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.engine-switch { display: flex; gap: 6px; margin-bottom: 18px; padding: 4px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; }
+.engine-switch a { display: flex; flex: 1; align-items: center; justify-content: center; gap: 6px; padding: 9px 5px; color: #c9c4d8; text-decoration: none; font-size: 11px; border-radius: 8px; }
+.engine-switch a.active { background: rgba(255,255,255,.12); color: white; }
+.engine-switch img { width: 21px; height: 21px; object-fit: contain; }
+.sidebar-nav [data-engine-nav] { display: grid; gap: 6px; align-content: start; }
+.mongo-page-head h1 { display: flex; align-items: center; gap: 12px; }
+.mongo-page-head h1 img { width: 38px; height: 38px; }
+.mongo-area a.tab, .mongo-area a.button { text-decoration: none; }
+@media (min-width: 851px) { .mongo-area .topbar { display: none; } }
+.mongo-editor-form { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.mongo-editor-form .code-editor { width: 100%; min-height: 260px; flex: 1; margin-top: 12px; }
+.mongo-editor-error { color: var(--danger); font-size: 13px; }
+.mongo-detail-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.mongo-count { margin-left: 5px; font-size: 11px; }
+.mongo-layout { display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.mongo-catalog { padding: 16px; }
+.mongo-catalog-head { display: grid; gap: 10px; padding-bottom: 14px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
+.mongo-catalog .search-box { min-width: 0; width: 100%; height: 42px; margin: 0; flex: none; }
+.mongo-catalog .search-box .icon { flex: 0 0 16px; }
+.mongo-catalog .search-box input { min-width: 0; width: 100%; font-size: 12px; text-overflow: ellipsis; }
+.mongo-catalog .mongo-catalog-count { margin: 0; padding-left: 13px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.mongo-collection-list { display: grid; gap: 6px; }
+.mongo-collection { display: grid; gap: 6px; width: 100%; text-align: left; border: 1px solid transparent; border-radius: 9px; padding: 13px 12px; background: transparent; color: var(--ink); cursor: pointer; }
+.mongo-collection span, .mongo-collection small { color: var(--muted); font-size: 11px; }
+.mongo-collection.active { background: #edf7f0; border-color: #c9e5d1; }
+.mongo-collection.active strong { color: #176338; }
+.mongo-area .tab.active { color: #176338; border-color: #176338; }
+.mongo-area .sidebar-nav a.active { box-shadow: inset 3px 0 #12a54b; }
+.mongo-area .sidebar-nav a.active .icon { color: #62cc8b; }
+.mongo-detail { min-width: 0; }
+.mongo-model-toolbar, .mongo-model-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mongo-model-toolbar { margin: 18px 0; }
+.mongo-model-controls { margin-left: auto; }
+.mongo-model-controls .icon-button { padding: 10px; }
+.mongo-model-controls output { font-size: 12px; min-width: 38px; text-align: center; }
+.mongo-model-canvas { height: 540px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: radial-gradient(#d9e1dc 1px, transparent 1px) 0 0 / 20px 20px #f7faf8; cursor: grab; touch-action: none; }
+.mongo-model-canvas:active { cursor: grabbing; }
+.mongo-model-card.expanded .mongo-model-canvas { height: 75vh; }
+.mongo-model-svg { display: block; max-width: none; user-select: none; }
+.mongo-model-node { cursor: grab; }
+.mongo-model-node rect { fill: white; stroke: #c9d8cf; stroke-width: 1.5; }
+.mongo-model-node.embedded rect { fill: #edf7f0; stroke-dasharray: 5 3; }
+.mongo-model-node.selected rect, .mongo-model-node:focus-visible rect { stroke: #176338; stroke-width: 3; }
+.mongo-model-node.dimmed { opacity: .28; }
+.mongo-model-kind { fill: #61776a; font: 9px sans-serif; letter-spacing: .08em; }
+.mongo-model-name { fill: #176338; font: bold 14px sans-serif; }
+.mongo-model-field { fill: var(--ink); font: 11px Consolas, monospace; }
+.mongo-model-type { fill: #62766a; font: 9px Consolas, monospace; }
+.mongo-model-edge path { fill: none; stroke: #288d50; stroke-width: 1.8; }
+.mongo-model-edge.reference path { stroke: #416a9a; stroke-dasharray: 6 4; }
+#mongo-model-arrow path { fill: #288d50; }
+.mongo-model-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 16px; color: var(--muted); font-size: 11px; }
+.mongo-model-legend span { display: flex; gap: 7px; align-items: center; }
+.mongo-model-legend i { display: inline-block; width: 22px; border-top: 2px solid #288d50; }
+.mongo-model-legend i.reference { border-top: 2px dashed #416a9a; }
+.mongo-model-note { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.mongo-model-selection { display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.mongo-model-selection p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.mongo-detail section { margin-top: 25px; scroll-margin-top: 85px; }
+.mongo-detail td { vertical-align: top; }
+.mongo-json.code { overflow: auto; max-height: 480px; padding: 16px 0; background: #121020; color: #e8e5ef; font-size: 13px; line-height: 1.8; }
+.mongo-json .code-line::before { color: #a09ab6; }
+.mongo-json .json-key { color: #adcfff; }
+.mongo-json .json-string { color: #a5dfb7; }
+.mongo-json .json-number { color: #ffd08b; }
+.mongo-json .json-boolean, .mongo-json .json-null { color: #d7b2ff; }
+.mongo-json:focus-visible { outline: 2px solid #62cc8b; outline-offset: -3px; }
+.mongo-notes { padding-left: 20px; font-size: 13px; line-height: 1.8; }
+.mongo-detail-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--line); margin-top: 22px; padding-top: 16px; font-size: 11px; overflow-wrap: anywhere; }
+.mongo-detail-footer a { color: #176338; }
+.mongo-decision { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.mongo-decision:last-child { border-bottom: 0; }
+.mongo-decision h3 { margin: 0 0 8px; font-size: 14px; }
+.mongo-decision p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.mongo-collection:focus-visible, .engine-switch a:focus-visible { outline: 2px solid #12a54b; outline-offset: 2px; }
+@media (max-width: 1050px) { .mongo-layout { grid-template-columns: 1fr; } .mongo-collection-list { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
 html, body { min-height: 100%; }
 body { margin: 0; min-width: 320px; overflow-x: hidden; background: var(--canvas); font-family: 'Montserrat', sans-serif; }
 button, input, select, textarea { font: inherit; }
@@ -674,3 +751,22 @@ dialog[open]::backdrop { animation: fade-in .24s ease; }
   }
   .sidebar-nav a:hover, .stat:hover, .object-category-card:hover { transform: none; }
 }
+
+/* Acentos PostgreSQL; a marca e as ações principais mantêm o roxo Astro. */
+.postgresql-area { --postgres-blue: #336791; --postgres-blue-light: #8fbee5; --postgres-blue-soft: #edf4fa; }
+.postgresql-area .engine-switch a[data-engine-link="postgresql"].active { background: rgba(51,103,145,.28); box-shadow: inset 0 0 0 1px rgba(143,190,229,.25); }
+.postgresql-area .sidebar-nav a.active { box-shadow: inset 3px 0 var(--postgres-blue-light); }
+.postgresql-area .sidebar-nav a.active .icon, .postgresql-area .sidebar-nav a:hover .icon { color: var(--postgres-blue-light); }
+.postgresql-area .tab.active { color: var(--postgres-blue); border-color: var(--postgres-blue); }
+.postgresql-area .tab.active .icon { color: var(--postgres-blue); }
+.postgresql-area .filter-button.active { background: var(--postgres-blue); border-color: var(--postgres-blue); }
+.postgresql-area .filter-button:hover:not(.active), .postgresql-area .button.ghost:hover:not(:disabled) { color: var(--postgres-blue); border-color: rgba(51,103,145,.4); }
+.postgresql-area .search-box:focus-within { border-color: var(--postgres-blue); box-shadow: 0 0 0 3px rgba(51,103,145,.12); }
+.postgresql-area .search-box:focus-within .icon { color: var(--postgres-blue); }
+.postgresql-area .object-description { border-left-color: var(--postgres-blue); }
+.postgresql-area .object-description .icon, .postgresql-area .stat-icon { color: var(--postgres-blue); }
+.postgresql-area .fact-icon { color: var(--postgres-blue); background: var(--postgres-blue-soft); }
+.postgresql-area .model-control:hover, .postgresql-area .model-search-results button:hover { color: var(--postgres-blue); background: var(--postgres-blue-soft); }
+.postgresql-area .model-node:hover .model-node-bg, .postgresql-area .model-node:focus-visible .model-node-bg { stroke: var(--postgres-blue); }
+.postgresql-area .model-node.is-selected .model-node-bg { stroke: var(--postgres-blue); filter: drop-shadow(0 8px 18px rgba(51,103,145,.18)); }
+.postgresql-area .model-node.is-focused .model-node-bg { stroke: var(--postgres-blue-light); }

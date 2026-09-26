@@ -1,0 +1,83 @@
+{
+  "name": "chatbot_sessoes",
+  "title": "Sessões de chatbot",
+  "description": "Histórico de conversas organizado por sessão, com mensagens embutidas.",
+  "pattern": "Embedding · sessão",
+  "notes": [
+    "Confirmar com o frontend se o histórico completo ou apenas a última conversa será exibido.",
+    "Definir a divisão de sessões extensas para evitar crescimento ilimitado do documento."
+  ],
+  "fields": [
+    {
+      "name": "_id",
+      "type": "string",
+      "description": "Identificador da sessão.",
+      "required": "A definir"
+    },
+    {
+      "name": "id_user",
+      "type": "number",
+      "description": "Referência ao usuário.",
+      "required": "A definir"
+    },
+    {
+      "name": "iniciada_em",
+      "type": "date",
+      "description": "Início da sessão.",
+      "required": "A definir"
+    },
+    {
+      "name": "atualizada_em",
+      "type": "date",
+      "description": "Última interação.",
+      "required": "A definir"
+    },
+    {
+      "name": "resumo",
+      "type": "string",
+      "description": "Resumo da sessão.",
+      "required": "A definir"
+    },
+    {
+      "name": "mensagens",
+      "type": "array<object>",
+      "description": "Mensagens embutidas.",
+      "required": "A definir"
+    },
+    {
+      "name": "mensagens[].role",
+      "type": "string",
+      "description": "Papel de quem enviou a mensagem.",
+      "required": "A definir"
+    },
+    {
+      "name": "mensagens[].content",
+      "type": "string",
+      "description": "Conteúdo da mensagem.",
+      "required": "A definir"
+    }
+  ],
+  "example": {
+    "_id": "sessao-exemplo",
+    "id_user": 1,
+    "iniciada_em": {
+      "$date": "2026-06-25T12:19:40.233Z"
+    },
+    "atualizada_em": {
+      "$date": "2026-06-25T12:20:36.194Z"
+    },
+    "resumo": "",
+    "mensagens": [
+      {
+        "role": "human",
+        "content": "Qual foi nossa conversa anterior?"
+      },
+      {
+        "role": "assistant",
+        "content": "Esta é a primeira conversa desta sessão."
+      }
+    ]
+  },
+  "status": "Proposta",
+  "indexes": []
+}

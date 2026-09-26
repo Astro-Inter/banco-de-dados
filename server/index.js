@@ -12,6 +12,8 @@ import { searchObjects } from '../site/services/search.js';
 import { databaseApi } from './routes/database.js';
 import { closeAllSessions } from './database/connection-service.js';
 import { gitStatus } from './services/git-status.js';
+import { readMongoFile, writeMongoFile } from './services/mongo-file-service.js';
+import { analyzeMongo } from '../analyzer/mongo/index.js';
 
 const port = Number(process.env.PORT || 4173);
 let database = await analyzeWorkspace();
@@ -33,6 +35,12 @@ async function refresh() {
 }
 
 async function api(request, response, url) {
+  if (request.method === 'GET' && url.pathname === '/api/mongo/content') return sendJson(response, 200, { content: await readMongoFile(url.searchParams.get('path')) });
+  if (request.method === 'PUT' && url.pathname === '/api/mongo/content') {
+    const body = await readJson(request);
+    await writeMongoFile(body.path, body.content, body.originalContent);
+    return sendJson(response, 200, { saved: true, data: await analyzeMongo() });
+  }
   if (url.pathname.startsWith('/api/database/')) {
     if (await databaseApi(request, response, url, { getDatabase: () => database })) return;
     return sendJson(response, 404, { error: 'Endpoint não encontrado.' });

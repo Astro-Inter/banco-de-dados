@@ -1,3 +1,6 @@
+import { createMongoModelState, mountMongoModel } from './components/mongo/mongo-model.js';
+import { openMongoEditor } from './components/mongo/mongo-editor.js';
+import { mongoView } from './components/mongo/mongo-view.js';
 import { api, detectMode, loadDatabase } from './services/api.js';
 import { analyzeImpactClient, findObjectPath } from './services/analysis.js';
 import {
@@ -39,6 +42,7 @@ import {
 const state = {
   mode: { mode: 'readonly', editable: false },
   database: null,
+  mongo: { data: null, loading: false, error: null, query: '', selected: null, model: createMongoModelState() },
   filter: 'all',
   databaseTab: 'list',
   selectedId: null,
@@ -385,6 +389,18 @@ function render() {
 
   const route = currentRoute();
   setActiveNavigation(route);
+  const mongoArea = route.startsWith('mongo');
+  document.body.classList.toggle('mongo-area', mongoArea);
+  document.body.classList.toggle('postgresql-area', !mongoArea);
+  document.querySelectorAll('[data-engine-nav]').forEach((element) => { element.hidden = (element.dataset.engineNav === 'mongo') !== mongoArea; });
+  document.querySelectorAll('[data-engine-link]').forEach((element) => {
+    const active = (element.dataset.engineLink === 'mongo') === mongoArea;
+    element.classList.toggle('active', active);
+    if (active) element.setAttribute('aria-current', 'true');
+    else element.removeAttribute('aria-current');
+  });
+  document.querySelector('#new-file-button').hidden = mongoArea;
+  document.querySelector('#global-search').closest('label').hidden = mongoArea;
 
   // A classe sai antes de trocar o conteúdo e só volta quando a rota mudou:
   // enquanto ela estiver aplicada, todo elemento inserido em #content anima, e
@@ -394,7 +410,10 @@ function render() {
   content.classList.remove('page-enter');
   if (routeChanged) void content.offsetWidth; // Força o reflow: sem isso o navegador não reinicia a animação.
 
-  if (route === 'overview') content.innerHTML = overview(state.database, state.mode);
+  if (mongoArea) {
+    content.innerHTML = mongoView(state.mongo.data, { ...state.mongo, mode: state.mode, tab: route === 'mongo-decisions' ? 'decisions' : route === 'mongo-model' ? 'model' : 'collections' });
+    if (!state.mongo.data && !state.mongo.loading && !state.mongo.error) loadMongo();
+  } else if (route === 'overview') content.innerHTML = overview(state.database, state.mode);
   else if (route === 'database') content.innerHTML = databaseView(state.database, state.databaseTab, state.model, state.mode);
   else if (route === 'logs') content.innerHTML = logsView(state.database);
   else if (route === 'dataload') content.innerHTML = dataLoadView(state.database);
@@ -438,6 +457,14 @@ function render() {
         const object = state.database.objects.find((item) => item.id === id);
         if (object) tableDetailDialog(object);
       }
+    });
+  }
+
+  if (route === 'mongo-model' && state.mongo.data) {
+    mountMongoModel(content, state.mongo.data, state.mongo.model, render, (name) => {
+      state.mongo.selected = name;
+      state.mongo.query = '';
+      location.hash = '#/mongo';
     });
   }
 
@@ -1008,6 +1035,13 @@ document.querySelector('#main-nav').addEventListener('click', () => {
   if (window.matchMedia('(max-width: 850px)').matches) sidebar.classList.remove('open');
 });
 
+document.querySelector('.engine-switch').addEventListener('click', () => {
+  if (window.matchMedia('(max-width: 850px)').matches) {
+    document.querySelector('#sidebar').classList.remove('open');
+    document.querySelector('#menu-button').setAttribute('aria-expanded', 'false');
+  }
+});
+
 document.querySelector('#global-search').addEventListener('input', (event) => {
   state.query = event.target.value.trim();
   if (state.query.length >= 2) {
@@ -1051,3 +1085,55 @@ async function initialize() {
 }
 
 initialize();
+
+
+async function loadMongo() {
+  state.mongo.loading = true;
+  state.mongo.error = null;
+  try {
+    const response = await fetch('./generated/mongo.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Execute npm run analyze para gerar a documentação MongoDB.');
+    state.mongo.data = await response.json();
+  } catch (error) { state.mongo.error = error.message; }
+  finally {
+    state.mongo.loading = false;
+    if (currentRoute().startsWith('mongo')) render();
+  }
+}
+
+document.addEventListener('click', async (event) => {
+  const edit = event.target.closest('[data-mongo-edit]');
+  if (edit && state.mode.editable) {
+    try {
+      await openMongoEditor(modal, edit.dataset.mongoEdit, (data) => {
+        state.mongo.data = data;
+        state.mongo.selected = data.collections.find((item) => item.file === edit.dataset.mongoEdit)?.name ?? state.mongo.selected;
+        render();
+        toast('Documentação MongoDB salva.');
+      });
+    } catch (error) { toast(error.message); }
+  }
+  const select = event.target.closest('[data-mongo-select]');
+  if (select) { state.mongo.selected = select.dataset.mongoSelect; render(); }
+  const copy = event.target.closest('[data-mongo-copy]');
+  if (copy) {
+    const collection = state.mongo.data?.collections.find((item) => item.name === copy.dataset.mongoCopy);
+    if (collection) {
+      try { await navigator.clipboard.writeText(JSON.stringify(collection.example, null, 2)); toast('Documento JSON copiado.'); }
+      catch { toast('Não foi possível copiar o documento.'); }
+    }
+  }
+  if (event.target.closest('[data-mongo-retry]')) loadMongo();
+  const section = event.target.closest('[data-mongo-section]');
+  if (section) document.getElementById(section.dataset.mongoSection)?.scrollIntoView({ block: 'start' });
+});
+
+document.addEventListener('input', (event) => {
+  if (event.target.id !== 'mongo-search') return;
+  const caret = event.target.selectionStart;
+  state.mongo.query = event.target.value;
+  render();
+  const input = document.querySelector('#mongo-search');
+  input.focus();
+  input.setSelectionRange(caret, caret);
+});

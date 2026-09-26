@@ -2,6 +2,8 @@
 
 O Astro Database Workspace transforma arquivos `.sql` em documentação navegável. Ele cataloga objetos, revela dependências, encontra caminhos entre objetos, estima o impacto de alterações e, quando executado localmente, edita os próprios arquivos do repositório.
 
+A navegação separa PostgreSQL e MongoDB. PostgreSQL usa os scripts de `database/` e suas ferramentas SQL. MongoDB oferece um catálogo de collections, campos, exemplos JSON e decisões de modelagem baseado nas definições de `mongo/`, com geração para os modos local e estático. Consulte [a organização do módulo MongoDB](mongo/README.md) para adicionar ou atualizar propostas.
+
 > Foco em PostgreSQL. Os arquivos SQL continuam sendo a fonte da verdade: no Local Mode eles também podem ser **executados** em um banco informado por você, na ordem calculada pelo grafo de dependências.
 
 ## O que a V1 oferece
