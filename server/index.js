@@ -1,8 +1,6 @@
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { analyzeWorkspace } from '../analyzer/index.js';
 import { generateGitHistory } from '../analyzer/git/history.js';
 import { findPath } from '../analyzer/dependencies/graph.js';
@@ -13,8 +11,12 @@ import { createSqlFile, deleteSqlFile, readSqlFile, renameSqlFile, writeSqlFile 
 import { searchObjects } from '../site/services/search.js';
 import { databaseApi } from './routes/database.js';
 import { closeAllSessions } from './database/connection-service.js';
+import { gitStatus } from './services/git-status.js';
+import { readMongoFile, writeMongoFile } from './services/mongo-file-service.js';
+import { analyzeMongo } from '../analyzer/mongo/index.js';
+import { analyzeRedis } from '../analyzer/redis/index.js';
+import { readRedisFile, writeRedisFile } from './services/redis-file-service.js';
 
-const run = promisify(execFile);
 const port = Number(process.env.PORT || 4173);
 let database = await analyzeWorkspace();
 
@@ -34,14 +36,19 @@ async function refresh() {
   return database;
 }
 
-async function gitStatus() {
-  try {
-    const { stdout } = await run('git', ['status', '--short'], { cwd: workspaceRoot });
-    return stdout.trim().split(/\r?\n/).filter(Boolean).map((line) => ({ status: line.slice(0, 2), file: line.slice(3) }));
-  } catch { return []; }
-}
-
 async function api(request, response, url) {
+  if (request.method === 'GET' && url.pathname === '/api/redis/content') return sendJson(response, 200, { content: await readRedisFile(url.searchParams.get('path')) });
+  if (request.method === 'PUT' && url.pathname === '/api/redis/content') {
+    const body = await readJson(request);
+    await writeRedisFile(body.path, body.content, body.originalContent);
+    return sendJson(response, 200, { saved: true, data: await analyzeRedis() });
+  }
+  if (request.method === 'GET' && url.pathname === '/api/mongo/content') return sendJson(response, 200, { content: await readMongoFile(url.searchParams.get('path')) });
+  if (request.method === 'PUT' && url.pathname === '/api/mongo/content') {
+    const body = await readJson(request);
+    await writeMongoFile(body.path, body.content, body.originalContent);
+    return sendJson(response, 200, { saved: true, data: await analyzeMongo() });
+  }
   if (url.pathname.startsWith('/api/database/')) {
     if (await databaseApi(request, response, url, { getDatabase: () => database })) return;
     return sendJson(response, 404, { error: 'Endpoint não encontrado.' });
@@ -57,7 +64,7 @@ async function api(request, response, url) {
     return sendJson(response, 200, searchObjects(database.objects, url.searchParams.get('q')));
   }
   if (request.method === 'GET' && url.pathname === '/api/path') return sendJson(response, 200, findPath(database.objects, url.searchParams.get('from'), url.searchParams.get('to')));
-  if (request.method === 'GET' && url.pathname === '/api/changes') return sendJson(response, 200, await gitStatus());
+  if (request.method === 'GET' && url.pathname === '/api/changes') return sendJson(response, 200, await gitStatus(workspaceRoot));
   if (request.method === 'POST' && url.pathname === '/api/impact-analysis') return sendJson(response, 200, analyzeImpact(database, await readJson(request)));
   if (request.method === 'PUT' && url.pathname === '/api/files/content') {
     const body = await readJson(request); await writeSqlFile(body.path, body.content); await refresh();

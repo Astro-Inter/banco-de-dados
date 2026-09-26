@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-26T17:32:31.547Z",
+  "keys": [
+    {
+      "id": "employee-queue",
+      "title": "Fila de primeiro acesso",
+      "key": "<REDIS_QUEUE_KEY>",
+      "type": "List",
+      "category": "Fila",
+      "status": "Implementado",
+      "description": "Contém IDs de usuários pré-cadastrados para envio do e-mail de primeiro acesso. O worker consulta o PostgreSQL antes de gerar o token e enviar a mensagem.",
+      "ttl": "Sem TTL definido pelo worker. Cada item é removido por LPOP.",
+      "producer": "Aplicação que cadastra colaboradores; produtor não localizado nos repositórios consultados.",
+      "consumer": "astro-email-worker · processEmailQueue",
+      "commands": [
+        "LPOP <REDIS_QUEUE_KEY>"
+      ],
+      "fields": [
+        {
+          "name": "item",
+          "type": "String",
+          "description": "ID de usuario.id_usuario; não é um objeto com e-mail e ID."
+        }
+      ],
+      "example": [
+        "123",
+        "456"
+      ],
+      "notes": [
+        "O worker aceita somente usuários do tipo COLABORADOR e status PRE_CADASTRADO; usuários ausentes ou incompatíveis são ignorados.",
+        "A execução termina quando a fila esvazia; não há BRPOP bloqueante.",
+        "Falha na geração do token ou envio do e-mail é registrada, mas o ID removido não é devolvido à fila. Não há confirmação ou fila de falhas implementada.",
+        "A ordem depende do comando do produtor: RPUSH com LPOP mantém FIFO. O produtor deve confirmar o contrato."
+      ],
+      "evidence": [
+        {
+          "repo": "astro-email-worker",
+          "file": "src/workers/emailQueueWorker.js",
+          "symbol": "processEmailQueue"
+        },
+        {
+          "repo": "astro-email-worker",
+          "file": "src/services/userService.js",
+          "symbol": "getEmployeeById"
+        },
+        {
+          "repo": "astro-email-worker",
+          "file": "src/repositories/userRepository.js",
+          "symbol": "findUserById"
+        }
+      ],
+      "file": "redis/keys/employee-queue.json"
+    },
+    {
+      "id": "employee-token",
+      "title": "Token de primeiro acesso",
+      "key": "<ACCESS_TOKEN_PREFIX>{id_usuario}",
+      "type": "String",
+      "category": "Token",
+      "status": "Implementado",
+      "description": "Código de seis dígitos associado ao ID de usuário do PostgreSQL. É gerado pelo worker e incluído no e-mail de primeiro acesso.",
+      "ttl": "ACCESS_TOKEN_TTL_SECONDS (segundos), aplicado em SET com EX. Valor depende da configuração.",
+      "producer": "astro-email-worker · createAccessToken",
+      "consumer": "Aplicação que valida o primeiro acesso; validação não localizada nos repositórios consultados.",
+      "commands": [
+        "SET <ACCESS_TOKEN_PREFIX>{id_usuario} <codigo> EX <ACCESS_TOKEN_TTL_SECONDS>"
+      ],
+      "fields": [
+        {
+          "name": "sufixo da chave",
+          "type": "ID",
+          "description": "ID de usuário recebido pelo worker."
+        },
+        {
+          "name": "valor",
+          "type": "String",
+          "description": "Código aleatório de seis dígitos."
+        }
+      ],
+      "example": "123456",
+      "notes": [
+        "Novo SET na mesma chave substitui o código anterior e renova a expiração.",
+        "A geração usa crypto.randomInt(100000, 1000000).",
+        "Consumo único e remoção após validação precisam ser confirmados na aplicação consumidora."
+      ],
+      "evidence": [
+        {
+          "repo": "astro-email-worker",
+          "file": "src/services/tokenService.js",
+          "symbol": "generateAccessToken / saveAccessToken / createAccessToken"
+        }
+      ],
+      "file": "redis/keys/employee-token.json"
+    },
+    {
+      "id": "workspace-queue",
+      "title": "Fila de criação de workspace",
+      "key": "<WORKSPACE_EMAIL_QUEUE_KEY>",
+      "type": "List",
+      "category": "Fila",
+      "status": "Implementado",
+      "description": "Fila de e-mails para iniciar a criação de um workspace. O processo gera um código e envia a mensagem sem consultar o PostgreSQL.",
+      "ttl": "Sem TTL definido pelo worker. Cada item é removido por LPOP.",
+      "producer": "Aplicação que solicita criação de workspace; produtor não localizado. README demonstra RPUSH.",
+      "consumer": "astro-email-worker · processWorkspaceEmailQueue",
+      "commands": [
+        "RPUSH <WORKSPACE_EMAIL_QUEUE_KEY> <email>",
+        "LPOP <WORKSPACE_EMAIL_QUEUE_KEY>"
+      ],
+      "fields": [
+        {
+          "name": "item",
+          "type": "String",
+          "description": "Endereço de e-mail; normalizado com trim e letras minúsculas antes de gerar o código."
+        }
+      ],
+      "example": [
+        "pessoa@example.com"
+      ],
+      "notes": [
+        "Exemplo de nome no README: astro:workspace:email:queue. O nome efetivo vem da variável de ambiente.",
+        "E-mail inválido é descartado.",
+        "Falha no token ou envio devolve o item original com RPUSH e encerra a execução com erro para uma nova tentativa.",
+        "O processo termina ao esvaziar a fila. A devolução após erro não protege contra queda entre LPOP e processamento."
+      ],
+      "evidence": [
+        {
+          "repo": "astro-email-worker",
+          "file": "src/workers/workspaceEmailQueueWorker.js",
+          "symbol": "processWorkspaceEmailQueue"
+        },
+        {
+          "repo": "astro-email-worker",
+          "file": "README.md",
+          "symbol": "Configuração do acesso ao workspace"
+        }
+      ],
+      "file": "redis/keys/workspace-queue.json"
+    },
+    {
+      "id": "workspace-token",
+      "title": "Código de acesso ao workspace",
+      "key": "<WORKSPACE_ACCESS_TOKEN_PREFIX>{email_normalizado}",
+      "type": "String",
+      "category": "Token",
+      "status": "Implementado",
+      "description": "Código de seis dígitos salvo por e-mail para iniciar a criação de workspace. O mesmo código é enviado por e-mail.",
+      "ttl": "Sem expiração automática: o SET atual não usa EX ou EXPIRE.",
+      "producer": "astro-email-worker · createWorkspaceAccessToken",
+      "consumer": "Aplicação que valida o código de workspace; consumidor não localizado.",
+      "commands": [
+        "SET <WORKSPACE_ACCESS_TOKEN_PREFIX>{email_normalizado} <codigo>"
+      ],
+      "fields": [
+        {
+          "name": "sufixo da chave",
+          "type": "String",
+          "description": "E-mail sem espaços externos e em minúsculas."
+        },
+        {
+          "name": "valor",
+          "type": "String",
+          "description": "Código de seis dígitos."
+        }
+      ],
+      "example": "654321",
+      "notes": [
+        "Exemplo de prefixo no README: astro:workspace:access:token:. Não é um nome fixo no código.",
+        "Um novo pedido para o mesmo e-mail substitui o código anterior.",
+        "O README atribui a remoção após uso à aplicação principal; essa remoção não é feita pelo worker.",
+        "Definir prazo de validade é uma decisão em aberto, pois este código não tem TTL atualmente."
+      ],
+      "evidence": [
+        {
+          "repo": "astro-email-worker",
+          "file": "src/services/workspaceTokenService.js",
+          "symbol": "createWorkspaceAccessToken"
+        },
+        {
+          "repo": "astro-email-worker",
+          "file": "src/workers/workspaceEmailQueueWorker.js",
+          "symbol": "normalização do e-mail"
+        },
+        {
+          "repo": "astro-email-worker",
+          "file": "README.md",
+          "symbol": "Configuração do acesso ao workspace"
+        }
+      ],
+      "file": "redis/keys/workspace-token.json"
+    },
+    {
+      "id": "application-cache",
+      "title": "Cache de consultas frequentes",
+      "key": "<recurso>:{id}",
+      "type": "String",
+      "category": "Cache",
+      "status": "Proposta",
+      "description": "Guardar respostas frequentemente consultadas e buscar primeiro no cache, recorrendo à origem quando a chave não existir. Nenhuma família de chaves Redis de cache foi localizada.",
+      "ttl": "A definir por recurso; proposta exige expiração e regra de invalidação.",
+      "producer": "Serviço responsável pela consulta · a definir",
+      "consumer": "Serviço responsável pela consulta · a definir",
+      "commands": [
+        "GET <recurso>:{id}",
+        "SET <recurso>:{id} <conteudo> EX <segundos>"
+      ],
+      "fields": [
+        {
+          "name": "valor",
+          "type": "String",
+          "description": "Conteúdo serializado da consulta; formato a definir por recurso."
+        }
+      ],
+      "example": {
+        "id": "exemplo",
+        "conteudo": "Resposta ilustrativa"
+      },
+      "notes": [
+        "O padrão de chave é ilustrativo e não um contrato implementado.",
+        "Definir quais consultas se beneficiam do cache, o prazo de validade e a invalidação quando a origem muda.",
+        "Ranking em tempo real e persistência de notificações não possuem implementação Redis localizada."
+      ],
+      "evidence": [],
+      "file": "redis/keys/application-cache.json"
+    },
+    {
+      "id": "chat-session",
+      "title": "Retomada de sessão do chatbot",
+      "key": "chat:usuario:{id}",
+      "type": "String",
+      "category": "Sessão",
+      "status": "Proposta",
+      "description": "Associar um usuário à sessão de chat recente para permitir retomar a conversa. Não foi localizada implementação desse contrato nos repositórios consultados.",
+      "ttl": "Prazo curto a definir; proposta de SET seguido de EXPIRE.",
+      "producer": "Chatbot · a definir",
+      "consumer": "Chatbot · a definir",
+      "commands": [
+        "SET chat:usuario:{id} <session_id>",
+        "EXPIRE chat:usuario:{id} <segundos>"
+      ],
+      "fields": [
+        {
+          "name": "valor",
+          "type": "String",
+          "description": "Identificador da sessão; o histórico de mensagens fica no armazenamento próprio de documentos."
+        }
+      ],
+      "example": "sessao-exemplo",
+      "notes": [
+        "astro-ai-api declara REDIS_URL em app/core/config.py e render.yaml, mas a pesquisa no código não encontrou cliente ou comandos Redis. Configuração não comprova uso.",
+        "O cache de consultas MCP encontrado em app/infrastructure/mcp_fetch.py usa um dicionário em memória, não Redis.",
+        "Chave, TTL e responsabilidade por invalidação precisam ser definidos antes da implementação."
+      ],
+      "evidence": [],
+      "file": "redis/keys/chat-session.json"
+    }
+  ],
+  "modeling": {
+    "principles": [
+      {
+        "title": "Filas e dados temporários",
+        "description": "O uso localizado concentra-se no worker de e-mail: filas de IDs ou e-mails e códigos de acesso. Redis não é a fonte dos dados cadastrais dos usuários."
+      },
+      {
+        "title": "Contratos configuráveis",
+        "description": "Os nomes reais de filas e prefixos vêm de variáveis de ambiente. Os exemplos são ilustrativos; nenhum valor de conexão ou credencial faz parte desta documentação."
+      },
+      {
+        "title": "Uma execução por lote",
+        "description": "O workflow de astro-email-worker agenda as duas workers a cada cinco minutos e permite disparo manual com workflow_dispatch. Cada processo consome até a fila esvaziar e encerra; a disponibilidade do agendamento em produção não foi verificada."
+      },
+      {
+        "title": "Implementado e proposta",
+        "description": "Implementado indica operações encontradas no código local, não comprovação de implantação. Sessões de chat e cache permanecem propostas. A configuração REDIS_URL na API de IA não comprova operações no Redis."
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Validade do código de workspace",
+        "description": "O código atual é salvo sem TTL. Definir se deve expirar e qual prazo, além de confirmar a remoção após uso no consumidor."
+      },
+      {
+        "title": "Entrega e recuperação de falhas",
+        "description": "A fila de funcionários remove o ID antes do envio e não devolve em falha. A fila de workspace devolve em erro, mas ambas ficam vulneráveis à interrupção após LPOP. Definir confirmação, novas tentativas e idempotência."
+      },
+      {
+        "title": "Contrato dos produtores e consumidores",
+        "description": "Os produtores de fila e validadores de códigos não foram localizados nas cópias consultadas. Confirmar nomes de chave, RPUSH/LPOP para FIFO, consumo único e integração com os serviços responsáveis."
+      },
+      {
+        "title": "Proposta inicial versus código atual",
+        "description": "A proposta inicial previa processamento:email com objeto contendo e-mail e ID, LPUSH/BRPOP e processamento:funcionario:{id}. O código atual usa nomes configuráveis, IDs simples na fila de funcionários e LPOP. Não tratar os nomes iniciais como contratos atuais."
+      },
+      {
+        "title": "Chat, cache, ranking e notificações",
+        "description": "Definir escopo e TTL da retomada de chat e do cache antes de implementar. Não foi localizado ranking Redis. O armazenamento durável das notificações continua uma decisão entre os módulos responsáveis."
+      }
+    ],
+    "flows": [
+      {
+        "id": "employee-access",
+        "title": "Primeiro acesso de colaborador",
+        "status": "Implementado",
+        "steps": [
+          {
+            "title": "Enfileirar ID",
+            "description": "A aplicação produtora adiciona o ID do usuário. O produtor não foi localizado.",
+            "keyId": "employee-queue"
+          },
+          {
+            "title": "Consumir e validar",
+            "description": "LPOP remove o ID; o worker consulta PostgreSQL e exige COLABORADOR / PRE_CADASTRADO.",
+            "keyId": "employee-queue"
+          },
+          {
+            "title": "Gerar código com TTL",
+            "description": "SET grava o código de seis dígitos com EX configurado em segundos.",
+            "keyId": "employee-token"
+          },
+          {
+            "title": "Enviar e-mail",
+            "description": "O worker envia pelo SMTP. Falha de envio é registrada sem devolver o ID à fila."
+          },
+          {
+            "title": "Validar primeiro acesso",
+            "description": "Etapa esperada na aplicação consumidora; não localizada. Confirmar uso único do código.",
+            "keyId": "employee-token"
+          }
+        ]
+      },
+      {
+        "id": "workspace-access",
+        "title": "Criação de workspace",
+        "status": "Implementado",
+        "steps": [
+          {
+            "title": "Enfileirar e-mail",
+            "description": "Aplicação produtora não localizada; o README demonstra RPUSH para inserção.",
+            "keyId": "workspace-queue"
+          },
+          {
+            "title": "Consumir e normalizar",
+            "description": "LPOP remove o item. O worker valida o e-mail após trim e conversão para minúsculas.",
+            "keyId": "workspace-queue"
+          },
+          {
+            "title": "Gerar código",
+            "description": "SET salva o código por e-mail sem expiração automática.",
+            "keyId": "workspace-token"
+          },
+          {
+            "title": "Enviar e recuperar",
+            "description": "SMTP envia o acesso. Em falha, RPUSH devolve o e-mail original e o processo encerra com erro.",
+            "keyId": "workspace-queue"
+          },
+          {
+            "title": "Validar e remover código",
+            "description": "Responsabilidade prevista para a aplicação principal no README; implementação não localizada.",
+            "keyId": "workspace-token"
+          }
+        ]
+      }
+    ]
+  },
+  "issues": []
+}

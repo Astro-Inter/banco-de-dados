@@ -1,0 +1,46 @@
+{
+  "principles": [
+    {
+      "title": "Agregados e contextos",
+      "description": "Avaliar contextos delimitados e raízes de agregação. Entidades internas podem ser embutidas; cada domínio não implica uma collection."
+    },
+    {
+      "title": "Embedding e referências",
+      "description": "Escolher a organização conforme acesso, frequência de atualização e regras de exclusão. A proposta também contempla modelagem híbrida."
+    },
+    {
+      "title": "Sessões e crescimento",
+      "description": "Organizar históricos por sessão e planejar a divisão de documentos extensos. A modelagem contempla os padrões Bucket e Outlier."
+    },
+    {
+      "title": "Hierarquias",
+      "description": "O padrão Tree é uma possibilidade para representar relações entre pais e filhos."
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Histórico de chatbot",
+      "description": "Exibir todo o histórico ou somente a última conversa? Alinhar com o frontend."
+    },
+    {
+      "title": "Leitura de mensagens",
+      "description": "Definir como registrar a leitura e confirmar a troca entre funcionários."
+    },
+    {
+      "title": "Collections de formulários",
+      "description": "Validar a proposta de uma collection por formulário e onde guardar respostas."
+    },
+    {
+      "title": "Destino das notificações",
+      "description": "Escolher MongoDB ou Redis e definir a automação dos alertas."
+    },
+    {
+      "title": "Organização das NRs",
+      "description": "Especificar as três partes previstas para o catálogo."
+    },
+    {
+      "title": "Índices e validação",
+      "description": "Índices, tipos definitivos e campos obrigatórios ainda não foram especificados na documentação."
+    }
+  ]
+}

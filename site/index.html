@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1c1839">
-  <meta name="description" content="Astro Database Workspace — documentação SQL navegável e análise de impacto.">
+  <meta name="description" content="Astro Database Workspace — documentação PostgreSQL e MongoDB.">
   <link rel="shortcut icon" href="images/astro.svg" type="image/x-icon">
   <title>Astro · Database Workspace</title>
   <link rel="stylesheet" href="./styles.css">
@@ -18,8 +18,14 @@
         <img class="brand-logo" src="images/astro.svg" alt="Icone Astro" aria-hidden="true">
         <span><strong>astro</strong><small>database workspace</small></span>
       </a>
+      <div class="engine-switch" aria-label="Áreas de documentação">
+        <a href="#/database" data-engine-link="postgresql"><img src="images/postgresql.png" alt=""/>PostgreSQL</a>
+        <a href="#/mongo" data-engine-link="mongo"><img src="images/mongo.png" alt=""/>MongoDB</a>
+        <a href="#/redis" data-engine-link="redis"><img src="images/redis.png" alt=""/>Redis</a>
+      </div>
       <!-- Os ícones são injetados a partir de site/icons.js (assets de site/images). -->
       <nav class="sidebar-nav" aria-label="Navegação principal" id="main-nav">
+        <div data-engine-nav="postgresql">
         <a href="#/overview" data-route="overview" data-icon="dashboard">Visão Geral</a>
         <span class="nav-group">Explorador</span>
         <a href="#/database" data-route="database" data-icon="table">Banco de Dados</a>
@@ -39,6 +45,19 @@
         <a href="#/execution" data-route="execution" data-icon="execution">Executar Banco</a>
         <a href="#/changes" data-route="changes" data-icon="changes">Alterações Locais</a>
         <a href="#/history" data-route="history" data-icon="history">Histórico</a>
+        </div>
+        <div data-engine-nav="mongo" hidden>
+          <span class="nav-group">MongoDB</span>
+          <a href="#/mongo" data-route="mongo" data-icon="table">Collections</a>
+          <a href="#/mongo-model" data-route="mongo-model" data-icon="physicalModel">Modelagem</a>
+          <a href="#/mongo-decisions" data-route="mongo-decisions" data-icon="modeling">Decisões de modelagem</a>
+        </div>
+        <div data-engine-nav="redis" hidden>
+          <span class="nav-group">Redis</span>
+          <a href="#/redis" data-route="redis" data-icon="table">Chaves</a>
+          <a href="#/redis-flows" data-route="redis-flows" data-icon="physicalModel">Fluxos</a>
+          <a href="#/redis-decisions" data-route="redis-decisions" data-icon="modeling">Decisões de uso</a>
+        </div>
       </nav>
       <div class="sidebar-footer">
         <span class="mode-badge" id="mode-badge"><i></i> Verificando...</span>

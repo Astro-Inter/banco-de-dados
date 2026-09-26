@@ -1,0 +1,46 @@
+{
+  "name": "notificacoes",
+  "title": "Notificações",
+  "description": "Proposta de mensagens e alertas destinados a usuários.",
+  "pattern": "Referências",
+  "notes": [
+    "O armazenamento em MongoDB ou Redis ainda está em aberto.",
+    "Definir título dos alertas criados por gestores e responsabilidade pela automação no backend."
+  ],
+  "fields": [
+    {
+      "name": "_id",
+      "type": "number",
+      "description": "Identificador da notificação.",
+      "required": "A definir"
+    },
+    {
+      "name": "id_usuario",
+      "type": "number",
+      "description": "Destinatário.",
+      "required": "A definir"
+    },
+    {
+      "name": "mensagem",
+      "type": "string",
+      "description": "Texto da notificação.",
+      "required": "A definir"
+    },
+    {
+      "name": "data_criacao",
+      "type": "date",
+      "description": "Data de criação.",
+      "required": "A definir"
+    }
+  ],
+  "example": {
+    "_id": 1,
+    "id_usuario": 2,
+    "mensagem": "Conclua o treinamento pendente.",
+    "data_criacao": {
+      "$date": "2026-06-25T12:19:40.233Z"
+    }
+  },
+  "status": "Proposta",
+  "indexes": []
+}
