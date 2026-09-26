@@ -1,5 +1,6 @@
 import { escapeHtml, icon, isLogTable } from '../../utils.js';
 import { modelFilters, searchTables, zoomLabel } from './model-state.js';
+import { inheritanceMarkup } from '../../services/inheritance.js';
 
 /**
  * Toolbar, legenda e painel de contexto da modelagem.
@@ -71,6 +72,7 @@ export function tableContextPanel(table, database) {
       <div><p class="eyebrow">${isLogTable(table) ? 'Log Table' : 'Tabela'}</p><h3>${icon(isLogTable(table) ? 'logTable' : 'table', 16)} ${escapeHtml(table.name)}</h3></div>
       <button class="icon-button" data-model-action="close-panel" aria-label="Fechar painel" title="Fechar painel">${icon('minus', 16)}</button>
     </div>
+    ${inheritanceMarkup(table, database?.objects)}
     ${table.description
       ? `<p class="model-panel-description">${icon('info', 14)} ${escapeHtml(table.description)}</p>`
       : '<p class="model-panel-description muted">Sem descrição cadastrada.</p>'}

@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-26T17:01:11.597Z",
+  "collections": [
+    {
+      "name": "chat_mensagens",
+      "title": "Mensagens de chat",
+      "description": "Mensagens trocadas entre remetente e destinatário.",
+      "pattern": "Referências",
+      "notes": [
+        "Confirmar mensagens entre funcionários e o registro de leitura.",
+        "Avaliar organização por sessão, conforme a organização proposta."
+      ],
+      "fields": [
+        {
+          "name": "_id",
+          "type": "number",
+          "description": "Identificador da mensagem.",
+          "required": "A definir"
+        },
+        {
+          "name": "id_envia",
+          "type": "number",
+          "description": "Referência ao remetente.",
+          "required": "A definir"
+        },
+        {
+          "name": "id_recebe",
+          "type": "number",
+          "description": "Referência ao destinatário.",
+          "required": "A definir"
+        },
+        {
+          "name": "mensagem",
+          "type": "string",
+          "description": "Texto da mensagem.",
+          "required": "A definir"
+        },
+        {
+          "name": "data",
+          "type": "date",
+          "description": "Data do envio.",
+          "required": "A definir"
+        }
+      ],
+      "example": {
+        "_id": 1,
+        "id_envia": 1,
+        "id_recebe": 2,
+        "mensagem": "Olá!",
+        "data": {
+          "$date": "2026-06-25T12:19:40.233Z"
+        }
+      },
+      "status": "Proposta",
+      "indexes": [],
+      "file": "mongo/collections/chat_mensagens.json"
+    },
+    {
+      "name": "chatbot_sessoes",
+      "title": "Sessões de chatbot",
+      "description": "Histórico de conversas organizado por sessão, com mensagens embutidas.",
+      "pattern": "Embedding · sessão",
+      "notes": [
+        "Confirmar com o frontend se o histórico completo ou apenas a última conversa será exibido.",
+        "Definir a divisão de sessões extensas para evitar crescimento ilimitado do documento."
+      ],
+      "fields": [
+        {
+          "name": "_id",
+          "type": "string",
+          "description": "Identificador da sessão.",
+          "required": "A definir"
+        },
+        {
+          "name": "id_user",
+          "type": "number",
+          "description": "Referência ao usuário.",
+          "required": "A definir"
+        },
+        {
+          "name": "iniciada_em",
+          "type": "date",
+          "description": "Início da sessão.",
+          "required": "A definir"
+        },
+        {
+          "name": "atualizada_em",
+          "type": "date",
+          "description": "Última interação.",
+          "required": "A definir"
+        },
+        {
+          "name": "resumo",
+          "type": "string",
+          "description": "Resumo da sessão.",
+          "required": "A definir"
+        },
+        {
+          "name": "mensagens",
+          "type": "array<object>",
+          "description": "Mensagens embutidas.",
+          "required": "A definir"
+        },
+        {
+          "name": "mensagens[].role",
+          "type": "string",
+          "description": "Papel de quem enviou a mensagem.",
+          "required": "A definir"
+        },
+        {
+          "name": "mensagens[].content",
+          "type": "string",
+          "description": "Conteúdo da mensagem.",
+          "required": "A definir"
+        }
+      ],
+      "example": {
+        "_id": "sessao-exemplo",
+        "id_user": 1,
+        "iniciada_em": {
+          "$date": "2026-06-25T12:19:40.233Z"
+        },
+        "atualizada_em": {
+          "$date": "2026-06-25T12:20:36.194Z"
+        },
+        "resumo": "",
+        "mensagens": [
+          {
+            "role": "human",
+            "content": "Qual foi nossa conversa anterior?"
+          },
+          {
+            "role": "assistant",
+            "content": "Esta é a primeira conversa desta sessão."
+          }
+        ]
+      },
+      "status": "Proposta",
+      "indexes": [],
+      "file": "mongo/collections/chatbot_sessoes.json"
+    },
+    {
+      "name": "forms",
+      "title": "Formulários",
+      "description": "Estrutura de formulários com perguntas e opções embutidas.",
+      "pattern": "Embedding",
+      "notes": [
+        "A modelagem propõe uma collection para cada formulário com a mesma estrutura. forms é o nome documental deste modelo, não uma decisão de collection única.",
+        "Validar armazenamento das respostas e organização das collections antes de implementar."
+      ],
+      "fields": [
+        {
+          "name": "_id",
+          "type": "number",
+          "description": "Identificador do formulário.",
+          "required": "A definir"
+        },
+        {
+          "name": "id_gestor",
+          "type": "number",
+          "description": "Gestor responsável.",
+          "required": "A definir"
+        },
+        {
+          "name": "nr",
+          "type": "number",
+          "description": "NR vinculada.",
+          "required": "Não"
+        },
+        {
+          "name": "id_unidade",
+          "type": "number",
+          "description": "Unidade vinculada.",
+          "required": "Não"
+        },
+        {
+          "name": "id_gestor_remetente",
+          "type": "number",
+          "description": "Gestor remetente.",
+          "required": "A definir"
+        },
+        {
+          "name": "titulo",
+          "type": "string",
+          "description": "Título do formulário.",
+          "required": "A definir"
+        },
+        {
+          "name": "descricao",
+          "type": "string",
+          "description": "Descrição do formulário.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas",
+          "type": "array<object>",
+          "description": "Perguntas embutidas.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].id_pergunta",
+          "type": "number",
+          "description": "Identificador da pergunta.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].tipo",
+          "type": "string",
+          "description": "Alternativa, dissertativa, avaliação, foto ou data.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].pergunta",
+          "type": "string",
+          "description": "Texto da pergunta.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].resposta",
+          "type": "array | null",
+          "description": "Resposta; formato ainda em discussão.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].opcoes",
+          "type": "array",
+          "description": "Opções disponíveis.",
+          "required": "A definir"
+        },
+        {
+          "name": "perguntas[].obrigatoria",
+          "type": "boolean",
+          "description": "Obrigatoriedade da pergunta.",
+          "required": "A definir"
+        }
+      ],
+      "example": {
+        "_id": 1,
+        "id_gestor": 2,
+        "id_gestor_remetente": 1,
+        "titulo": "Pesquisa Clima",
+        "descricao": "Avaliação do ambiente organizacional",
+        "perguntas": [
+          {
+            "id_pergunta": 1,
+            "tipo": "alternativa",
+            "pergunta": "Você está satisfeito com seu ambiente de trabalho?",
+            "resposta": [],
+            "opcoes": [
+              "Sim",
+              "Não"
+            ],
+            "obrigatoria": true
+          }
+        ]
+      },
+      "status": "Proposta",
+      "indexes": [],
+      "file": "mongo/collections/forms.json"
+    },
+    {
+      "name": "notificacoes",
+      "title": "Notificações",
+      "description": "Proposta de mensagens e alertas destinados a usuários.",
+      "pattern": "Referências",
+      "notes": [
+        "O armazenamento em MongoDB ou Redis ainda está em aberto.",
+        "Definir título dos alertas criados por gestores e responsabilidade pela automação no backend."
+      ],
+      "fields": [
+        {
+          "name": "_id",
+          "type": "number",
+          "description": "Identificador da notificação.",
+          "required": "A definir"
+        },
+        {
+          "name": "id_usuario",
+          "type": "number",
+          "description": "Destinatário.",
+          "required": "A definir"
+        },
+        {
+          "name": "mensagem",
+          "type": "string",
+          "description": "Texto da notificação.",
+          "required": "A definir"
+        },
+        {
+          "name": "data_criacao",
+          "type": "date",
+          "description": "Data de criação.",
+          "required": "A definir"
+        }
+      ],
+      "example": {
+        "_id": 1,
+        "id_usuario": 2,
+        "mensagem": "Conclua o treinamento pendente.",
+        "data_criacao": {
+          "$date": "2026-06-25T12:19:40.233Z"
+        }
+      },
+      "status": "Proposta",
+      "indexes": [],
+      "file": "mongo/collections/notificacoes.json"
+    },
+    {
+      "name": "nr_catalogo",
+      "title": "Normas Regulamentadoras",
+      "description": "Conteúdo descritivo e atributos das NRs.",
+      "pattern": "Documento",
+      "notes": [
+        "A modelagem prevê guardar em três partes; a divisão ainda precisa ser definida."
+      ],
+      "fields": [
+        {
+          "name": "_id",
+          "type": "number",
+          "description": "Código da NR.",
+          "required": "A definir"
+        },
+        {
+          "name": "nome",
+          "type": "string",
+          "description": "Nome da norma.",
+          "required": "A definir"
+        },
+        {
+          "name": "tempo_reciclagem_meses",
+          "type": "number",
+          "description": "Intervalo de reciclagem.",
+          "required": "A definir"
+        },
+        {
+          "name": "descricao",
+          "type": "string",
+          "description": "Descrição da norma.",
+          "required": "A definir"
+        },
+        {
+          "name": "objetivo",
+          "type": "string",
+          "description": "Objetivo da norma.",
+          "required": "A definir"
+        },
+        {
+          "name": "aplicabilidade",
+          "type": "string",
+          "description": "Âmbito de aplicação.",
+          "required": "A definir"
+        },
+        {
+          "name": "usabilidade",
+          "type": "string",
+          "description": "Funcionário ou empresa; valores a validar.",
+          "required": "A definir"
+        },
+        {
+          "name": "data_criacao",
+          "type": "date",
+          "description": "Data de criação.",
+          "required": "A definir"
+        },
+        {
+          "name": "ultima_atualizacao",
+          "type": "date",
+          "description": "Última atualização.",
+          "required": "A definir"
+        },
+        {
+          "name": "revogada",
+          "type": "boolean",
+          "description": "Situação da norma.",
+          "required": "A definir"
+        }
+      ],
+      "example": {
+        "_id": 35,
+        "nome": "Trabalho em Altura",
+        "tempo_reciclagem_meses": 24,
+        "descricao": "Exemplo de descrição",
+        "objetivo": "Exemplo de objetivo",
+        "aplicabilidade": "A definir",
+        "usabilidade": "A definir",
+        "data_criacao": {
+          "$date": "2026-06-25T12:19:40.233Z"
+        },
+        "ultima_atualizacao": {
+          "$date": "2026-06-25T12:19:40.233Z"
+        },
+        "revogada": false
+      },
+      "status": "Proposta",
+      "indexes": [],
+      "file": "mongo/collections/nr_catalogo.json"
+    }
+  ],
+  "modeling": {
+    "principles": [
+      {
+        "title": "Agregados e contextos",
+        "description": "Avaliar contextos delimitados e raízes de agregação. Entidades internas podem ser embutidas; cada domínio não implica uma collection."
+      },
+      {
+        "title": "Embedding e referências",
+        "description": "Escolher a organização conforme acesso, frequência de atualização e regras de exclusão. A proposta também contempla modelagem híbrida."
+      },
+      {
+        "title": "Sessões e crescimento",
+        "description": "Organizar históricos por sessão e planejar a divisão de documentos extensos. A modelagem contempla os padrões Bucket e Outlier."
+      },
+      {
+        "title": "Hierarquias",
+        "description": "O padrão Tree é uma possibilidade para representar relações entre pais e filhos."
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Histórico de chatbot",
+        "description": "Exibir todo o histórico ou somente a última conversa? Alinhar com o frontend."
+      },
+      {
+        "title": "Leitura de mensagens",
+        "description": "Definir como registrar a leitura e confirmar a troca entre funcionários."
+      },
+      {
+        "title": "Collections de formulários",
+        "description": "Validar a proposta de uma collection por formulário e onde guardar respostas."
+      },
+      {
+        "title": "Destino das notificações",
+        "description": "Escolher MongoDB ou Redis e definir a automação dos alertas."
+      },
+      {
+        "title": "Organização das NRs",
+        "description": "Especificar as três partes previstas para o catálogo."
+      },
+      {
+        "title": "Índices e validação",
+        "description": "Índices, tipos definitivos e campos obrigatórios ainda não foram especificados na documentação."
+      }
+    ]
+  },
+  "issues": []
+}

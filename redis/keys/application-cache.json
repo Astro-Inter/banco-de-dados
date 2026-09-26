@@ -1,0 +1,33 @@
+{
+  "id": "application-cache",
+  "title": "Cache de consultas frequentes",
+  "key": "<recurso>:{id}",
+  "type": "String",
+  "category": "Cache",
+  "status": "Proposta",
+  "description": "Guardar respostas frequentemente consultadas e buscar primeiro no cache, recorrendo à origem quando a chave não existir. Nenhuma família de chaves Redis de cache foi localizada.",
+  "ttl": "A definir por recurso; proposta exige expiração e regra de invalidação.",
+  "producer": "Serviço responsável pela consulta · a definir",
+  "consumer": "Serviço responsável pela consulta · a definir",
+  "commands": [
+    "GET <recurso>:{id}",
+    "SET <recurso>:{id} <conteudo> EX <segundos>"
+  ],
+  "fields": [
+    {
+      "name": "valor",
+      "type": "String",
+      "description": "Conteúdo serializado da consulta; formato a definir por recurso."
+    }
+  ],
+  "example": {
+    "id": "exemplo",
+    "conteudo": "Resposta ilustrativa"
+  },
+  "notes": [
+    "O padrão de chave é ilustrativo e não um contrato implementado.",
+    "Definir quais consultas se beneficiam do cache, o prazo de validade e a invalidação quando a origem muda.",
+    "Ranking em tempo real e persistência de notificações não possuem implementação Redis localizada."
+  ],
+  "evidence": []
+}

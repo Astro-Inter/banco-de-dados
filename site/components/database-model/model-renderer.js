@@ -1,6 +1,7 @@
 import { escapeHtml, formatColumnType, isLogTable } from '../../utils.js';
 import { svgIcon } from '../../icons.js';
 import { layoutMetrics } from './model-layout.js';
+import { inheritanceOf } from '../../services/inheritance.js';
 
 /**
  * Renderização do diagrama. Recebe layout + estado e devolve markup SVG:
@@ -28,6 +29,7 @@ function columnTitle(table, column) {
     `Check: ${column.check ?? 'Nenhum'}`
   ];
   if (column.description) lines.push(`Descrição: ${column.description}`);
+  if (column.inheritedFrom) lines.push(`Herdada de: ${column.inheritedFrom}`);
   return escapeHtml(lines.join('\n'));
 }
 
@@ -42,8 +44,10 @@ export function columnAnchorY(table, columnName, position, metrics = layoutMetri
   return position.y + metrics.headerHeight + columnRowIndex(table, columnName, metrics) * metrics.rowHeight + metrics.rowHeight / 2;
 }
 
-export function renderNode(table, position, state, metrics = layoutMetrics) {
+export function renderNode(table, position, state, metrics = layoutMetrics, allTables = []) {
   const log = isLogTable(table);
+  const { children, parents } = inheritanceOf(table, allTables);
+  const inheritanceLabel = children.length ? 'Tabela base de herança' : parents.length ? `Herda de ${parents.join(', ')}` : '';
   const columns = (table.columns ?? []).slice(0, metrics.maxRows);
   const hidden = (table.columns ?? []).length - columns.length;
   const selected = state.selectedId === table.id;
@@ -66,15 +70,16 @@ export function renderNode(table, position, state, metrics = layoutMetrics) {
     ? `<text class="model-node-footer" x="${metrics.nodeWidth / 2}" y="${metrics.headerHeight + columns.length * metrics.rowHeight + 15}" text-anchor="middle">+${hidden} coluna(s)</text>`
     : '';
 
-  return `<g class="model-node ${log ? 'is-log' : ''} ${selected ? 'is-selected' : ''} ${focused ? 'is-focused' : ''} ${dimmed ? 'is-dimmed' : ''}"
+  return `<g class="model-node ${log ? 'is-log' : ''} ${children.length ? 'is-inheritance-base' : ''} ${selected ? 'is-selected' : ''} ${focused ? 'is-focused' : ''} ${dimmed ? 'is-dimmed' : ''}"
       data-model-table="${escapeHtml(table.id)}" transform="translate(${position.x} ${position.y})"
-      tabindex="0" role="button" aria-label="${escapeHtml(`${log ? 'Log Table' : 'Tabela'} ${table.name}`)}">
-    <title>${escapeHtml(table.description ? `${table.name}\n${table.description}` : table.name)}</title>
+      tabindex="0" role="button" aria-label="${escapeHtml(`${log ? 'Log Table' : 'Tabela'} ${table.name}${inheritanceLabel ? `, ${inheritanceLabel}` : ''}`)}">
+    <title>${escapeHtml([table.name, table.description, inheritanceLabel, children.length ? `Fornece colunas para: ${children.map((child) => child.name).join(', ')}` : ''].filter(Boolean).join('\n'))}</title>
     <rect class="model-node-bg" width="${metrics.nodeWidth}" height="${position.height}" rx="10"/>
     <path class="model-node-head" d="M0 10a10 10 0 0 1 10-10h${metrics.nodeWidth - 20}a10 10 0 0 1 10 10v${metrics.headerHeight - 10}H0Z"/>
     ${svgIcon(log ? 'logTable' : 'table', { x: 12, y: metrics.headerHeight / 2 - 8, size: 16, className: 'model-node-icon' })}
     <text class="model-node-name" x="36" y="${metrics.headerHeight / 2 + 5}">${escapeHtml(truncate(table.name, log ? 17 : 21))}</text>
     ${log ? `<g class="model-log-tag" transform="translate(${metrics.nodeWidth - 44} ${metrics.headerHeight / 2 - 9})"><rect width="34" height="18" rx="9"/><text x="17" y="13" text-anchor="middle">LOG</text></g>` : ''}
+    ${inheritanceLabel ? `<text class="model-inheritance-label" x="12" y="${metrics.headerHeight - 8}">${escapeHtml(truncate(inheritanceLabel, 29))}</text>` : ''}
     ${rows}${footer}
   </g>`;
 }
@@ -112,12 +117,12 @@ export function renderRelationship(relationship, tables, positions, state, metri
   </g>`;
 }
 
-export function renderDiagram(tables, layout, positions, state, metrics = layoutMetrics) {
+export function renderDiagram(tables, layout, positions, state, metrics = layoutMetrics, allTables = tables) {
   const byId = new Map(tables.map((table) => [table.id, table]));
   const visible = new Set(tables.map((table) => table.id));
   const relationships = layout.relationships.filter((item) => visible.has(item.from) && visible.has(item.to));
   const edges = relationships.map((relationship) => renderRelationship(relationship, byId, positions, state, metrics)).join('');
-  const nodes = tables.map((table) => renderNode(table, positions.get(table.id), state, metrics)).join('');
+  const nodes = tables.map((table) => renderNode(table, positions.get(table.id), state, metrics, allTables)).join('');
   return `<svg class="model-svg" id="model-svg" viewBox="0 0 ${layout.bounds.width} ${layout.bounds.height}"
       style="width:${Math.round(layout.bounds.width * state.zoom)}px;height:${Math.round(layout.bounds.height * state.zoom)}px"
       role="img" aria-label="Diagrama da modelagem física do banco">

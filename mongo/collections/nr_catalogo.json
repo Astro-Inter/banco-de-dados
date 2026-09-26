@@ -1,0 +1,89 @@
+{
+  "name": "nr_catalogo",
+  "title": "Normas Regulamentadoras",
+  "description": "Conteúdo descritivo e atributos das NRs.",
+  "pattern": "Documento",
+  "notes": [
+    "A modelagem prevê guardar em três partes; a divisão ainda precisa ser definida."
+  ],
+  "fields": [
+    {
+      "name": "_id",
+      "type": "number",
+      "description": "Código da NR.",
+      "required": "A definir"
+    },
+    {
+      "name": "nome",
+      "type": "string",
+      "description": "Nome da norma.",
+      "required": "A definir"
+    },
+    {
+      "name": "tempo_reciclagem_meses",
+      "type": "number",
+      "description": "Intervalo de reciclagem.",
+      "required": "A definir"
+    },
+    {
+      "name": "descricao",
+      "type": "string",
+      "description": "Descrição da norma.",
+      "required": "A definir"
+    },
+    {
+      "name": "objetivo",
+      "type": "string",
+      "description": "Objetivo da norma.",
+      "required": "A definir"
+    },
+    {
+      "name": "aplicabilidade",
+      "type": "string",
+      "description": "Âmbito de aplicação.",
+      "required": "A definir"
+    },
+    {
+      "name": "usabilidade",
+      "type": "string",
+      "description": "Funcionário ou empresa; valores a validar.",
+      "required": "A definir"
+    },
+    {
+      "name": "data_criacao",
+      "type": "date",
+      "description": "Data de criação.",
+      "required": "A definir"
+    },
+    {
+      "name": "ultima_atualizacao",
+      "type": "date",
+      "description": "Última atualização.",
+      "required": "A definir"
+    },
+    {
+      "name": "revogada",
+      "type": "boolean",
+      "description": "Situação da norma.",
+      "required": "A definir"
+    }
+  ],
+  "example": {
+    "_id": 35,
+    "nome": "Trabalho em Altura",
+    "tempo_reciclagem_meses": 24,
+    "descricao": "Exemplo de descrição",
+    "objetivo": "Exemplo de objetivo",
+    "aplicabilidade": "A definir",
+    "usabilidade": "A definir",
+    "data_criacao": {
+      "$date": "2026-06-25T12:19:40.233Z"
+    },
+    "ultima_atualizacao": {
+      "$date": "2026-06-25T12:19:40.233Z"
+    },
+    "revogada": false
+  },
+  "status": "Proposta",
+  "indexes": []
+}

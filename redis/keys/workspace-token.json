@@ -1,0 +1,51 @@
+{
+  "id": "workspace-token",
+  "title": "Código de acesso ao workspace",
+  "key": "<WORKSPACE_ACCESS_TOKEN_PREFIX>{email_normalizado}",
+  "type": "String",
+  "category": "Token",
+  "status": "Implementado",
+  "description": "Código de seis dígitos salvo por e-mail para iniciar a criação de workspace. O mesmo código é enviado por e-mail.",
+  "ttl": "Sem expiração automática: o SET atual não usa EX ou EXPIRE.",
+  "producer": "astro-email-worker · createWorkspaceAccessToken",
+  "consumer": "Aplicação que valida o código de workspace; consumidor não localizado.",
+  "commands": [
+    "SET <WORKSPACE_ACCESS_TOKEN_PREFIX>{email_normalizado} <codigo>"
+  ],
+  "fields": [
+    {
+      "name": "sufixo da chave",
+      "type": "String",
+      "description": "E-mail sem espaços externos e em minúsculas."
+    },
+    {
+      "name": "valor",
+      "type": "String",
+      "description": "Código de seis dígitos."
+    }
+  ],
+  "example": "654321",
+  "notes": [
+    "Exemplo de prefixo no README: astro:workspace:access:token:. Não é um nome fixo no código.",
+    "Um novo pedido para o mesmo e-mail substitui o código anterior.",
+    "O README atribui a remoção após uso à aplicação principal; essa remoção não é feita pelo worker.",
+    "Definir prazo de validade é uma decisão em aberto, pois este código não tem TTL atualmente."
+  ],
+  "evidence": [
+    {
+      "repo": "astro-email-worker",
+      "file": "src/services/workspaceTokenService.js",
+      "symbol": "createWorkspaceAccessToken"
+    },
+    {
+      "repo": "astro-email-worker",
+      "file": "src/workers/workspaceEmailQueueWorker.js",
+      "symbol": "normalização do e-mail"
+    },
+    {
+      "repo": "astro-email-worker",
+      "file": "README.md",
+      "symbol": "Configuração do acesso ao workspace"
+    }
+  ]
+}

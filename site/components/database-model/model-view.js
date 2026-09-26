@@ -48,7 +48,7 @@ export function modelingView(database, state = createModelState()) {
     ${alert}
     <div class="model-stage">
       <div class="model-canvas" id="model-canvas" tabindex="0" aria-label="Área navegável do diagrama">
-        ${tables.length ? renderDiagram(tables, layout, positions, state) : modelEmptyState(state, all.length)}
+        ${tables.length ? renderDiagram(tables, layout, positions, state, undefined, all) : modelEmptyState(state, all.length)}
       </div>
       ${panel}
     </div>

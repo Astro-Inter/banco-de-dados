@@ -1,0 +1,53 @@
+{
+  "name": "chat_mensagens",
+  "title": "Mensagens de chat",
+  "description": "Mensagens trocadas entre remetente e destinatário.",
+  "pattern": "Referências",
+  "notes": [
+    "Confirmar mensagens entre funcionários e o registro de leitura.",
+    "Avaliar organização por sessão, conforme a organização proposta."
+  ],
+  "fields": [
+    {
+      "name": "_id",
+      "type": "number",
+      "description": "Identificador da mensagem.",
+      "required": "A definir"
+    },
+    {
+      "name": "id_envia",
+      "type": "number",
+      "description": "Referência ao remetente.",
+      "required": "A definir"
+    },
+    {
+      "name": "id_recebe",
+      "type": "number",
+      "description": "Referência ao destinatário.",
+      "required": "A definir"
+    },
+    {
+      "name": "mensagem",
+      "type": "string",
+      "description": "Texto da mensagem.",
+      "required": "A definir"
+    },
+    {
+      "name": "data",
+      "type": "date",
+      "description": "Data do envio.",
+      "required": "A definir"
+    }
+  ],
+  "example": {
+    "_id": 1,
+    "id_envia": 1,
+    "id_recebe": 2,
+    "mensagem": "Olá!",
+    "data": {
+      "$date": "2026-06-25T12:19:40.233Z"
+    }
+  },
+  "status": "Proposta",
+  "indexes": []
+}

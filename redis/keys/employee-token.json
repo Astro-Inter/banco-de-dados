@@ -1,0 +1,40 @@
+{
+  "id": "employee-token",
+  "title": "Token de primeiro acesso",
+  "key": "<ACCESS_TOKEN_PREFIX>{id_usuario}",
+  "type": "String",
+  "category": "Token",
+  "status": "Implementado",
+  "description": "Código de seis dígitos associado ao ID de usuário do PostgreSQL. É gerado pelo worker e incluído no e-mail de primeiro acesso.",
+  "ttl": "ACCESS_TOKEN_TTL_SECONDS (segundos), aplicado em SET com EX. Valor depende da configuração.",
+  "producer": "astro-email-worker · createAccessToken",
+  "consumer": "Aplicação que valida o primeiro acesso; validação não localizada nos repositórios consultados.",
+  "commands": [
+    "SET <ACCESS_TOKEN_PREFIX>{id_usuario} <codigo> EX <ACCESS_TOKEN_TTL_SECONDS>"
+  ],
+  "fields": [
+    {
+      "name": "sufixo da chave",
+      "type": "ID",
+      "description": "ID de usuário recebido pelo worker."
+    },
+    {
+      "name": "valor",
+      "type": "String",
+      "description": "Código aleatório de seis dígitos."
+    }
+  ],
+  "example": "123456",
+  "notes": [
+    "Novo SET na mesma chave substitui o código anterior e renova a expiração.",
+    "A geração usa crypto.randomInt(100000, 1000000).",
+    "Consumo único e remoção após validação precisam ser confirmados na aplicação consumidora."
+  ],
+  "evidence": [
+    {
+      "repo": "astro-email-worker",
+      "file": "src/services/tokenService.js",
+      "symbol": "generateAccessToken / saveAccessToken / createAccessToken"
+    }
+  ]
+}

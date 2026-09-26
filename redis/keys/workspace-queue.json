@@ -1,0 +1,44 @@
+{
+  "id": "workspace-queue",
+  "title": "Fila de criação de workspace",
+  "key": "<WORKSPACE_EMAIL_QUEUE_KEY>",
+  "type": "List",
+  "category": "Fila",
+  "status": "Implementado",
+  "description": "Fila de e-mails para iniciar a criação de um workspace. O processo gera um código e envia a mensagem sem consultar o PostgreSQL.",
+  "ttl": "Sem TTL definido pelo worker. Cada item é removido por LPOP.",
+  "producer": "Aplicação que solicita criação de workspace; produtor não localizado. README demonstra RPUSH.",
+  "consumer": "astro-email-worker · processWorkspaceEmailQueue",
+  "commands": [
+    "RPUSH <WORKSPACE_EMAIL_QUEUE_KEY> <email>",
+    "LPOP <WORKSPACE_EMAIL_QUEUE_KEY>"
+  ],
+  "fields": [
+    {
+      "name": "item",
+      "type": "String",
+      "description": "Endereço de e-mail; normalizado com trim e letras minúsculas antes de gerar o código."
+    }
+  ],
+  "example": [
+    "pessoa@example.com"
+  ],
+  "notes": [
+    "Exemplo de nome no README: astro:workspace:email:queue. O nome efetivo vem da variável de ambiente.",
+    "E-mail inválido é descartado.",
+    "Falha no token ou envio devolve o item original com RPUSH e encerra a execução com erro para uma nova tentativa.",
+    "O processo termina ao esvaziar a fila. A devolução após erro não protege contra queda entre LPOP e processamento."
+  ],
+  "evidence": [
+    {
+      "repo": "astro-email-worker",
+      "file": "src/workers/workspaceEmailQueueWorker.js",
+      "symbol": "processWorkspaceEmailQueue"
+    },
+    {
+      "repo": "astro-email-worker",
+      "file": "README.md",
+      "symbol": "Configuração do acesso ao workspace"
+    }
+  ]
+}

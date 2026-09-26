@@ -1,6 +1,7 @@
 import { escapeHtml, formatColumnType as columnType, formatDate, highlightSql, icon, isLogTable, isTableLike, labels, typeIcons } from './utils.js';
 import { columnName, sameIdentifier, searchDatabase } from './services/search.js';
 import { modelingView } from './components/database-model/model-view.js';
+import { inheritanceOf, inheritanceMarkup } from './services/inheritance.js';
 
 export function pageHead(title, description, eyebrow = 'Astro Workspace', action = '') {
   return `<header class="page-head"><div><p class="eyebrow">${escapeHtml(eyebrow)}</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></div>${action}</header>`;
@@ -91,6 +92,7 @@ export function objectDetail(object, database, mode) {
 
 function columnBadges(column) {
   const badges = [];
+  if (column.inheritedFrom) badges.push(`<span class="pill inheritance" title="Coluna herdada de ${escapeHtml(column.inheritedFrom)}">Herdada de ${escapeHtml(column.inheritedFrom)}</span>`);
   if (column.primaryKey) badges.push('<span class="pill pk" title="Primary Key">PK</span>');
   if (column.references) badges.push(`<span class="pill fk" title="Foreign Key → ${escapeHtml(column.references)}${column.referencesColumn ? `.${escapeHtml(column.referencesColumn)}` : ''}">FK</span>`);
   if (column.unique) badges.push('<span class="pill unique" title="UNIQUE">UNIQUE</span>');
@@ -122,12 +124,14 @@ function columnKeyIcon(column) {
   return '';
 }
 
-function tableCard(object) {
+function tableCard(object, database) {
   const columns = (object.columns ?? []);
   const fkCount = columns.filter((c) => c.references).length;
   const log = isLogTable(object);
-  return `<article class="table-card ${log ? 'is-log' : ''}" data-model-table="${escapeHtml(object.id)}" tabindex="0" role="button" aria-label="Abrir ${log ? 'log table' : 'tabela'} ${escapeHtml(object.name)}" title="Duplo clique para detalhes">
+  const { children } = inheritanceOf(object, database.objects);
+  return `<article class="table-card ${log ? 'is-log' : ''} ${children.length ? 'is-inheritance-base' : ''}" data-model-table="${escapeHtml(object.id)}" tabindex="0" role="button" aria-label="Abrir ${log ? 'log table' : 'tabela'} ${escapeHtml(object.name)}${children.length ? ', tabela base de herança' : ''}" title="Duplo clique para detalhes">
     <header class="table-card-head"><div class="table-card-title">${icon(log ? 'logTable' : 'table', 16)}<div><strong>${escapeHtml(object.name)}</strong><small>${escapeHtml((object.schema ?? 'public'))} · ${columns.length} colunas</small></div></div><div class="table-card-meta">${log ? '<span class="pill log">LOG</span>' : ''}${fkCount ? `<span class="pill fk" title="${fkCount} chaves estrangeiras">${fkCount} FK</span>` : ''}</div></header>
+    ${inheritanceMarkup(object, database.objects)}
     ${object.description ? `<p class="table-card-description">${escapeHtml(summarize(object.description, 110))}</p>` : ''}
     <ul class="table-card-cols">${columns.map((column) => `<li class="model-column ${column.primaryKey ? 'is-pk' : ''} ${column.references ? 'is-fk' : ''}" data-model-column="${escapeHtml(object.id)}:${escapeHtml(column.name)}" tabindex="0" aria-label="Coluna ${escapeHtml(column.name)}">
       <span class="column-key-icon">${columnKeyIcon(column)}</span>
@@ -143,7 +147,7 @@ export function tableDetail(object, database, mode = { editable: false }) {
   const columnCount = object.columns?.length ?? 0;
   const log = isLogTable(object);
   const columns = (object.columns ?? []).map((column) => `<tr>
-    <td><span class="column-cell">${columnKeyIcon(column)}<strong>${escapeHtml(column.name)}</strong></span></td>
+    <td><span class="column-cell">${columnKeyIcon(column)}<strong>${escapeHtml(column.name)}</strong></span>${column.inheritedFrom ? `<span class="pill inheritance">Herdada de ${escapeHtml(column.inheritedFrom)}</span>` : ''}</td>
     <td>${formatColumnType(column)}</td>
     <td><span class="table-constraint-badges">${column.primaryKey ? '<span class="pill pk">PK</span>' : ''}${column.references ? `<span class="pill fk">FK → ${escapeHtml(column.references)}${column.referencesColumn ? `.${escapeHtml(column.referencesColumn)}` : ''}</span>` : ''}${column.unique ? '<span class="pill unique">UNIQUE</span>' : ''}</span></td>
     <td>${column.notNull || !column.nullable || column.primaryKey ? 'Não' : 'Sim'}</td>
@@ -157,6 +161,7 @@ export function tableDetail(object, database, mode = { editable: false }) {
     <div><p class="eyebrow">${icon(log ? 'logTable' : 'table', 14)} ${log ? 'Log Table' : 'Tabela'} · ${escapeHtml(object.schema ?? 'public')}</p><h2>${escapeHtml(object.name)}</h2></div>
     <div class="table-detail-actions"><button class="button ghost" data-copy-code="${escapeHtml(object.id)}">${icon('copy', 16)} Copiar SQL</button><button class="button primary" data-edit-object="${escapeHtml(object.id)}">${icon(mode.editable ? 'edit' : 'lock', 16)} Editar SQL</button></div>
   </div>
+  ${inheritanceMarkup(object, database.objects)}
   ${descriptionBlock(object)}
   <div class="detail-meta"><span>Arquivo: ${escapeHtml(object.file)}</span><span>${columnCount} colunas</span><span>${object.usedBy?.length ?? 0} dependentes</span><span>${indexes.length} índices</span></div>
   <section class="card inner-card"><div class="card-head"><h3>Colunas</h3></div><div class="table-wrap"><table><thead><tr><th>Coluna</th><th>Tipo</th><th>Chave</th><th>Nullable</th><th>Default</th><th>Check</th><th>Descrição</th></tr></thead><tbody>${columns || '<tr><td colspan="7" class="muted">Nenhuma coluna identificada.</td></tr>'}</tbody></table></div></section>
@@ -239,7 +244,7 @@ export function databaseView(database, tab = 'list', modelState, mode = { editab
   const tabs = `<div class="tabs" role="tablist"><button class="tab ${tab === 'list' ? 'active' : ''}" data-db-tab="list" role="tab">${icon('listView', 15)} Lista</button><button class="tab ${tab === 'model' ? 'active' : ''}" data-db-tab="model" role="tab">${icon('physicalModel', 15)} Modelagem</button></div>`;
   // A grade fica em uma caixa com rolagem própria: tabelas com muitas colunas
   // não esticam a página nem empurram os cards vizinhos.
-  const listView = `<div class="table-grid-scroll"><div id="db-table-list" class="table-grid">${tables.map(tableCard).join('') || empty('Nenhuma tabela foi encontrada. Adicione arquivos de esquema e execute o analyzer.')}</div></div>`;
+  const listView = `<div class="table-grid-scroll"><div id="db-table-list" class="table-grid">${tables.map((table) => tableCard(table, database)).join('') || empty('Nenhuma tabela foi encontrada. Adicione arquivos de esquema e execute o analyzer.')}</div></div>`;
   const script = mainTablesFile(database);
   // Uma única ação: tabelas novas são escritas no MESMO script de criação, então
   // "Nova tabela" abria exatamente o mesmo editor que "Ver script SQL".
@@ -523,8 +528,8 @@ export function modeling(config = {}) {
 }
 
 export function changes(mode) {
-  if (!mode.editable) return `${pageHead('Alterações Locais', 'Acompanhe arquivos modificados no workspace.')}<div class="readonly-note"><strong>Esta versão está em modo somente leitura.</strong><br>Para editar scripts e consultar o status Git local, clone o repositório e execute <code>npm run dev</code>.</div>`;
-  return `${pageHead('Alterações Locais', 'Arquivos identificados pelo status Git local.')}<section class="card" id="changes-list"><p class="muted">Consultando alterações…</p></section>`;
+  if (!mode.editable) return `${pageHead('Alterações Locais', 'Acompanhe arquivos modificados em database/.')}<div class="readonly-note"><strong>Esta versão está em modo somente leitura.</strong><br>Para editar scripts e consultar o status Git local, clone o repositório e execute <code>npm run dev</code>.</div>`;
+  return `${pageHead('Alterações Locais', 'Arquivos modificados, adicionados ou excluídos em database/, identificados pelo Git.')}<section class="card" id="changes-list"><p class="muted">Consultando alterações…</p></section>`;
 }
 
 export function searchResults(database, query) {

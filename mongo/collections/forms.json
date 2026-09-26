@@ -1,0 +1,118 @@
+{
+  "name": "forms",
+  "title": "Formulários",
+  "description": "Estrutura de formulários com perguntas e opções embutidas.",
+  "pattern": "Embedding",
+  "notes": [
+    "A modelagem propõe uma collection para cada formulário com a mesma estrutura. forms é o nome documental deste modelo, não uma decisão de collection única.",
+    "Validar armazenamento das respostas e organização das collections antes de implementar."
+  ],
+  "fields": [
+    {
+      "name": "_id",
+      "type": "number",
+      "description": "Identificador do formulário.",
+      "required": "A definir"
+    },
+    {
+      "name": "id_gestor",
+      "type": "number",
+      "description": "Gestor responsável.",
+      "required": "A definir"
+    },
+    {
+      "name": "nr",
+      "type": "number",
+      "description": "NR vinculada.",
+      "required": "Não"
+    },
+    {
+      "name": "id_unidade",
+      "type": "number",
+      "description": "Unidade vinculada.",
+      "required": "Não"
+    },
+    {
+      "name": "id_gestor_remetente",
+      "type": "number",
+      "description": "Gestor remetente.",
+      "required": "A definir"
+    },
+    {
+      "name": "titulo",
+      "type": "string",
+      "description": "Título do formulário.",
+      "required": "A definir"
+    },
+    {
+      "name": "descricao",
+      "type": "string",
+      "description": "Descrição do formulário.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas",
+      "type": "array<object>",
+      "description": "Perguntas embutidas.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].id_pergunta",
+      "type": "number",
+      "description": "Identificador da pergunta.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].tipo",
+      "type": "string",
+      "description": "Alternativa, dissertativa, avaliação, foto ou data.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].pergunta",
+      "type": "string",
+      "description": "Texto da pergunta.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].resposta",
+      "type": "array | null",
+      "description": "Resposta; formato ainda em discussão.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].opcoes",
+      "type": "array",
+      "description": "Opções disponíveis.",
+      "required": "A definir"
+    },
+    {
+      "name": "perguntas[].obrigatoria",
+      "type": "boolean",
+      "description": "Obrigatoriedade da pergunta.",
+      "required": "A definir"
+    }
+  ],
+  "example": {
+    "_id": 1,
+    "id_gestor": 2,
+    "id_gestor_remetente": 1,
+    "titulo": "Pesquisa Clima",
+    "descricao": "Avaliação do ambiente organizacional",
+    "perguntas": [
+      {
+        "id_pergunta": 1,
+        "tipo": "alternativa",
+        "pergunta": "Você está satisfeito com seu ambiente de trabalho?",
+        "resposta": [],
+        "opcoes": [
+          "Sim",
+          "Não"
+        ],
+        "obrigatoria": true
+      }
+    ]
+  },
+  "status": "Proposta",
+  "indexes": []
+}

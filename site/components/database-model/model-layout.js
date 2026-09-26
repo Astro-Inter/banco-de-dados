@@ -11,7 +11,7 @@ import { isLogTable } from '../../utils.js';
  */
 export const layoutMetrics = Object.freeze({
   nodeWidth: 232,
-  headerHeight: 46,
+  headerHeight: 66,
   rowHeight: 26,
   maxRows: 14,
   footerHeight: 22,
