@@ -343,3 +343,10 @@ ALTER TABLE acesso
     ALTER COLUMN data SET NOT NULL,
     ALTER COLUMN usuario_id SET NOT NULL,
     ADD CONSTRAINT pk_acesso PRIMARY KEY (data, usuario_id);
+
+ALTER TABLE eventos_astro
+    ALTER COLUMN firebase_uid SET NOT NULL,
+    ALTER COLUMN tipo_evento SET NOT NULL,
+    ALTER COLUMN criado_em SET NOT NULL,
+    ALTER COLUMN criado_em SET DEFAULT CURRENT_DATE,
+    ADD CONSTRAINT pk_eventos_astro PRIMARY KEY (id_evento);
