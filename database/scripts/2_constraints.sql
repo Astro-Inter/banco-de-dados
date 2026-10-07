@@ -329,16 +329,6 @@ ALTER TABLE conformidade
         REFERENCES conclusao_evento (id_conclusao_evento)
         ON UPDATE CASCADE ON DELETE RESTRICT;
 
-ALTER TABLE calendario
-    ADD CONSTRAINT pk_calendario
-        PRIMARY KEY (data_evento),
-    ADD CONSTRAINT chk_calendario_mes
-        CHECK (mes BETWEEN 1 AND 12),
-    ADD CONSTRAINT chk_calendario_dia
-        CHECK (dia BETWEEN 1 AND 31),
-    ADD CONSTRAINT chk_calendario_trimestre
-        CHECK (trimestre BETWEEN 1 AND 4);
-
 ALTER TABLE acesso
     ALTER COLUMN data SET NOT NULL,
     ALTER COLUMN usuario_id SET NOT NULL,
