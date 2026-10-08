@@ -1,0 +1,98 @@
+/* A nova área preserva a interface Astro; as cores distinguem os labels. */
+.neo4j-area { --neo-blue: #156b91; --neo-soft: #edf7fc; }
+.neo4j-area a.tab { text-decoration: none; }
+.neo4j-area .tab.active { color: var(--neo-blue); border-color: var(--neo-blue); }
+.neo4j-area .sidebar-nav a.active { box-shadow: inset 3px 0 #49baf5; }
+.neo4j-area .sidebar-nav a.active .icon { color: #73d1ff; }
+.neo4j-area .engine-switch a[data-engine-link="neo4j"].active { background: rgba(0,139,219,.22); }
+.neo-page-head { align-items: center; }
+.neo-page-head h1 { display: flex; align-items: center; gap: 12px; }
+.neo-page-head h1 img { width: 42px; height: 42px; }
+.neo-source { padding: 0 0 22px; }
+.neo-source p { margin: 0 0 8px; font-size: 13px; line-height: 1.7; }
+.neo-source small { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.neo-catalog-item strong { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.neo-catalog-item strong i, .neo-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: 0 0 9px; }
+.neo-catalog-item.active { background: #edf7fc; border-color: #c5e0ed; }
+.neo-catalog-item.active strong { color: #156b91; }
+.neo-doc-detail, .neo-script-detail { min-width: 0; }
+.neo-doc-detail p, .neo-script-detail p { font-size: 13px; line-height: 1.7; }
+.neo-doc-detail h3 { margin-top: 26px; font-size: 15px; }
+.neo-label-pill { display: inline-flex; padding: 5px 9px; border: 1px solid currentColor; border-radius: 6px; font-size: 11px; color: var(--node-color, #156b91); white-space: nowrap; }
+.neo-relation-line { display: grid; gap: 6px; }
+.neo-relation-line > code { display: block; overflow-wrap: anywhere; }
+.neo-relation-line strong { color: #156b91; }
+.neo-relation-line span { color: var(--muted); }
+.neo-relationships { margin-top: 22px; }
+.neo-relationship { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.neo-relationship:last-child { border-bottom: 0; }
+.neo-relationship > div { display: grid; align-content: start; gap: 6px; }
+.neo-relationship > div code { color: #156b91; font-size: 12px; font-weight: bold; }
+.neo-relationship small { color: var(--muted); font-size: 11px; }
+.neo-relationship p { display: grid; gap: 7px; margin: 0; font-size: 12px; line-height: 1.7; }
+.neo-relationship p span { color: var(--muted); }
+.neo-relationship p code { overflow-wrap: anywhere; font-size: 11px; }
+.neo-model { padding: 22px; }
+.neo-model > .card-head { flex-wrap: wrap; gap: 12px; }
+.neo-model h2 { margin: 0; }
+.neo-model .muted { margin-bottom: 0; font-size: 12px; }
+.neo-segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; }
+.neo-segmented button { padding: 9px 12px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; }
+.neo-segmented button[aria-pressed="true"] { color: #156b91; background: #edf7fc; font-weight: bold; }
+.neo-model-toolbar { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; margin: 20px 0 14px; }
+.neo-model-toolbar .search-box { min-width: 180px; flex: 1; margin: 0; height: 42px; }
+.neo-model-toolbar input { min-width: 0; width: 100%; font-size: 12px; }
+.neo-filter { display: grid; gap: 5px; color: var(--muted); font-size: 10px; max-width: 260px; }
+.neo-filter select { border: 1px solid var(--line); border-radius: 8px; height: 42px; max-width: 100%; padding: 0 10px; color: var(--ink); background: white; font-size: 11px; }
+.neo-model-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.neo-model-controls > span { margin-right: auto; color: var(--muted); font-size: 10px; }
+.neo-model-controls .icon-button { width: 32px; height: 32px; padding: 8px; }
+.neo-model-controls .button { font-size: 10px; padding: 8px 10px; }
+.neo-model-controls output { min-width: 35px; text-align: center; color: var(--muted); font: 11px Consolas, monospace; }
+.neo-model-layout { display: grid; grid-template-columns: minmax(0, 1fr) 255px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.neo-graph-canvas { height: 510px; overflow: auto; background: radial-gradient(#ccdbe3 1px, transparent 1px) 0 0 / 22px 22px #f7fafc; cursor: grab; touch-action: none; }
+.neo-graph-canvas:active { cursor: grabbing; }
+.neo-graph-svg { display: block; max-width: none; user-select: none; }
+.neo-node { cursor: grab; }
+.neo-node circle { fill: var(--node-color); stroke: #fff; stroke-width: 3; }
+.neo-node.selected circle, .neo-node:focus-visible circle { stroke: var(--ink); stroke-width: 5; }
+.neo-node:hover circle { stroke: #c9e1ef; }
+.neo-node-id { fill: white; font: bold 18px Consolas, monospace; pointer-events: none; }
+.neo-node-caption { fill: #1c1839; font: 13px 'Montserrat', sans-serif; pointer-events: none; }
+.neo-node-label { fill: #686e7b; font: 10px 'Montserrat', sans-serif; pointer-events: none; }
+.neo-edge path { fill: none; stroke: #8295a4; stroke-width: 1.5; }
+.neo-edge rect { fill: #f7fafc; }
+.neo-edge text { fill: #506275; font: 10px Consolas, monospace; }
+#neo-arrow path { fill: #8295a4; }
+.neo-node.dimmed, .neo-edge.dimmed { opacity: .16; }
+.neo-inspector { padding: 20px; border-left: 1px solid var(--line); background: #fff; max-height: 510px; overflow: auto; }
+.neo-inspector h3 { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.neo-inspector p { color: var(--muted); font-size: 11px; line-height: 1.8; }
+.neo-inspector h4 { font-size: 11px; margin: 20px 0 10px; }
+.neo-inspector .button { margin-top: 15px; font-size: 10px; }
+.neo-properties { margin-top: 20px; }
+.neo-properties > div { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.neo-properties dt { font: 10px Consolas, monospace; color: var(--muted); }
+.neo-properties dd { margin: 4px 0 0; font-size: 11px; overflow-wrap: anywhere; line-height: 1.6; }
+.neo-connections { display: grid; gap: 6px; }
+.neo-connections button { display: grid; gap: 5px; text-align: left; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: #f7fafc; cursor: pointer; }
+.neo-connections code { color: #156b91; font-size: 10px; }
+.neo-connections span { font-size: 10px; color: var(--muted); line-height: 1.6; }
+.neo-legend { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: 16px; }
+.neo-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+.neo-traversal { margin-top: 22px; }
+.neo-traversal .card-head { flex-wrap: wrap; gap: 12px; }
+.neo-traversal h2 { font-size: 18px; }
+.neo-traversal p { font-size: 12px; line-height: 1.7; color: var(--muted); }
+.neo-traversal [role="status"] { margin: 16px 0; font-size: 12px; color: #167563; }
+.neo-traversal .table-wrap { margin: 15px 0; }
+.neo-script-actions { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+.neo-script-actions p { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.neo-script-actions .button { flex: 0 0 auto; }
+.neo-code { max-height: 650px; white-space: pre; overflow: auto; padding: 20px; color: #bcd8ec; background: #121020; border-radius: 10px; font: 12px/1.8 Consolas, monospace; }
+.neo-script-detail .card-head { flex-wrap: wrap; gap: 12px; }
+.neo-script-detail .mongo-detail-footer .button { font-size: 11px; }
+.neo-warning { border-color: #eecb96; }
+@media (min-width: 851px) { .neo4j-area .topbar { display: none; } }
+@media (max-width: 1400px) { .neo-model-layout { grid-template-columns: minmax(0, 1fr); } .neo-inspector { max-height: 340px; border-left: 0; border-top: 1px solid var(--line); } .neo-graph-canvas { height: 470px; } }
+@media (max-width: 650px) { .neo-page-head { gap: 12px; flex-wrap: wrap; } .neo-model { padding: 14px; } .neo-relationship { grid-template-columns: 1fr; gap: 10px; } .neo-script-actions { flex-wrap: wrap; } .neo-filter { max-width: 100%; flex: 1 1 150px; } .neo-model-toolbar .search-box { flex-basis: 100%; } .neo-graph-canvas { height: 370px; } .neo-source small { line-height: 1.8; } }

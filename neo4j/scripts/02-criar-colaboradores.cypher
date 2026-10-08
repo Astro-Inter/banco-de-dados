@@ -1,0 +1,16 @@
+// 2. Criar os 15 Colaboradores
+CREATE (c1:Colaborador {id_colaborador:1, nome:'João Silva', departamento:'Produção', cargo:'Operador de Máquina'}),
+  (c2:Colaborador {id_colaborador:2, nome:'Maria Souza', departamento:'Manutenção', cargo:'Eletricista Industrial'}),
+  (c3:Colaborador {id_colaborador:3, nome:'Pedro Lima', departamento:'Logística', cargo:'Operador de Empilhadeira'}),
+  (c4:Colaborador {id_colaborador:4, nome:'Lucas Oliveira', departamento:'Produção', cargo:'Soldador'}),
+  (c5:Colaborador {id_colaborador:5, nome:'Fernanda Costa', departamento:'Segurança do Trabalho', cargo:'Técnica em Segurança do Trabalho'}),
+  (c6:Colaborador {id_colaborador:6, nome:'Carlos Santos', departamento:'Obras', cargo:'Pedreiro'}),
+  (c7:Colaborador {id_colaborador:7, nome:'Juliana Rocha', departamento:'Obras', cargo:'Eletricista'}),
+  (c8:Colaborador {id_colaborador:8, nome:'Gabriel Almeida', departamento:'Obras', cargo:'Carpinteiro'}),
+  (c9:Colaborador {id_colaborador:9, nome:'Amanda Ferreira', departamento:'Obras', cargo:'Montadora de Estruturas'}),
+  (c10:Colaborador {id_colaborador:10, nome:'Ricardo Gomes', departamento:'Segurança do Trabalho', cargo:'Técnico em Segurança do Trabalho'}),
+  (c11:Colaborador {id_colaborador:11, nome:'Patrícia Martins', departamento:'Produção', cargo:'Técnica Química'}),
+  (c12:Colaborador {id_colaborador:12, nome:'Bruno Carvalho', departamento:'Produção', cargo:'Operador de Produção Química'}),
+  (c13:Colaborador {id_colaborador:13, nome:'Camila Ribeiro', departamento:'Logística', cargo:'Operadora de Empilhadeira'}),
+  (c14:Colaborador {id_colaborador:14, nome:'Diego Pereira', departamento:'Manutenção', cargo:'Eletricista Industrial'}),
+  (c15:Colaborador {id_colaborador:15, nome:'Larissa Mendes', departamento:'Segurança do Trabalho', cargo:'Técnica em Segurança do Trabalho'});

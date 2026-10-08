@@ -6,6 +6,8 @@ A navegação separa PostgreSQL e MongoDB. PostgreSQL usa os scripts de `databas
 
 Redis possui uma área própria de chaves, TTL e fluxos de processamento, com edição local e documentação independente em `redis/`. Consulte [a organização do módulo Redis](redis/README.md) para manter os contratos encontrados no código e as propostas.
 
+Neo4j possui uma área de documentação de colaboradores e treinamentos, com propriedades dos nós, relacionamentos, os 12 scripts Cypher e uma modelagem interativa do esquema e dos dados de exemplo. A simulação da consulta NR-10 percorre as ligações declaradas na carga, sem conexão a um banco. Consulte [a organização do módulo Neo4j](neo4j/README.md).
+
 > Foco em PostgreSQL. Os arquivos SQL continuam sendo a fonte da verdade: no Local Mode eles também podem ser **executados** em um banco informado por você, na ordem calculada pelo grafo de dependências.
 
 ## O que a V1 oferece

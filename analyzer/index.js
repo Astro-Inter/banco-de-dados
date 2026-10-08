@@ -14,6 +14,7 @@ import { parsePostgreSqlFile } from './parser/postgresql.js';
 import { scanSqlFiles } from './scanners/sql-file-scanner.js';
 import { analyzeMongo } from './mongo/index.js';
 import { analyzeRedis } from './redis/index.js';
+import { analyzeNeo4j } from './neo4j/index.js';
 
 const parsers = { postgresql: parsePostgreSqlFile, postgres: parsePostgreSqlFile, sqlserver: parseSqlServerFile };
 
@@ -56,6 +57,7 @@ export async function analyzeWorkspace({ write = true } = {}) {
   if (write) {
     await analyzeMongo({ generated: config.generated });
     await analyzeRedis({ generated: config.generated });
+    await analyzeNeo4j({ generated: config.generated });
     const generated = path.resolve(workspaceRoot, config.generated);
     await fs.mkdir(generated, { recursive: true });
     await Promise.all([
