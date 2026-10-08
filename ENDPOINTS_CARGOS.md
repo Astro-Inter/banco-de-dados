@@ -22,6 +22,23 @@ Recebe `firebase_uid` e `id_cargo` e chama `fn_seleciona_cargo_nrs(firebase_uid,
 
 O front pode exibir o código com o prefixo `NR` (por exemplo, `NR1`).
 
+## POST — alterar NRs do cargo
+
+Recebe `firebase_uid`, `id_cargo` e a lista `nrs`:
+
+```json
+{
+  "firebase_uid": "uid-do-firebase",
+  "id_cargo": 12,
+  "nrs": [
+    { "nr": 1, "ativo": true },
+    { "nr": 17, "ativo": false }
+  ]
+}
+```
+
+Chama `pr_alterar_cargo_nrs(firebase_uid, id_cargo, nrs)`. `ativo: true` liga a NR ao cargo; `ativo: false` remove a ligação. Cada número de NR deve existir no catálogo.
+
 ## POST — criar cargo
 
 Recebe:
