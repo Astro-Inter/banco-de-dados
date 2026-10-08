@@ -15,8 +15,8 @@ import { workspaceRoot } from '../analyzer/config.js';
 const source = path.join(workspaceRoot, 'site', 'images');
 const target = path.join(workspaceRoot, 'site', 'icons-library.js');
 
-// A marca é usada como <img> na sidebar e possui gradiente próprio.
-const excluded = new Set(['astro.svg']);
+// Marcas são usadas como <img> e preservam suas cores próprias.
+const excluded = new Set(['astro.svg', 'neo4j.svg']);
 
 function normalize(svg) {
   const viewBox = svg.match(/viewBox="([^"]+)"/)?.[1];

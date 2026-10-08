@@ -1,0 +1,64 @@
+{
+  "title": "Colaboradores e treinamentos",
+  "description": "Grafo de colaboradores, unidades e grupos de treinamento, conectando a participação aos eventos, treinamentos e certificados.",
+  "source": "codigos_neo4j_colaborador_evento.docx",
+  "sourceTitle": "Reconstrução do Neo4j - Colaboradores e Treinamentos",
+  "labels": [
+    { "name": "Unidade", "identity": "nome", "description": "Unidade à qual o colaborador pertence. O exemplo contém três empresas e seus grupos empresariais.", "properties": [
+      { "name": "nome", "type": "String", "description": "Nome da unidade; usado para localizar a unidade nos MATCH do documento." },
+      { "name": "grupo_empresarial", "type": "String", "description": "Grupo empresarial da unidade." }
+    ] },
+    { "name": "Colaborador", "identity": "id_colaborador", "description": "Pessoa participante dos treinamentos, identificada por id_colaborador, com departamento e cargo.", "properties": [
+      { "name": "id_colaborador", "type": "Integer", "description": "Identificador do colaborador no exemplo." },
+      { "name": "nome", "type": "String", "description": "Nome do colaborador." },
+      { "name": "departamento", "type": "String", "description": "Departamento de atuação." },
+      { "name": "cargo", "type": "String", "description": "Cargo do colaborador." }
+    ] },
+    { "name": "GrupoTreinamento", "identity": "id_grupo", "description": "Grupo de participação associado a uma NR. Grupos com a mesma NR e título continuam distintos pelo id_grupo.", "properties": [
+      { "name": "id_grupo", "type": "Integer", "description": "Identificador do grupo." },
+      { "name": "grupo_nr", "type": "Integer", "description": "Número da NR associado ao grupo." },
+      { "name": "titulo", "type": "String", "description": "Título da NR no grupo de treinamento." }
+    ] },
+    { "name": "Evento", "identity": "id_evento", "description": "Ocorrência agendada de um treinamento, com data e horário.", "properties": [
+      { "name": "id_evento", "type": "Integer", "description": "Identificador do evento." },
+      { "name": "data_evento", "type": "Date", "description": "Data criada com date('AAAA-MM-DD') no Cypher." },
+      { "name": "horario", "type": "String", "description": "Horário textual no formato HH:mm; o documento não usa o tipo Time." }
+    ] },
+    { "name": "Treinamento", "identity": "id_treinamento", "description": "Treinamento realizado no evento. Nomes repetidos pertencem a nós diferentes quando os identificadores diferem.", "properties": [
+      { "name": "id_treinamento", "type": "Integer", "description": "Identificador do treinamento." },
+      { "name": "nome", "type": "String", "description": "Nome do treinamento, como NR-10 Básico." }
+    ] },
+    { "name": "Certificado", "identity": "id_certificado", "description": "Certificado associado ao treinamento. O modelo fornecido o liga ao treinamento, sem emissão individual por colaborador.", "properties": [
+      { "name": "id_certificado", "type": "Integer", "description": "Identificador do certificado." },
+      { "name": "nome", "type": "String", "description": "Nome do certificado associado à NR." }
+    ] }
+  ],
+  "relationships": [
+    { "type": "PERTENCE", "from": "Colaborador", "to": "Unidade", "description": "Vincula os colaboradores 1–5 à Brasilfer, 6–10 à Horizonte e 11–15 à Verde Campo.", "rule": "Vínculos explícitos pelos identificadores dos colaboradores e pelo nome da unidade." },
+    { "type": "PARTICIPA", "from": "Colaborador", "to": "GrupoTreinamento", "description": "Registra a participação dos colaboradores 1–5 no grupo 1 e dos colaboradores 2, 4 e 5 no grupo 4.", "rule": "O script fornecido declara somente estas oito participações." },
+    { "type": "POSSUI", "from": "GrupoTreinamento", "to": "Evento", "description": "Liga cada grupo ao evento correspondente nos dados fornecidos.", "rule": "g.id_grupo = e.id_evento" },
+    { "type": "REALIZA", "from": "Evento", "to": "Treinamento", "description": "Liga cada evento ao treinamento realizado.", "rule": "e.id_evento = t.id_treinamento" },
+    { "type": "RECEBE", "from": "Treinamento", "to": "Certificado", "description": "Liga cada treinamento ao seu certificado.", "rule": "t.id_treinamento = cert.id_certificado" }
+  ],
+  "scripts": [
+    { "file": "01-criar-unidades.cypher", "description": "Cria as três unidades e seus grupos empresariais.", "kind": "load" },
+    { "file": "02-criar-colaboradores.cypher", "description": "Cria 15 colaboradores com identificador, nome, departamento e cargo.", "kind": "load" },
+    { "file": "03-relacionar-unidades.cypher", "description": "Cria os 15 relacionamentos PERTENCE, cinco por unidade.", "kind": "load" },
+    { "file": "04-criar-grupos.cypher", "description": "Cria os 12 grupos de treinamento e suas NRs.", "kind": "load" },
+    { "file": "05-criar-eventos.cypher", "description": "Cria 12 eventos de agosto a outubro de 2026, com data e horário.", "kind": "load" },
+    { "file": "06-relacionar-grupos-eventos.cypher", "description": "Cria POSSUI usando a igualdade entre id_grupo e id_evento.", "kind": "load" },
+    { "file": "07-criar-treinamentos.cypher", "description": "Cria os 12 treinamentos, preservando os nomes e IDs do documento.", "kind": "load" },
+    { "file": "08-relacionar-eventos-treinamentos.cypher", "description": "Cria REALIZA usando a igualdade entre id_evento e id_treinamento.", "kind": "load" },
+    { "file": "09-criar-certificados.cypher", "description": "Cria os 12 certificados associados às NRs.", "kind": "load" },
+    { "file": "10-relacionar-treinamentos-certificados.cypher", "description": "Cria RECEBE usando a igualdade entre id_treinamento e id_certificado.", "kind": "load" },
+    { "file": "11-participacao-colaboradores.cypher", "description": "Cria cinco participações no grupo 1 e três no grupo 4, em duas instruções.", "kind": "load" },
+    { "file": "12-traversal-nr10.cypher", "description": "Percorre Colaborador → GrupoTreinamento → Evento → Treinamento e retorna as participações em NR-10 Básico.", "kind": "query" }
+  ],
+  "notes": [
+    { "title": "Dados de exemplo", "description": "Esta documentação reproduz o arquivo fornecido. O grafo virtual mostra os dados dessa carga, sem conexão a uma instância Neo4j ou confirmação do estado de produção." },
+    { "title": "Ordem da carga", "description": "As etapas 1 a 11 dependem dos nós criados anteriormente. A etapa 12 é uma consulta de leitura. Os scripts estão disponíveis para copiar ou baixar na ordem do documento." },
+    { "title": "Reexecução com CREATE", "description": "CREATE cria novos nós e relacionamentos a cada execução. A carga foi documentada para uma base de exemplo vazia; rodá-la novamente pode duplicar dados. Constraints e uma carga com MERGE não foram fornecidas no documento.", "url": "https://neo4j.com/docs/cypher-manual/current/clauses/create/" },
+    { "title": "Identificadores correspondentes", "description": "A igualdade entre os IDs de grupo, evento, treinamento e certificado é uma regra desta carga. Não é uma ligação automática do Neo4j nem uma constraint declarada." },
+    { "title": "Participações e certificados", "description": "Os grupos 2, 3 e 5–12 não possuem participantes declarados nesta carga. Também não há relacionamento direto entre colaborador e certificado, validade, conclusão ou status de emissão no arquivo." }
+  ]
+}

@@ -1,0 +1,1227 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-08T03:17:21.964Z",
+  "title": "Colaboradores e treinamentos",
+  "description": "Grafo de colaboradores, unidades e grupos de treinamento, conectando a participação aos eventos, treinamentos e certificados.",
+  "source": "codigos_neo4j_colaborador_evento.docx",
+  "sourceTitle": "Reconstrução do Neo4j - Colaboradores e Treinamentos",
+  "labels": [
+    {
+      "name": "Unidade",
+      "identity": "nome",
+      "description": "Unidade à qual o colaborador pertence. O exemplo contém três empresas e seus grupos empresariais.",
+      "properties": [
+        {
+          "name": "nome",
+          "type": "String",
+          "description": "Nome da unidade; usado para localizar a unidade nos MATCH do documento."
+        },
+        {
+          "name": "grupo_empresarial",
+          "type": "String",
+          "description": "Grupo empresarial da unidade."
+        }
+      ]
+    },
+    {
+      "name": "Colaborador",
+      "identity": "id_colaborador",
+      "description": "Pessoa participante dos treinamentos, identificada por id_colaborador, com departamento e cargo.",
+      "properties": [
+        {
+          "name": "id_colaborador",
+          "type": "Integer",
+          "description": "Identificador do colaborador no exemplo."
+        },
+        {
+          "name": "nome",
+          "type": "String",
+          "description": "Nome do colaborador."
+        },
+        {
+          "name": "departamento",
+          "type": "String",
+          "description": "Departamento de atuação."
+        },
+        {
+          "name": "cargo",
+          "type": "String",
+          "description": "Cargo do colaborador."
+        }
+      ]
+    },
+    {
+      "name": "GrupoTreinamento",
+      "identity": "id_grupo",
+      "description": "Grupo de participação associado a uma NR. Grupos com a mesma NR e título continuam distintos pelo id_grupo.",
+      "properties": [
+        {
+          "name": "id_grupo",
+          "type": "Integer",
+          "description": "Identificador do grupo."
+        },
+        {
+          "name": "grupo_nr",
+          "type": "Integer",
+          "description": "Número da NR associado ao grupo."
+        },
+        {
+          "name": "titulo",
+          "type": "String",
+          "description": "Título da NR no grupo de treinamento."
+        }
+      ]
+    },
+    {
+      "name": "Evento",
+      "identity": "id_evento",
+      "description": "Ocorrência agendada de um treinamento, com data e horário.",
+      "properties": [
+        {
+          "name": "id_evento",
+          "type": "Integer",
+          "description": "Identificador do evento."
+        },
+        {
+          "name": "data_evento",
+          "type": "Date",
+          "description": "Data criada com date('AAAA-MM-DD') no Cypher."
+        },
+        {
+          "name": "horario",
+          "type": "String",
+          "description": "Horário textual no formato HH:mm; o documento não usa o tipo Time."
+        }
+      ]
+    },
+    {
+      "name": "Treinamento",
+      "identity": "id_treinamento",
+      "description": "Treinamento realizado no evento. Nomes repetidos pertencem a nós diferentes quando os identificadores diferem.",
+      "properties": [
+        {
+          "name": "id_treinamento",
+          "type": "Integer",
+          "description": "Identificador do treinamento."
+        },
+        {
+          "name": "nome",
+          "type": "String",
+          "description": "Nome do treinamento, como NR-10 Básico."
+        }
+      ]
+    },
+    {
+      "name": "Certificado",
+      "identity": "id_certificado",
+      "description": "Certificado associado ao treinamento. O modelo fornecido o liga ao treinamento, sem emissão individual por colaborador.",
+      "properties": [
+        {
+          "name": "id_certificado",
+          "type": "Integer",
+          "description": "Identificador do certificado."
+        },
+        {
+          "name": "nome",
+          "type": "String",
+          "description": "Nome do certificado associado à NR."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "PERTENCE",
+      "from": "Colaborador",
+      "to": "Unidade",
+      "description": "Vincula os colaboradores 1–5 à Brasilfer, 6–10 à Horizonte e 11–15 à Verde Campo.",
+      "rule": "Vínculos explícitos pelos identificadores dos colaboradores e pelo nome da unidade."
+    },
+    {
+      "type": "PARTICIPA",
+      "from": "Colaborador",
+      "to": "GrupoTreinamento",
+      "description": "Registra a participação dos colaboradores 1–5 no grupo 1 e dos colaboradores 2, 4 e 5 no grupo 4.",
+      "rule": "O script fornecido declara somente estas oito participações."
+    },
+    {
+      "type": "POSSUI",
+      "from": "GrupoTreinamento",
+      "to": "Evento",
+      "description": "Liga cada grupo ao evento correspondente nos dados fornecidos.",
+      "rule": "g.id_grupo = e.id_evento"
+    },
+    {
+      "type": "REALIZA",
+      "from": "Evento",
+      "to": "Treinamento",
+      "description": "Liga cada evento ao treinamento realizado.",
+      "rule": "e.id_evento = t.id_treinamento"
+    },
+    {
+      "type": "RECEBE",
+      "from": "Treinamento",
+      "to": "Certificado",
+      "description": "Liga cada treinamento ao seu certificado.",
+      "rule": "t.id_treinamento = cert.id_certificado"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "neo4j/scripts/01-criar-unidades.cypher",
+      "description": "Cria as três unidades e seus grupos empresariais.",
+      "kind": "load",
+      "title": "Criar as Unidades",
+      "code": "// 1. Criar as Unidades\nCREATE (u1:Unidade {nome:'Metalúrgica Brasilfer Ltda', grupo_empresarial:'Brasilfer'}),\n  (u2:Unidade {nome:'Construtora Horizonte S.A.', grupo_empresarial:'Horizonte'}),\n  (u3:Unidade {nome:'Agroquímica Verde Campo Eireli', grupo_empresarial:'Verde Campo'});\n"
+    },
+    {
+      "file": "neo4j/scripts/02-criar-colaboradores.cypher",
+      "description": "Cria 15 colaboradores com identificador, nome, departamento e cargo.",
+      "kind": "load",
+      "title": "Criar os 15 Colaboradores",
+      "code": "// 2. Criar os 15 Colaboradores\nCREATE (c1:Colaborador {id_colaborador:1, nome:'João Silva', departamento:'Produção', cargo:'Operador de Máquina'}),\n  (c2:Colaborador {id_colaborador:2, nome:'Maria Souza', departamento:'Manutenção', cargo:'Eletricista Industrial'}),\n  (c3:Colaborador {id_colaborador:3, nome:'Pedro Lima', departamento:'Logística', cargo:'Operador de Empilhadeira'}),\n  (c4:Colaborador {id_colaborador:4, nome:'Lucas Oliveira', departamento:'Produção', cargo:'Soldador'}),\n  (c5:Colaborador {id_colaborador:5, nome:'Fernanda Costa', departamento:'Segurança do Trabalho', cargo:'Técnica em Segurança do Trabalho'}),\n  (c6:Colaborador {id_colaborador:6, nome:'Carlos Santos', departamento:'Obras', cargo:'Pedreiro'}),\n  (c7:Colaborador {id_colaborador:7, nome:'Juliana Rocha', departamento:'Obras', cargo:'Eletricista'}),\n  (c8:Colaborador {id_colaborador:8, nome:'Gabriel Almeida', departamento:'Obras', cargo:'Carpinteiro'}),\n  (c9:Colaborador {id_colaborador:9, nome:'Amanda Ferreira', departamento:'Obras', cargo:'Montadora de Estruturas'}),\n  (c10:Colaborador {id_colaborador:10, nome:'Ricardo Gomes', departamento:'Segurança do Trabalho', cargo:'Técnico em Segurança do Trabalho'}),\n  (c11:Colaborador {id_colaborador:11, nome:'Patrícia Martins', departamento:'Produção', cargo:'Técnica Química'}),\n  (c12:Colaborador {id_colaborador:12, nome:'Bruno Carvalho', departamento:'Produção', cargo:'Operador de Produção Química'}),\n  (c13:Colaborador {id_colaborador:13, nome:'Camila Ribeiro', departamento:'Logística', cargo:'Operadora de Empilhadeira'}),\n  (c14:Colaborador {id_colaborador:14, nome:'Diego Pereira', departamento:'Manutenção', cargo:'Eletricista Industrial'}),\n  (c15:Colaborador {id_colaborador:15, nome:'Larissa Mendes', departamento:'Segurança do Trabalho', cargo:'Técnica em Segurança do Trabalho'});\n"
+    },
+    {
+      "file": "neo4j/scripts/03-relacionar-unidades.cypher",
+      "description": "Cria os 15 relacionamentos PERTENCE, cinco por unidade.",
+      "kind": "load",
+      "title": "Relacionar Colaboradores às Unidades",
+      "code": "// 3. Relacionar Colaboradores às Unidades\nMATCH  (u1:Unidade {nome:'Metalúrgica Brasilfer Ltda'})\nMATCH  (u2:Unidade {nome:'Construtora Horizonte S.A.'})\nMATCH  (u3:Unidade {nome:'Agroquímica Verde Campo Eireli'})\nMATCH  (c1:Colaborador {id_colaborador:1})\nMATCH  (c2:Colaborador {id_colaborador:2})\nMATCH  (c3:Colaborador {id_colaborador:3})\nMATCH  (c4:Colaborador {id_colaborador:4})\nMATCH  (c5:Colaborador {id_colaborador:5})\nMATCH  (c6:Colaborador {id_colaborador:6})\nMATCH  (c7:Colaborador {id_colaborador:7})\nMATCH  (c8:Colaborador {id_colaborador:8})\nMATCH  (c9:Colaborador {id_colaborador:9})\nMATCH  (c10:Colaborador {id_colaborador:10})\nMATCH  (c11:Colaborador {id_colaborador:11})\nMATCH  (c12:Colaborador {id_colaborador:12})\nMATCH  (c13:Colaborador {id_colaborador:13})\nMATCH  (c14:Colaborador {id_colaborador:14})\nMATCH  (c15:Colaborador {id_colaborador:15})\nCREATE (c1)-[:PERTENCE]->(u1),\n  (c2)-[:PERTENCE]->(u1),\n  (c3)-[:PERTENCE]->(u1),\n  (c4)-[:PERTENCE]->(u1),\n  (c5)-[:PERTENCE]->(u1),\n  (c6)-[:PERTENCE]->(u2),\n  (c7)-[:PERTENCE]->(u2),\n  (c8)-[:PERTENCE]->(u2),\n  (c9)-[:PERTENCE]->(u2),\n  (c10)-[:PERTENCE]->(u2),\n  (c11)-[:PERTENCE]->(u3),\n  (c12)-[:PERTENCE]->(u3),\n  (c13)-[:PERTENCE]->(u3),\n  (c14)-[:PERTENCE]->(u3),\n  (c15)-[:PERTENCE]->(u3);\n"
+    },
+    {
+      "file": "neo4j/scripts/04-criar-grupos.cypher",
+      "description": "Cria os 12 grupos de treinamento e suas NRs.",
+      "kind": "load",
+      "title": "Criar os Grupos de Treinamento",
+      "code": "// 4. Criar os Grupos de Treinamento\nCREATE (g1:GrupoTreinamento {id_grupo:1, grupo_nr:10, titulo:'Segurança em Instalações e Serviços em Eletricidade'}),\n  (g2:GrupoTreinamento {id_grupo:2, grupo_nr:11, titulo:'Transporte, Movimentação, Armazenagem e Manuseio de Materiais'}),\n  (g3:GrupoTreinamento {id_grupo:3, grupo_nr:12, titulo:'Segurança no Trabalho em Máquinas e Equipamentos'}),\n  (g4:GrupoTreinamento {id_grupo:4, grupo_nr:35, titulo:'Trabalho em Altura'}),\n  (g5:GrupoTreinamento {id_grupo:5, grupo_nr:10, titulo:'Segurança em Instalações e Serviços em Eletricidade'}),\n  (g6:GrupoTreinamento {id_grupo:6, grupo_nr:18, titulo:'Segurança e Saúde no Trabalho na Indústria da Construção'}),\n  (g7:GrupoTreinamento {id_grupo:7, grupo_nr:33, titulo:'Segurança e Saúde nos Trabalhos em Espaços Confinados'}),\n  (g8:GrupoTreinamento {id_grupo:8, grupo_nr:35, titulo:'Trabalho em Altura'}),\n  (g9:GrupoTreinamento {id_grupo:9, grupo_nr:11, titulo:'Transporte, Movimentação, Armazenagem e Manuseio de Materiais'}),\n  (g10:GrupoTreinamento {id_grupo:10, grupo_nr:20, titulo:'Segurança e Saúde no Trabalho com Inflamáveis e Combustíveis'}),\n  (g11:GrupoTreinamento {id_grupo:11, grupo_nr:31, titulo:'Segurança e Saúde no Trabalho na Agricultura'}),\n  (g12:GrupoTreinamento {id_grupo:12, grupo_nr:33, titulo:'Segurança e Saúde nos Trabalhos em Espaços Confinados'});\n"
+    },
+    {
+      "file": "neo4j/scripts/05-criar-eventos.cypher",
+      "description": "Cria 12 eventos de agosto a outubro de 2026, com data e horário.",
+      "kind": "load",
+      "title": "Criar os Eventos",
+      "code": "// 5. Criar os Eventos\nCREATE (cal1:Evento {id_evento:1, data_evento:date('2026-08-15'), horario:'08:00'}),\n  (cal2:Evento {id_evento:2, data_evento:date('2026-08-18'), horario:'08:00'}),\n  (cal3:Evento {id_evento:3, data_evento:date('2026-08-22'), horario:'13:30'}),\n  (cal4:Evento {id_evento:4, data_evento:date('2026-09-02'), horario:'08:00'}),\n  (cal5:Evento {id_evento:5, data_evento:date('2026-09-08'), horario:'08:00'}),\n  (cal6:Evento {id_evento:6, data_evento:date('2026-09-15'), horario:'13:00'}),\n  (cal7:Evento {id_evento:7, data_evento:date('2026-09-22'), horario:'08:00'}),\n  (cal8:Evento {id_evento:8, data_evento:date('2026-10-01'), horario:'08:00'}),\n  (cal9:Evento {id_evento:9, data_evento:date('2026-10-08'), horario:'08:00'}),\n  (cal10:Evento {id_evento:10, data_evento:date('2026-10-15'), horario:'13:00'}),\n  (cal11:Evento {id_evento:11, data_evento:date('2026-10-22'), horario:'08:00'}),\n  (cal12:Evento {id_evento:12, data_evento:date('2026-10-29'), horario:'08:00'});\n"
+    },
+    {
+      "file": "neo4j/scripts/06-relacionar-grupos-eventos.cypher",
+      "description": "Cria POSSUI usando a igualdade entre id_grupo e id_evento.",
+      "kind": "load",
+      "title": "GrupoTreinamento POSSUI Evento",
+      "code": "// 6. GrupoTreinamento POSSUI Evento\nMATCH  (g:GrupoTreinamento)\nMATCH  (e:Evento)\nWHERE  g.id_grupo = e.id_evento\nCREATE  (g)-[:POSSUI]->(e);\n"
+    },
+    {
+      "file": "neo4j/scripts/07-criar-treinamentos.cypher",
+      "description": "Cria os 12 treinamentos, preservando os nomes e IDs do documento.",
+      "kind": "load",
+      "title": "Criar os Treinamentos",
+      "code": "// 7. Criar os Treinamentos\nCREATE (t1:Treinamento {id_treinamento:1, nome:'NR-10 Básico'}),\n  (t2:Treinamento {id_treinamento:2, nome:'NR-11 Movimentação de Materiais'}),\n  (t3:Treinamento {id_treinamento:3, nome:'NR-12 Máquinas e Equipamentos'}),\n  (t4:Treinamento {id_treinamento:4, nome:'NR-35 Trabalho em Altura'}),\n  (t5:Treinamento {id_treinamento:5, nome:'NR-10 Básico'}),\n  (t6:Treinamento {id_treinamento:6, nome:'NR-18 Construção Civil'}),\n  (t7:Treinamento {id_treinamento:7, nome:'NR-33 Espaços Confinados'}),\n  (t8:Treinamento {id_treinamento:8, nome:'NR-35 Trabalho em Altura'}),\n  (t9:Treinamento {id_treinamento:9, nome:'NR-11 Movimentação de Materiais'}),\n  (t10:Treinamento {id_treinamento:10, nome:'NR-20 Inflamáveis e Combustíveis'}),\n  (t11:Treinamento {id_treinamento:11, nome:'NR-31 Segurança no Trabalho Rural'}),\n  (t12:Treinamento {id_treinamento:12, nome:'NR-33 Espaços Confinados'});\n"
+    },
+    {
+      "file": "neo4j/scripts/08-relacionar-eventos-treinamentos.cypher",
+      "description": "Cria REALIZA usando a igualdade entre id_evento e id_treinamento.",
+      "kind": "load",
+      "title": "Evento REALIZA Treinamento",
+      "code": "// 8. Evento REALIZA Treinamento\nMATCH  (e:Evento)\nMATCH  (t:Treinamento)\nWHERE  e.id_evento = t.id_treinamento\nCREATE  (e)-[:REALIZA]->(t);\n"
+    },
+    {
+      "file": "neo4j/scripts/09-criar-certificados.cypher",
+      "description": "Cria os 12 certificados associados às NRs.",
+      "kind": "load",
+      "title": "Criar os Certificados",
+      "code": "// 9. Criar os Certificados\nCREATE (cert1:Certificado {id_certificado:1, nome:'Certificado NR-10'}),\n  (cert2:Certificado {id_certificado:2, nome:'Certificado NR-11'}),\n  (cert3:Certificado {id_certificado:3, nome:'Certificado NR-12'}),\n  (cert4:Certificado {id_certificado:4, nome:'Certificado NR-35'}),\n  (cert5:Certificado {id_certificado:5, nome:'Certificado NR-10'}),\n  (cert6:Certificado {id_certificado:6, nome:'Certificado NR-18'}),\n  (cert7:Certificado {id_certificado:7, nome:'Certificado NR-33'}),\n  (cert8:Certificado {id_certificado:8, nome:'Certificado NR-35'}),\n  (cert9:Certificado {id_certificado:9, nome:'Certificado NR-11'}),\n  (cert10:Certificado {id_certificado:10, nome:'Certificado NR-20'}),\n  (cert11:Certificado {id_certificado:11, nome:'Certificado NR-31'}),\n  (cert12:Certificado {id_certificado:12, nome:'Certificado NR-33'});\n"
+    },
+    {
+      "file": "neo4j/scripts/10-relacionar-treinamentos-certificados.cypher",
+      "description": "Cria RECEBE usando a igualdade entre id_treinamento e id_certificado.",
+      "kind": "load",
+      "title": "Treinamento RECEBE Certificado",
+      "code": "// 10. Treinamento RECEBE Certificado\nMATCH  (t:Treinamento)\nMATCH  (cert:Certificado)\nWHERE  t.id_treinamento = cert.id_certificado\nCREATE  (t)-[:RECEBE]->(cert);\n"
+    },
+    {
+      "file": "neo4j/scripts/11-participacao-colaboradores.cypher",
+      "description": "Cria cinco participações no grupo 1 e três no grupo 4, em duas instruções.",
+      "kind": "load",
+      "title": "Participação dos Colaboradores",
+      "code": "// 11. Participação dos Colaboradores\nMATCH  (c1:Colaborador {id_colaborador:1})\nMATCH  (c2:Colaborador {id_colaborador:2})\nMATCH  (c3:Colaborador {id_colaborador:3})\nMATCH  (c4:Colaborador {id_colaborador:4})\nMATCH  (c5:Colaborador {id_colaborador:5})\nMATCH  (g1:GrupoTreinamento {id_grupo:1})\nCREATE (c1)-[:PARTICIPA]->(g1),\n  (c2)-[:PARTICIPA]->(g1),\n  (c3)-[:PARTICIPA]->(g1),\n  (c4)-[:PARTICIPA]->(g1),\n  (c5)-[:PARTICIPA]->(g1);\n\nMATCH  (c2:Colaborador {id_colaborador:2})\nMATCH  (c4:Colaborador {id_colaborador:4})\nMATCH  (c5:Colaborador {id_colaborador:5})\nMATCH  (g4:GrupoTreinamento {id_grupo:4})\nCREATE (c2)-[:PARTICIPA]->(g4),\n  (c4)-[:PARTICIPA]->(g4),\n  (c5)-[:PARTICIPA]->(g4);\n"
+    },
+    {
+      "file": "neo4j/scripts/12-traversal-nr10.cypher",
+      "description": "Percorre Colaborador → GrupoTreinamento → Evento → Treinamento e retorna as participações em NR-10 Básico.",
+      "kind": "query",
+      "title": "Consulta Traversal - NR-10 Básico",
+      "code": "// 12. Consulta Traversal - NR-10 Básico\nMATCH (c:Colaborador)-[:PARTICIPA]->(g:GrupoTreinamento)\n      -[:POSSUI]->(e:Evento)-[:REALIZA]->(t:Treinamento)\nWHERE t.nome = 'NR-10 Básico'\nRETURN c.nome AS colaborador,\n       c.cargo AS cargo,\n       g.titulo AS grupo,\n       e.data_evento AS data_treinamento;\n"
+    }
+  ],
+  "notes": [
+    {
+      "title": "Dados de exemplo",
+      "description": "Esta documentação reproduz o arquivo fornecido. O grafo virtual mostra os dados dessa carga, sem conexão a uma instância Neo4j ou confirmação do estado de produção."
+    },
+    {
+      "title": "Ordem da carga",
+      "description": "As etapas 1 a 11 dependem dos nós criados anteriormente. A etapa 12 é uma consulta de leitura. Os scripts estão disponíveis para copiar ou baixar na ordem do documento."
+    },
+    {
+      "title": "Reexecução com CREATE",
+      "description": "CREATE cria novos nós e relacionamentos a cada execução. A carga foi documentada para uma base de exemplo vazia; rodá-la novamente pode duplicar dados. Constraints e uma carga com MERGE não foram fornecidas no documento.",
+      "url": "https://neo4j.com/docs/cypher-manual/current/clauses/create/"
+    },
+    {
+      "title": "Identificadores correspondentes",
+      "description": "A igualdade entre os IDs de grupo, evento, treinamento e certificado é uma regra desta carga. Não é uma ligação automática do Neo4j nem uma constraint declarada."
+    },
+    {
+      "title": "Participações e certificados",
+      "description": "Os grupos 2, 3 e 5–12 não possuem participantes declarados nesta carga. Também não há relacionamento direto entre colaborador e certificado, validade, conclusão ou status de emissão no arquivo."
+    }
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "Unidade:Metalúrgica Brasilfer Ltda",
+        "label": "Unidade",
+        "properties": {
+          "nome": "Metalúrgica Brasilfer Ltda",
+          "grupo_empresarial": "Brasilfer"
+        }
+      },
+      {
+        "id": "Unidade:Construtora Horizonte S.A.",
+        "label": "Unidade",
+        "properties": {
+          "nome": "Construtora Horizonte S.A.",
+          "grupo_empresarial": "Horizonte"
+        }
+      },
+      {
+        "id": "Unidade:Agroquímica Verde Campo Eireli",
+        "label": "Unidade",
+        "properties": {
+          "nome": "Agroquímica Verde Campo Eireli",
+          "grupo_empresarial": "Verde Campo"
+        }
+      },
+      {
+        "id": "Colaborador:1",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 1,
+          "nome": "João Silva",
+          "departamento": "Produção",
+          "cargo": "Operador de Máquina"
+        }
+      },
+      {
+        "id": "Colaborador:2",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 2,
+          "nome": "Maria Souza",
+          "departamento": "Manutenção",
+          "cargo": "Eletricista Industrial"
+        }
+      },
+      {
+        "id": "Colaborador:3",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 3,
+          "nome": "Pedro Lima",
+          "departamento": "Logística",
+          "cargo": "Operador de Empilhadeira"
+        }
+      },
+      {
+        "id": "Colaborador:4",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 4,
+          "nome": "Lucas Oliveira",
+          "departamento": "Produção",
+          "cargo": "Soldador"
+        }
+      },
+      {
+        "id": "Colaborador:5",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 5,
+          "nome": "Fernanda Costa",
+          "departamento": "Segurança do Trabalho",
+          "cargo": "Técnica em Segurança do Trabalho"
+        }
+      },
+      {
+        "id": "Colaborador:6",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 6,
+          "nome": "Carlos Santos",
+          "departamento": "Obras",
+          "cargo": "Pedreiro"
+        }
+      },
+      {
+        "id": "Colaborador:7",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 7,
+          "nome": "Juliana Rocha",
+          "departamento": "Obras",
+          "cargo": "Eletricista"
+        }
+      },
+      {
+        "id": "Colaborador:8",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 8,
+          "nome": "Gabriel Almeida",
+          "departamento": "Obras",
+          "cargo": "Carpinteiro"
+        }
+      },
+      {
+        "id": "Colaborador:9",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 9,
+          "nome": "Amanda Ferreira",
+          "departamento": "Obras",
+          "cargo": "Montadora de Estruturas"
+        }
+      },
+      {
+        "id": "Colaborador:10",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 10,
+          "nome": "Ricardo Gomes",
+          "departamento": "Segurança do Trabalho",
+          "cargo": "Técnico em Segurança do Trabalho"
+        }
+      },
+      {
+        "id": "Colaborador:11",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 11,
+          "nome": "Patrícia Martins",
+          "departamento": "Produção",
+          "cargo": "Técnica Química"
+        }
+      },
+      {
+        "id": "Colaborador:12",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 12,
+          "nome": "Bruno Carvalho",
+          "departamento": "Produção",
+          "cargo": "Operador de Produção Química"
+        }
+      },
+      {
+        "id": "Colaborador:13",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 13,
+          "nome": "Camila Ribeiro",
+          "departamento": "Logística",
+          "cargo": "Operadora de Empilhadeira"
+        }
+      },
+      {
+        "id": "Colaborador:14",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 14,
+          "nome": "Diego Pereira",
+          "departamento": "Manutenção",
+          "cargo": "Eletricista Industrial"
+        }
+      },
+      {
+        "id": "Colaborador:15",
+        "label": "Colaborador",
+        "properties": {
+          "id_colaborador": 15,
+          "nome": "Larissa Mendes",
+          "departamento": "Segurança do Trabalho",
+          "cargo": "Técnica em Segurança do Trabalho"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:1",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 1,
+          "grupo_nr": 10,
+          "titulo": "Segurança em Instalações e Serviços em Eletricidade"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:2",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 2,
+          "grupo_nr": 11,
+          "titulo": "Transporte, Movimentação, Armazenagem e Manuseio de Materiais"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:3",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 3,
+          "grupo_nr": 12,
+          "titulo": "Segurança no Trabalho em Máquinas e Equipamentos"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:4",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 4,
+          "grupo_nr": 35,
+          "titulo": "Trabalho em Altura"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:5",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 5,
+          "grupo_nr": 10,
+          "titulo": "Segurança em Instalações e Serviços em Eletricidade"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:6",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 6,
+          "grupo_nr": 18,
+          "titulo": "Segurança e Saúde no Trabalho na Indústria da Construção"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:7",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 7,
+          "grupo_nr": 33,
+          "titulo": "Segurança e Saúde nos Trabalhos em Espaços Confinados"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:8",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 8,
+          "grupo_nr": 35,
+          "titulo": "Trabalho em Altura"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:9",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 9,
+          "grupo_nr": 11,
+          "titulo": "Transporte, Movimentação, Armazenagem e Manuseio de Materiais"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:10",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 10,
+          "grupo_nr": 20,
+          "titulo": "Segurança e Saúde no Trabalho com Inflamáveis e Combustíveis"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:11",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 11,
+          "grupo_nr": 31,
+          "titulo": "Segurança e Saúde no Trabalho na Agricultura"
+        }
+      },
+      {
+        "id": "GrupoTreinamento:12",
+        "label": "GrupoTreinamento",
+        "properties": {
+          "id_grupo": 12,
+          "grupo_nr": 33,
+          "titulo": "Segurança e Saúde nos Trabalhos em Espaços Confinados"
+        }
+      },
+      {
+        "id": "Evento:1",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 1,
+          "data_evento": "2026-08-15",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:2",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 2,
+          "data_evento": "2026-08-18",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:3",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 3,
+          "data_evento": "2026-08-22",
+          "horario": "13:30"
+        }
+      },
+      {
+        "id": "Evento:4",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 4,
+          "data_evento": "2026-09-02",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:5",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 5,
+          "data_evento": "2026-09-08",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:6",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 6,
+          "data_evento": "2026-09-15",
+          "horario": "13:00"
+        }
+      },
+      {
+        "id": "Evento:7",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 7,
+          "data_evento": "2026-09-22",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:8",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 8,
+          "data_evento": "2026-10-01",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:9",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 9,
+          "data_evento": "2026-10-08",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:10",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 10,
+          "data_evento": "2026-10-15",
+          "horario": "13:00"
+        }
+      },
+      {
+        "id": "Evento:11",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 11,
+          "data_evento": "2026-10-22",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Evento:12",
+        "label": "Evento",
+        "properties": {
+          "id_evento": 12,
+          "data_evento": "2026-10-29",
+          "horario": "08:00"
+        }
+      },
+      {
+        "id": "Treinamento:1",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 1,
+          "nome": "NR-10 Básico"
+        }
+      },
+      {
+        "id": "Treinamento:2",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 2,
+          "nome": "NR-11 Movimentação de Materiais"
+        }
+      },
+      {
+        "id": "Treinamento:3",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 3,
+          "nome": "NR-12 Máquinas e Equipamentos"
+        }
+      },
+      {
+        "id": "Treinamento:4",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 4,
+          "nome": "NR-35 Trabalho em Altura"
+        }
+      },
+      {
+        "id": "Treinamento:5",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 5,
+          "nome": "NR-10 Básico"
+        }
+      },
+      {
+        "id": "Treinamento:6",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 6,
+          "nome": "NR-18 Construção Civil"
+        }
+      },
+      {
+        "id": "Treinamento:7",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 7,
+          "nome": "NR-33 Espaços Confinados"
+        }
+      },
+      {
+        "id": "Treinamento:8",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 8,
+          "nome": "NR-35 Trabalho em Altura"
+        }
+      },
+      {
+        "id": "Treinamento:9",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 9,
+          "nome": "NR-11 Movimentação de Materiais"
+        }
+      },
+      {
+        "id": "Treinamento:10",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 10,
+          "nome": "NR-20 Inflamáveis e Combustíveis"
+        }
+      },
+      {
+        "id": "Treinamento:11",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 11,
+          "nome": "NR-31 Segurança no Trabalho Rural"
+        }
+      },
+      {
+        "id": "Treinamento:12",
+        "label": "Treinamento",
+        "properties": {
+          "id_treinamento": 12,
+          "nome": "NR-33 Espaços Confinados"
+        }
+      },
+      {
+        "id": "Certificado:1",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 1,
+          "nome": "Certificado NR-10"
+        }
+      },
+      {
+        "id": "Certificado:2",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 2,
+          "nome": "Certificado NR-11"
+        }
+      },
+      {
+        "id": "Certificado:3",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 3,
+          "nome": "Certificado NR-12"
+        }
+      },
+      {
+        "id": "Certificado:4",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 4,
+          "nome": "Certificado NR-35"
+        }
+      },
+      {
+        "id": "Certificado:5",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 5,
+          "nome": "Certificado NR-10"
+        }
+      },
+      {
+        "id": "Certificado:6",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 6,
+          "nome": "Certificado NR-18"
+        }
+      },
+      {
+        "id": "Certificado:7",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 7,
+          "nome": "Certificado NR-33"
+        }
+      },
+      {
+        "id": "Certificado:8",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 8,
+          "nome": "Certificado NR-35"
+        }
+      },
+      {
+        "id": "Certificado:9",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 9,
+          "nome": "Certificado NR-11"
+        }
+      },
+      {
+        "id": "Certificado:10",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 10,
+          "nome": "Certificado NR-20"
+        }
+      },
+      {
+        "id": "Certificado:11",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 11,
+          "nome": "Certificado NR-31"
+        }
+      },
+      {
+        "id": "Certificado:12",
+        "label": "Certificado",
+        "properties": {
+          "id_certificado": 12,
+          "nome": "Certificado NR-33"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "r1",
+        "from": "Colaborador:1",
+        "to": "Unidade:Metalúrgica Brasilfer Ltda",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r2",
+        "from": "Colaborador:2",
+        "to": "Unidade:Metalúrgica Brasilfer Ltda",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r3",
+        "from": "Colaborador:3",
+        "to": "Unidade:Metalúrgica Brasilfer Ltda",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r4",
+        "from": "Colaborador:4",
+        "to": "Unidade:Metalúrgica Brasilfer Ltda",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r5",
+        "from": "Colaborador:5",
+        "to": "Unidade:Metalúrgica Brasilfer Ltda",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r6",
+        "from": "Colaborador:6",
+        "to": "Unidade:Construtora Horizonte S.A.",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r7",
+        "from": "Colaborador:7",
+        "to": "Unidade:Construtora Horizonte S.A.",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r8",
+        "from": "Colaborador:8",
+        "to": "Unidade:Construtora Horizonte S.A.",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r9",
+        "from": "Colaborador:9",
+        "to": "Unidade:Construtora Horizonte S.A.",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r10",
+        "from": "Colaborador:10",
+        "to": "Unidade:Construtora Horizonte S.A.",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r11",
+        "from": "Colaborador:11",
+        "to": "Unidade:Agroquímica Verde Campo Eireli",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r12",
+        "from": "Colaborador:12",
+        "to": "Unidade:Agroquímica Verde Campo Eireli",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r13",
+        "from": "Colaborador:13",
+        "to": "Unidade:Agroquímica Verde Campo Eireli",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r14",
+        "from": "Colaborador:14",
+        "to": "Unidade:Agroquímica Verde Campo Eireli",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r15",
+        "from": "Colaborador:15",
+        "to": "Unidade:Agroquímica Verde Campo Eireli",
+        "type": "PERTENCE"
+      },
+      {
+        "id": "r16",
+        "from": "GrupoTreinamento:1",
+        "to": "Evento:1",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r17",
+        "from": "GrupoTreinamento:2",
+        "to": "Evento:2",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r18",
+        "from": "GrupoTreinamento:3",
+        "to": "Evento:3",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r19",
+        "from": "GrupoTreinamento:4",
+        "to": "Evento:4",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r20",
+        "from": "GrupoTreinamento:5",
+        "to": "Evento:5",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r21",
+        "from": "GrupoTreinamento:6",
+        "to": "Evento:6",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r22",
+        "from": "GrupoTreinamento:7",
+        "to": "Evento:7",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r23",
+        "from": "GrupoTreinamento:8",
+        "to": "Evento:8",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r24",
+        "from": "GrupoTreinamento:9",
+        "to": "Evento:9",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r25",
+        "from": "GrupoTreinamento:10",
+        "to": "Evento:10",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r26",
+        "from": "GrupoTreinamento:11",
+        "to": "Evento:11",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r27",
+        "from": "GrupoTreinamento:12",
+        "to": "Evento:12",
+        "type": "POSSUI"
+      },
+      {
+        "id": "r28",
+        "from": "Evento:1",
+        "to": "Treinamento:1",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r29",
+        "from": "Evento:2",
+        "to": "Treinamento:2",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r30",
+        "from": "Evento:3",
+        "to": "Treinamento:3",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r31",
+        "from": "Evento:4",
+        "to": "Treinamento:4",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r32",
+        "from": "Evento:5",
+        "to": "Treinamento:5",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r33",
+        "from": "Evento:6",
+        "to": "Treinamento:6",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r34",
+        "from": "Evento:7",
+        "to": "Treinamento:7",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r35",
+        "from": "Evento:8",
+        "to": "Treinamento:8",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r36",
+        "from": "Evento:9",
+        "to": "Treinamento:9",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r37",
+        "from": "Evento:10",
+        "to": "Treinamento:10",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r38",
+        "from": "Evento:11",
+        "to": "Treinamento:11",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r39",
+        "from": "Evento:12",
+        "to": "Treinamento:12",
+        "type": "REALIZA"
+      },
+      {
+        "id": "r40",
+        "from": "Treinamento:1",
+        "to": "Certificado:1",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r41",
+        "from": "Treinamento:2",
+        "to": "Certificado:2",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r42",
+        "from": "Treinamento:3",
+        "to": "Certificado:3",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r43",
+        "from": "Treinamento:4",
+        "to": "Certificado:4",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r44",
+        "from": "Treinamento:5",
+        "to": "Certificado:5",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r45",
+        "from": "Treinamento:6",
+        "to": "Certificado:6",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r46",
+        "from": "Treinamento:7",
+        "to": "Certificado:7",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r47",
+        "from": "Treinamento:8",
+        "to": "Certificado:8",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r48",
+        "from": "Treinamento:9",
+        "to": "Certificado:9",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r49",
+        "from": "Treinamento:10",
+        "to": "Certificado:10",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r50",
+        "from": "Treinamento:11",
+        "to": "Certificado:11",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r51",
+        "from": "Treinamento:12",
+        "to": "Certificado:12",
+        "type": "RECEBE"
+      },
+      {
+        "id": "r52",
+        "from": "Colaborador:1",
+        "to": "GrupoTreinamento:1",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r53",
+        "from": "Colaborador:2",
+        "to": "GrupoTreinamento:1",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r54",
+        "from": "Colaborador:3",
+        "to": "GrupoTreinamento:1",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r55",
+        "from": "Colaborador:4",
+        "to": "GrupoTreinamento:1",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r56",
+        "from": "Colaborador:5",
+        "to": "GrupoTreinamento:1",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r57",
+        "from": "Colaborador:2",
+        "to": "GrupoTreinamento:4",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r58",
+        "from": "Colaborador:4",
+        "to": "GrupoTreinamento:4",
+        "type": "PARTICIPA"
+      },
+      {
+        "id": "r59",
+        "from": "Colaborador:5",
+        "to": "GrupoTreinamento:4",
+        "type": "PARTICIPA"
+      }
+    ]
+  },
+  "issues": [],
+  "counts": {
+    "nodes": 66,
+    "relationships": 59,
+    "labels": 6,
+    "scripts": 12
+  }
+}

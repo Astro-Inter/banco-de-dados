@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1c1839">
-  <meta name="description" content="Astro Database Workspace — documentação PostgreSQL e MongoDB.">
+  <meta name="description" content="Astro Database Workspace — documentação PostgreSQL, MongoDB, Redis e Neo4j.">
   <link rel="shortcut icon" href="images/astro.svg" type="image/x-icon">
   <title>Astro · Database Workspace</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./components/neo4j/neo4j.css">
   <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -22,6 +23,7 @@
         <a href="#/database" data-engine-link="postgresql"><img src="images/postgresql.png" alt=""/>PostgreSQL</a>
         <a href="#/mongo" data-engine-link="mongo"><img src="images/mongo.png" alt=""/>MongoDB</a>
         <a href="#/redis" data-engine-link="redis"><img src="images/redis.png" alt=""/>Redis</a>
+        <a href="#/neo4j" data-engine-link="neo4j"><img src="images/neo4j.svg" alt=""/>Neo4j</a>
       </div>
       <!-- Os ícones são injetados a partir de site/icons.js (assets de site/images). -->
       <nav class="sidebar-nav" aria-label="Navegação principal" id="main-nav">
@@ -57,6 +59,12 @@
           <a href="#/redis" data-route="redis" data-icon="table">Chaves</a>
           <a href="#/redis-flows" data-route="redis-flows" data-icon="physicalModel">Fluxos</a>
           <a href="#/redis-decisions" data-route="redis-decisions" data-icon="modeling">Decisões de uso</a>
+        </div>
+        <div data-engine-nav="neo4j" hidden>
+          <span class="nav-group">Neo4j</span>
+          <a href="#/neo4j" data-route="neo4j" data-icon="document">Documentação</a>
+          <a href="#/neo4j-model" data-route="neo4j-model" data-icon="physicalModel">Modelagem de grafos</a>
+          <a href="#/neo4j-scripts" data-route="neo4j-scripts" data-icon="script">Scripts Cypher</a>
         </div>
       </nav>
       <div class="sidebar-footer">

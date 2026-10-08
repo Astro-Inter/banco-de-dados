@@ -2,6 +2,8 @@ import { createMongoModelState, mountMongoModel } from './components/mongo/mongo
 import { openMongoEditor } from './components/mongo/mongo-editor.js';
 import { mongoView } from './components/mongo/mongo-view.js';
 import { redisView } from './components/redis/redis-view.js';
+import { neo4jView } from './components/neo4j/neo4j-view.js';
+import { createNeo4jModelState, mountNeo4jModel } from './components/neo4j/neo4j-model.js';
 import { openDocumentationEditor } from './components/documentation/documentation-editor.js';
 import { api, detectMode, loadDatabase } from './services/api.js';
 import { analyzeImpactClient, findObjectPath } from './services/analysis.js';
@@ -46,6 +48,7 @@ const state = {
   database: null,
   mongo: { data: null, loading: false, error: null, query: '', selected: null, model: createMongoModelState() },
   redis: { data: null, loading: false, error: null, query: '', selected: null },
+  neo4j: { data: null, loading: false, error: null, query: '', selected: null, scriptQuery: '', scriptSelected: null, model: createNeo4jModelState() },
   filter: 'all',
   databaseTab: 'list',
   selectedId: null,
@@ -391,12 +394,15 @@ function render() {
   if (!state.database) return;
 
   const route = currentRoute();
+  hideColumnTooltip();
   setActiveNavigation(route);
   const mongoArea = route.startsWith('mongo');
   const redisArea = route.startsWith('redis');
-  const engine = mongoArea ? 'mongo' : redisArea ? 'redis' : 'postgresql';
+  const neo4jArea = route.startsWith('neo4j');
+  const engine = mongoArea ? 'mongo' : redisArea ? 'redis' : neo4jArea ? 'neo4j' : 'postgresql';
   document.body.classList.toggle('mongo-area', mongoArea);
   document.body.classList.toggle('redis-area', redisArea);
+  document.body.classList.toggle('neo4j-area', neo4jArea);
   document.body.classList.toggle('postgresql-area', engine === 'postgresql');
   document.querySelectorAll('[data-engine-nav]').forEach((element) => { element.hidden = element.dataset.engineNav !== engine; });
   document.querySelectorAll('[data-engine-link]').forEach((element) => {
@@ -405,8 +411,8 @@ function render() {
     if (active) element.setAttribute('aria-current', 'true');
     else element.removeAttribute('aria-current');
   });
-  document.querySelector('#new-file-button').hidden = mongoArea || redisArea;
-  document.querySelector('#global-search').closest('label').hidden = mongoArea || redisArea;
+  document.querySelector('#new-file-button').hidden = mongoArea || redisArea || neo4jArea;
+  document.querySelector('#global-search').closest('label').hidden = mongoArea || redisArea || neo4jArea;
 
   // A classe sai antes de trocar o conteúdo e só volta quando a rota mudou:
   // enquanto ela estiver aplicada, todo elemento inserido em #content anima, e
@@ -416,7 +422,10 @@ function render() {
   content.classList.remove('page-enter');
   if (routeChanged) void content.offsetWidth; // Força o reflow: sem isso o navegador não reinicia a animação.
 
-  if (redisArea) {
+  if (neo4jArea) {
+    content.innerHTML = neo4jView(state.neo4j.data, { ...state.neo4j, tab: route === 'neo4j-model' ? 'model' : route === 'neo4j-scripts' ? 'scripts' : 'docs' });
+    if (!state.neo4j.data && !state.neo4j.loading && !state.neo4j.error) loadNeo4j();
+  } else if (redisArea) {
     content.innerHTML = redisView(state.redis.data, { ...state.redis, mode: state.mode, tab: route === 'redis-flows' ? 'flows' : route === 'redis-decisions' ? 'decisions' : 'keys' });
     if (!state.redis.data && !state.redis.loading && !state.redis.error) loadRedis();
   } else if (mongoArea) {
@@ -474,6 +483,14 @@ function render() {
       state.mongo.selected = name;
       state.mongo.query = '';
       location.hash = '#/mongo';
+    });
+  }
+
+  if (route === 'neo4j-model' && state.neo4j.data) {
+    mountNeo4jModel(content, state.neo4j.data, state.neo4j.model, render, (label) => {
+      state.neo4j.selected = label;
+      state.neo4j.query = '';
+      location.hash = '#/neo4j';
     });
   }
 
@@ -893,7 +910,7 @@ document.addEventListener('click', async (event) => {
 });
 
 /**
- * Camada única do tooltip de coluna, presa ao body.
+ * Painel de detalhes da coluna, aberto por clique e preso ao body.
  *
  * O conteúdo continua sendo gerado junto da coluna; aqui ele só é exibido em
  * uma camada livre de recortes (as listas rolam) e de `transform` (o card se
@@ -901,43 +918,84 @@ document.addEventListener('click', async (event) => {
  */
 const columnTooltip = document.createElement('div');
 columnTooltip.id = 'column-tooltip';
-columnTooltip.setAttribute('role', 'tooltip');
+columnTooltip.setAttribute('role', 'dialog');
+columnTooltip.setAttribute('aria-label', 'Detalhes da coluna');
+columnTooltip.tabIndex = -1;
+columnTooltip.hidden = true;
 document.body.append(columnTooltip);
+let activeColumn = null;
 
 function showColumnTooltip(column) {
   const source = column.querySelector('.column-tooltip');
   if (!source) return hideColumnTooltip();
-  columnTooltip.innerHTML = source.innerHTML;
+  hideColumnTooltip();
+  activeColumn = column;
+  column.classList.add('is-active');
+  column.setAttribute('aria-expanded', 'true');
+  columnTooltip.setAttribute('aria-label', column.getAttribute('aria-label'));
+  columnTooltip.innerHTML = `<button class="column-details-close" aria-label="Fechar detalhes da coluna">Fechar</button>${source.innerHTML}`;
+  columnTooltip.hidden = false;
   columnTooltip.classList.add('is-visible');
+  columnTooltip.style.maxHeight = '';
 
   const box = column.getBoundingClientRect();
   const height = columnTooltip.offsetHeight;
   const width = columnTooltip.offsetWidth;
-  const belowFits = box.bottom + height + 12 <= window.innerHeight;
+  const belowSpace = window.innerHeight - box.bottom - 12;
+  const aboveSpace = box.top - 12;
+  const showBelow = height + 6 <= belowSpace || belowSpace >= aboveSpace;
+  const availableHeight = Math.max(40, (showBelow ? belowSpace : aboveSpace) - 6);
+  columnTooltip.style.maxHeight = `${availableHeight}px`;
   columnTooltip.style.left = `${Math.max(12, Math.min(box.left + 24, window.innerWidth - width - 12))}px`;
-  columnTooltip.style.top = `${belowFits ? box.bottom - 2 : Math.max(12, box.top - height + 2)}px`;
+  columnTooltip.style.top = `${showBelow ? box.bottom + 6 : Math.max(12, box.top - Math.min(height, availableHeight) - 6)}px`;
 }
 
 function hideColumnTooltip() {
+  activeColumn?.classList.remove('is-active');
+  activeColumn?.setAttribute('aria-expanded', 'false');
+  activeColumn = null;
   columnTooltip.classList.remove('is-visible');
+  columnTooltip.hidden = true;
 }
 
-document.addEventListener('mouseover', (event) => {
+function toggleColumnDetails(column) {
+  if (activeColumn === column) hideColumnTooltip();
+  else showColumnTooltip(column);
+}
+
+document.addEventListener('click', (event) => {
   const column = event.target.closest?.('.model-column');
-  if (column) showColumnTooltip(column);
-  else if (!event.target.closest?.('#column-tooltip')) hideColumnTooltip();
+  if (column) toggleColumnDetails(column);
+  else if (event.target.closest?.('.column-details-close')) {
+    const trigger = activeColumn;
+    hideColumnTooltip();
+    trigger?.focus({ preventScroll: true });
+  } else if (!columnTooltip.contains(event.target)) hideColumnTooltip();
 });
 
-document.addEventListener('focusin', (event) => {
+document.addEventListener('keydown', (event) => {
   const column = event.target.closest?.('.model-column');
-  if (column) showColumnTooltip(column);
-  else hideColumnTooltip();
+  if (column && ['Enter', ' '].includes(event.key)) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    toggleColumnDetails(column);
+    if (activeColumn) columnTooltip.focus({ preventScroll: true });
+  } else if (event.key === 'Escape' && activeColumn) {
+    const trigger = activeColumn;
+    const restoreFocus = columnTooltip.contains(document.activeElement);
+    hideColumnTooltip();
+    if (restoreFocus) trigger.focus({ preventScroll: true });
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
 });
 
-// Rolar a lista moveria a coluna sem mover o tooltip.
-document.addEventListener('scroll', hideColumnTooltip, true);
+// Fecha quando a âncora se move; o próprio painel pode rolar sem fechar.
+document.addEventListener('scroll', (event) => { if (!columnTooltip.contains(event.target)) hideColumnTooltip(); }, true);
+window.addEventListener('resize', hideColumnTooltip);
 
 document.addEventListener('dblclick', (event) => {
+  if (event.target.closest('.model-column')) return;
   const table = event.target.closest('[data-model-table]');
   if (!table) return;
   const object = state.database.objects.find((item) => item.id === table.dataset.modelTable);
@@ -1094,6 +1152,61 @@ async function initialize() {
 }
 
 initialize();
+
+async function loadNeo4j() {
+  state.neo4j.loading = true;
+  state.neo4j.error = null;
+  try {
+    const response = await fetch('./generated/neo4j.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Execute npm run analyze para gerar a documentação Neo4j.');
+    state.neo4j.data = await response.json();
+  } catch (error) { state.neo4j.error = error.message; }
+  finally {
+    state.neo4j.loading = false;
+    if (currentRoute().startsWith('neo4j')) render();
+  }
+}
+
+document.addEventListener('click', async (event) => {
+  const select = event.target.closest('[data-neo-select]');
+  if (select) { state.neo4j.selected = select.dataset.neoSelect; render(); }
+  const script = event.target.closest('[data-neo-script]');
+  if (script) { state.neo4j.scriptSelected = script.dataset.neoScript; render(); }
+  const copy = event.target.closest('[data-neo-copy]');
+  if (copy) {
+    const entry = state.neo4j.data?.scripts.find((item) => item.file === copy.dataset.neoCopy);
+    if (entry) {
+      try { await navigator.clipboard.writeText(entry.code); toast('Cypher copiado.'); }
+      catch { toast('Não foi possível copiar. Selecione o código para copiá-lo manualmente.'); }
+    }
+  }
+  const download = event.target.closest('[data-neo-download]');
+  if (download && state.neo4j.data) {
+    const file = download.dataset.neoDownload;
+    const scripts = file === 'all' ? state.neo4j.data.scripts : state.neo4j.data.scripts.filter((entry) => entry.file === file);
+    if (scripts.length) {
+      const url = URL.createObjectURL(new Blob([scripts.map((entry) => entry.code).join('\n')], { type: 'text/plain;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file === 'all' ? 'astro-neo4j-colaboradores-treinamentos.cypher' : file.split('/').at(-1);
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  }
+  if (event.target.closest('[data-neo-retry]')) loadNeo4j();
+});
+
+document.addEventListener('input', (event) => {
+  if (!['neo-doc-search', 'neo-script-search'].includes(event.target.id)) return;
+  const { id, selectionStart } = event.target;
+  state.neo4j[id === 'neo-doc-search' ? 'query' : 'scriptQuery'] = event.target.value;
+  render();
+  const input = document.getElementById(id);
+  input.focus();
+  input.setSelectionRange(selectionStart, selectionStart);
+});
 
 async function loadRedis() {
   state.redis.loading = true;
