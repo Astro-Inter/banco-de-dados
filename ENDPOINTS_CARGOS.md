@@ -13,6 +13,15 @@ Retorna a lista para a tabela com:
 
 A função SQL retorna o nome na coluna `cargo`; mapear esse valor para `nome` no DTO. A view também fornece `id_workspace`. A quantidade considera colaboradores ativos.
 
+## GET — mostrar NRs do cargo
+
+Recebe `firebase_uid` e `id_cargo` e chama `fn_seleciona_cargo_nrs(firebase_uid, id_cargo)`. Retorna as NRs associadas ao cargo com:
+
+- `codigo_nr`, número da NR
+- `descricao`, com o texto da NR
+
+O front pode exibir o código com o prefixo `NR` (por exemplo, `NR1`).
+
 ## POST — criar cargo
 
 Recebe:
