@@ -394,6 +394,7 @@ function render() {
   if (!state.database) return;
 
   const route = currentRoute();
+  hideColumnTooltip();
   setActiveNavigation(route);
   const mongoArea = route.startsWith('mongo');
   const redisArea = route.startsWith('redis');
@@ -909,7 +910,7 @@ document.addEventListener('click', async (event) => {
 });
 
 /**
- * Camada única do tooltip de coluna, presa ao body.
+ * Painel de detalhes da coluna, aberto por clique e preso ao body.
  *
  * O conteúdo continua sendo gerado junto da coluna; aqui ele só é exibido em
  * uma camada livre de recortes (as listas rolam) e de `transform` (o card se
@@ -917,43 +918,84 @@ document.addEventListener('click', async (event) => {
  */
 const columnTooltip = document.createElement('div');
 columnTooltip.id = 'column-tooltip';
-columnTooltip.setAttribute('role', 'tooltip');
+columnTooltip.setAttribute('role', 'dialog');
+columnTooltip.setAttribute('aria-label', 'Detalhes da coluna');
+columnTooltip.tabIndex = -1;
+columnTooltip.hidden = true;
 document.body.append(columnTooltip);
+let activeColumn = null;
 
 function showColumnTooltip(column) {
   const source = column.querySelector('.column-tooltip');
   if (!source) return hideColumnTooltip();
-  columnTooltip.innerHTML = source.innerHTML;
+  hideColumnTooltip();
+  activeColumn = column;
+  column.classList.add('is-active');
+  column.setAttribute('aria-expanded', 'true');
+  columnTooltip.setAttribute('aria-label', column.getAttribute('aria-label'));
+  columnTooltip.innerHTML = `<button class="column-details-close" aria-label="Fechar detalhes da coluna">Fechar</button>${source.innerHTML}`;
+  columnTooltip.hidden = false;
   columnTooltip.classList.add('is-visible');
+  columnTooltip.style.maxHeight = '';
 
   const box = column.getBoundingClientRect();
   const height = columnTooltip.offsetHeight;
   const width = columnTooltip.offsetWidth;
-  const belowFits = box.bottom + height + 12 <= window.innerHeight;
+  const belowSpace = window.innerHeight - box.bottom - 12;
+  const aboveSpace = box.top - 12;
+  const showBelow = height + 6 <= belowSpace || belowSpace >= aboveSpace;
+  const availableHeight = Math.max(40, (showBelow ? belowSpace : aboveSpace) - 6);
+  columnTooltip.style.maxHeight = `${availableHeight}px`;
   columnTooltip.style.left = `${Math.max(12, Math.min(box.left + 24, window.innerWidth - width - 12))}px`;
-  columnTooltip.style.top = `${belowFits ? box.bottom - 2 : Math.max(12, box.top - height + 2)}px`;
+  columnTooltip.style.top = `${showBelow ? box.bottom + 6 : Math.max(12, box.top - Math.min(height, availableHeight) - 6)}px`;
 }
 
 function hideColumnTooltip() {
+  activeColumn?.classList.remove('is-active');
+  activeColumn?.setAttribute('aria-expanded', 'false');
+  activeColumn = null;
   columnTooltip.classList.remove('is-visible');
+  columnTooltip.hidden = true;
 }
 
-document.addEventListener('mouseover', (event) => {
+function toggleColumnDetails(column) {
+  if (activeColumn === column) hideColumnTooltip();
+  else showColumnTooltip(column);
+}
+
+document.addEventListener('click', (event) => {
   const column = event.target.closest?.('.model-column');
-  if (column) showColumnTooltip(column);
-  else if (!event.target.closest?.('#column-tooltip')) hideColumnTooltip();
+  if (column) toggleColumnDetails(column);
+  else if (event.target.closest?.('.column-details-close')) {
+    const trigger = activeColumn;
+    hideColumnTooltip();
+    trigger?.focus({ preventScroll: true });
+  } else if (!columnTooltip.contains(event.target)) hideColumnTooltip();
 });
 
-document.addEventListener('focusin', (event) => {
+document.addEventListener('keydown', (event) => {
   const column = event.target.closest?.('.model-column');
-  if (column) showColumnTooltip(column);
-  else hideColumnTooltip();
+  if (column && ['Enter', ' '].includes(event.key)) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    toggleColumnDetails(column);
+    if (activeColumn) columnTooltip.focus({ preventScroll: true });
+  } else if (event.key === 'Escape' && activeColumn) {
+    const trigger = activeColumn;
+    const restoreFocus = columnTooltip.contains(document.activeElement);
+    hideColumnTooltip();
+    if (restoreFocus) trigger.focus({ preventScroll: true });
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
 });
 
-// Rolar a lista moveria a coluna sem mover o tooltip.
-document.addEventListener('scroll', hideColumnTooltip, true);
+// Fecha quando a âncora se move; o próprio painel pode rolar sem fechar.
+document.addEventListener('scroll', (event) => { if (!columnTooltip.contains(event.target)) hideColumnTooltip(); }, true);
+window.addEventListener('resize', hideColumnTooltip);
 
 document.addEventListener('dblclick', (event) => {
+  if (event.target.closest('.model-column')) return;
   const table = event.target.closest('[data-model-table]');
   if (!table) return;
   const object = state.database.objects.find((item) => item.id === table.dataset.modelTable);

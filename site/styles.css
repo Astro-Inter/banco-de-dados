@@ -328,7 +328,7 @@ dialog::backdrop { background: rgba(15,12,30,.62); backdrop-filter: blur(3px); }
 .table-grid-scroll { max-height: calc(100vh - 280px); min-height: 320px; overflow: auto; padding: 6px; margin: -6px; overscroll-behavior: contain; }
 .table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); align-items: start; gap: 16px; }
 /* Cada card também para de crescer sozinho: a lista de colunas rola por dentro. */
-.table-card { position: relative; display: flex; flex-direction: column; max-height: calc(100vh - 320px); overflow: visible; background: white; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 5px 20px rgba(28,24,57,.04); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.table-card { position: relative; display: flex; flex-direction: column; max-height: max(260px, calc(100vh - 320px)); overflow: visible; background: white; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 5px 20px rgba(28,24,57,.04); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
 .table-card:hover, .table-card:focus-visible { transform: translateY(-2px); border-color: rgba(143,0,196,.35); box-shadow: 0 12px 28px rgba(28,24,57,.09); }
 .table-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; color: white; background: linear-gradient(125deg, var(--ink), var(--ink-2)); border-radius: 13px 13px 0 0; }
 .table-card-head strong, .table-card-head small { display: block; }
@@ -340,9 +340,10 @@ dialog::backdrop { background: rgba(15,12,30,.62); backdrop-filter: blur(3px); }
 .model-inheritance-label { fill: #bdb8cf; font-size: 10px; font-weight: 400; }
 .table-card-cols { flex: 1 1 auto; min-height: 0; margin: 0; padding: 5px 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; }
 .table-card-head, .table-card-description { flex: 0 0 auto; }
-.model-column { position: relative; display: grid; grid-template-columns: 22px minmax(70px, 1fr) minmax(0, auto) auto; align-items: center; gap: 8px; min-height: 38px; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.model-column { position: relative; display: grid; grid-template-columns: 22px minmax(70px, 1fr) minmax(0, auto) auto; align-items: center; gap: 8px; min-height: 38px; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12px; cursor: pointer; }
 .model-column:first-child { border-top: 0; }
 .model-column:hover, .model-column:focus-visible { z-index: 5; background: #faf6fc; }
+.model-column.is-active { background: #edf4fa; box-shadow: inset 3px 0 #336791; }
 .column-key-icon { width: 20px; text-align: center; font-size: 12px; }
 .column-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 720; }
 .column-type { min-width: 0; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: 10px/1.3 "Cascadia Code", Consolas, monospace; text-align: right; }
@@ -354,15 +355,16 @@ dialog::backdrop { background: rgba(15,12,30,.62); backdrop-filter: blur(3px); }
 .pill.check { color: #7a3f8d; background: #f3e3f8; }
 .pill.notnull { color: #7b4b00; background: #ffedcf; }
 /*
- * O conteúdo do tooltip vive dentro da coluna (fonte da verdade), mas quem
+ * O conteúdo dos detalhes vive dentro da coluna (fonte da verdade), mas quem
  * aparece é a camada #column-tooltip, presa ao body: as listas de tabelas rolam
  * dentro de caixas e o card recebe `transform` no hover — os dois recortariam
  * ou reposicionariam um tooltip ancorado ali dentro.
  */
 .column-tooltip { display: none; }
-#column-tooltip { position: fixed; left: 0; top: 0; z-index: 90; width: min(320px, calc(100vw - 70px)); padding: 14px; visibility: hidden; opacity: 0; pointer-events: none; color: white; background: #151229; border: 1px solid #37314e; border-radius: 11px; box-shadow: 0 16px 36px rgba(17,14,35,.32); transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease, visibility .15s; }
+#column-tooltip { position: fixed; left: 0; top: 0; z-index: 90; width: min(320px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; padding: 14px; visibility: hidden; opacity: 0; pointer-events: auto; color: white; background: #151229; border: 1px solid #37314e; border-radius: 11px; box-shadow: 0 16px 36px rgba(17,14,35,.32); transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease, visibility .15s; }
 #column-tooltip.is-visible { visibility: visible; opacity: 1; transform: translateY(0); }
-.column-tooltip-name { font-weight: 850; }
+.column-tooltip-name { font-weight: 850; padding-right: 30px; }
+.column-details-close { float: right; padding: 5px 8px; border: 0; border-radius: 5px; color: white; background: #37314e; font-size: 10px; cursor: pointer; }
 .column-tooltip-type { margin: 3px 0 11px; color: #c7bfd4; font: 11px "Cascadia Code", Consolas, monospace; }
 .column-tooltip-props { display: grid; grid-template-columns: 86px 1fr; gap: 6px 10px; margin: 0; font-size: 11px; }
 .column-tooltip-props dt { color: #9c95ad; }

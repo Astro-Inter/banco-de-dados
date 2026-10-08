@@ -129,11 +129,11 @@ function tableCard(object, database) {
   const fkCount = columns.filter((c) => c.references).length;
   const log = isLogTable(object);
   const { children } = inheritanceOf(object, database.objects);
-  return `<article class="table-card ${log ? 'is-log' : ''} ${children.length ? 'is-inheritance-base' : ''}" data-model-table="${escapeHtml(object.id)}" tabindex="0" role="button" aria-label="Abrir ${log ? 'log table' : 'tabela'} ${escapeHtml(object.name)}${children.length ? ', tabela base de herança' : ''}" title="Duplo clique para detalhes">
+  return `<article class="table-card ${log ? 'is-log' : ''} ${children.length ? 'is-inheritance-base' : ''}" data-model-table="${escapeHtml(object.id)}" tabindex="0" role="button" aria-label="Abrir ${log ? 'log table' : 'tabela'} ${escapeHtml(object.name)}${children.length ? ', tabela base de herança' : ''}">
     <header class="table-card-head"><div class="table-card-title">${icon(log ? 'logTable' : 'table', 16)}<div><strong>${escapeHtml(object.name)}</strong><small>${escapeHtml((object.schema ?? 'public'))} · ${columns.length} colunas</small></div></div><div class="table-card-meta">${log ? '<span class="pill log">LOG</span>' : ''}${fkCount ? `<span class="pill fk" title="${fkCount} chaves estrangeiras">${fkCount} FK</span>` : ''}</div></header>
     ${inheritanceMarkup(object, database.objects)}
     ${object.description ? `<p class="table-card-description">${escapeHtml(summarize(object.description, 110))}</p>` : ''}
-    <ul class="table-card-cols">${columns.map((column) => `<li class="model-column ${column.primaryKey ? 'is-pk' : ''} ${column.references ? 'is-fk' : ''}" data-model-column="${escapeHtml(object.id)}:${escapeHtml(column.name)}" tabindex="0" aria-label="Coluna ${escapeHtml(column.name)}">
+    <ul class="table-card-cols">${columns.map((column) => `<li class="model-column ${column.primaryKey ? 'is-pk' : ''} ${column.references ? 'is-fk' : ''}" data-model-column="${escapeHtml(object.id)}:${escapeHtml(column.name)}" tabindex="0" role="button" aria-label="Detalhes da coluna ${escapeHtml(column.name)}" aria-expanded="false" aria-controls="column-tooltip" aria-haspopup="dialog">
       <span class="column-key-icon">${columnKeyIcon(column)}</span>
       <span class="column-name">${escapeHtml(column.name)}</span>
       <span class="column-type">${formatColumnType(column)}</span>
